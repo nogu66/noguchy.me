@@ -1,229 +1,91 @@
 import satori from "satori";
-// import { html } from "satori-html";
-import { SITE } from "@/config";
+import fs from "node:fs";
+import path from "node:path";
 import loadGoogleFonts from "../loadGoogleFont";
 
-// const markup = html`<div
-//       style={{
-//         background: "#fefbfb",
-//         width: "100%",
-//         height: "100%",
-//         display: "flex",
-//         alignItems: "center",
-//         justifyContent: "center",
-//       }}
-//     >
-//       <div
-//         style={{
-//           position: "absolute",
-//           top: "-1px",
-//           right: "-1px",
-//           border: "4px solid #000",
-//           background: "#ecebeb",
-//           opacity: "0.9",
-//           borderRadius: "4px",
-//           display: "flex",
-//           justifyContent: "center",
-//           margin: "2.5rem",
-//           width: "88%",
-//           height: "80%",
-//         }}
-//       />
+// OGP画像サイズ
+const OGP_WIDTH = 1200;
+const OGP_HEIGHT = 630;
 
-//       <div
-//         style={{
-//           border: "4px solid #000",
-//           background: "#fefbfb",
-//           borderRadius: "4px",
-//           display: "flex",
-//           justifyContent: "center",
-//           margin: "2rem",
-//           width: "88%",
-//           height: "80%",
-//         }}
-//       >
-//         <div
-//           style={{
-//             display: "flex",
-//             flexDirection: "column",
-//             justifyContent: "space-between",
-//             margin: "20px",
-//             width: "90%",
-//             height: "90%",
-//           }}
-//         >
-//           <p
-//             style={{
-//               fontSize: 72,
-//               fontWeight: "bold",
-//               maxHeight: "84%",
-//               overflow: "hidden",
-//             }}
-//           >
-//             {post.data.title}
-//           </p>
-//           <div
-//             style={{
-//               display: "flex",
-//               justifyContent: "space-between",
-//               width: "100%",
-//               marginBottom: "8px",
-//               fontSize: 28,
-//             }}
-//           >
-//             <span>
-//               by{" "}
-//               <span
-//                 style={{
-//                   color: "transparent",
-//                 }}
-//               >
-//                 "
-//               </span>
-//               <span style={{ overflow: "hidden", fontWeight: "bold" }}>
-//                 {post.data.author}
-//               </span>
-//             </span>
+// 白い領域の座標とサイズ
+const WHITE_AREA = {
+  top: 35,
+  left: 35,
+  width: 1130,
+  height: 440,
+  padding: 40,
+};
 
-//             <span style={{ overflow: "hidden", fontWeight: "bold" }}>
-//               {SITE.title}
-//             </span>
-//           </div>
-//         </div>
-//       </div>
-//     </div>`;
+// テンプレート画像をBase64エンコード（キャッシュ）
+let cachedTemplateBase64 = null;
+
+function getTemplateImageBase64() {
+  if (cachedTemplateBase64) return cachedTemplateBase64;
+  const templatePath = path.join(process.cwd(), "public", "ogp-template.png");
+  const imageBuffer = fs.readFileSync(templatePath);
+  cachedTemplateBase64 = `data:image/png;base64,${imageBuffer.toString("base64")}`;
+  return cachedTemplateBase64;
+}
+
+// タイトル省略処理
+function truncateTitle(title, maxLength = 80) {
+  if (title.length <= maxLength) return title;
+  return title.slice(0, maxLength - 1) + "...";
+}
 
 export default async post => {
+  const templateBase64 = getTemplateImageBase64();
+  const title = truncateTitle(post.data.title);
+
   return satori(
     {
       type: "div",
       props: {
         style: {
-          background: "#fefbfb",
           width: "100%",
           height: "100%",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          backgroundImage: `url(${templateBase64})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         },
-        children: [
-          {
-            type: "div",
-            props: {
-              style: {
-                position: "absolute",
-                top: "-1px",
-                right: "-1px",
-                border: "4px solid #000",
-                background: "#ecebeb",
-                opacity: "0.9",
-                borderRadius: "4px",
-                display: "flex",
-                justifyContent: "center",
-                margin: "2.5rem",
-                width: "88%",
-                height: "80%",
-              },
+        children: {
+          type: "div",
+          props: {
+            style: {
+              position: "absolute",
+              top: WHITE_AREA.top + WHITE_AREA.padding,
+              left: WHITE_AREA.left + WHITE_AREA.padding,
+              width: WHITE_AREA.width - WHITE_AREA.padding * 2,
+              height: WHITE_AREA.height - WHITE_AREA.padding * 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             },
-          },
-          {
-            type: "div",
-            props: {
-              style: {
-                border: "4px solid #000",
-                background: "#fefbfb",
-                borderRadius: "4px",
-                display: "flex",
-                justifyContent: "center",
-                margin: "2rem",
-                width: "88%",
-                height: "80%",
-              },
-              children: {
-                type: "div",
-                props: {
-                  style: {
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    margin: "20px",
-                    width: "90%",
-                    height: "90%",
-                  },
-                  children: [
-                    {
-                      type: "p",
-                      props: {
-                        style: {
-                          fontSize: 72,
-                          fontWeight: "bold",
-                          maxHeight: "84%",
-                          overflow: "hidden",
-                        },
-                        children: post.data.title,
-                      },
-                    },
-                    {
-                      type: "div",
-                      props: {
-                        style: {
-                          display: "flex",
-                          justifyContent: "space-between",
-                          width: "100%",
-                          marginBottom: "8px",
-                          fontSize: 28,
-                        },
-                        children: [
-                          {
-                            type: "span",
-                            props: {
-                              children: [
-                                "by ",
-                                {
-                                  type: "span",
-                                  props: {
-                                    style: { color: "transparent" },
-                                    children: '"',
-                                  },
-                                },
-                                {
-                                  type: "span",
-                                  props: {
-                                    style: {
-                                      overflow: "hidden",
-                                      fontWeight: "bold",
-                                    },
-                                    children: post.data.author,
-                                  },
-                                },
-                              ],
-                            },
-                          },
-                          {
-                            type: "span",
-                            props: {
-                              style: { overflow: "hidden", fontWeight: "bold" },
-                              children: SITE.title,
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
+            children: {
+              type: "p",
+              props: {
+                style: {
+                  fontSize: 48,
+                  fontWeight: "bold",
+                  color: "#333333",
+                  textAlign: "center",
+                  lineHeight: 1.4,
+                  wordBreak: "break-word",
+                  overflow: "hidden",
                 },
+                children: title,
               },
             },
           },
-        ],
+        },
       },
     },
     {
-      width: 1200,
-      height: 630,
+      width: OGP_WIDTH,
+      height: OGP_HEIGHT,
       embedFont: true,
-      fonts: await loadGoogleFonts(
-        post.data.title + post.data.author + SITE.title + "by"
-      ),
+      fonts: await loadGoogleFonts(title),
     }
   );
 };
