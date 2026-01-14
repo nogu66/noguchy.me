@@ -1,0 +1,128 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Tag from "@/components/Tag.astro";
+import BackButton from "@/components/BackButton.astro";
+import { SITE } from "@/config";
+import { slugifyStr } from "@/utils/slugify";
+
+export interface Props {
+  award: CollectionEntry<"awards">;
+}
+
+const { award } = Astro.props;
+
+const {
+  title,
+  event,
+  date,
+  award: awardName,
+  projectUrl,
+  eventUrl,
+  tags,
+} = award.data;
+
+const { Content } = await render(award);
+
+// フォーマット済みの日付
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const layoutProps = {
+  title: `${title} | ${SITE.title}`,
+  description: `${event}で${awardName}を受賞: ${title}`,
+  scrollSmooth: true,
+};
+---
+
+<Layout {...layoutProps}>
+  <Header />
+  <BackButton />
+  <main
+    id="main-content"
+    class:list={[
+      "mx-auto w-full max-w-app px-4 pb-12",
+      { "mt-8": !SITE.showBackButton },
+    ]}
+  >
+    <article class="prose prose-lg mx-auto">
+      <!-- タイトルと受賞情報 -->
+      <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <h1 class="text-2xl font-bold text-skin-accent sm:text-3xl flex-1">
+          {title}
+        </h1>
+        <span class="bg-skin-accent text-skin-inverted shrink-0 rounded-lg px-4 py-2 text-base font-semibold">
+          {awardName}
+        </span>
+      </div>
+
+      <!-- イベント情報 -->
+      <div class="mb-6 text-skin-base">
+        <p class="text-lg font-medium">{event}</p>
+        <p class="text-skin-muted text-sm">{formatDate(date)}</p>
+      </div>
+
+      <!-- リンクボタン -->
+      <div class="mb-8 flex flex-wrap gap-3 not-prose">
+        {
+          projectUrl && (
+            <a
+              href={projectUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 rounded-lg bg-skin-accent px-5 py-2.5 text-sm font-medium text-skin-inverted transition-all hover:opacity-90 shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              <span>Project</span>
+            </a>
+          )
+        }
+        {
+          eventUrl && (
+            <a
+              href={eventUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 rounded-lg border-2 border-skin-line bg-skin-card px-5 py-2.5 text-sm font-medium text-skin-base transition-all hover:border-skin-accent hover:bg-skin-fill shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Event Page</span>
+            </a>
+          )
+        }
+      </div>
+
+      <!-- タグ -->
+      {
+        tags.length > 0 && (
+          <ul class="mb-8 flex flex-wrap gap-x-2 gap-y-1 not-prose">
+            {tags.map(tag => (
+              <Tag tag={slugifyStr(tag)} tagName={tag} />
+            ))}
+          </ul>
+        )
+      }
+
+      <!-- Markdownコンテンツ -->
+      <div class="prose-headings:text-skin-base prose-p:text-skin-base prose-a:text-skin-accent prose-blockquote:text-skin-base prose-strong:text-skin-base prose-code:text-skin-base prose-pre:bg-skin-fill prose-ol:text-skin-base prose-ul:text-skin-base">
+        <Content />
+      </div>
+    </article>
+  </main>
+  <Footer />
+</Layout>

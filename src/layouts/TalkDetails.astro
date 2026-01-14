@@ -1,0 +1,157 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Tag from "@/components/Tag.astro";
+import BackButton from "@/components/BackButton.astro";
+import { SITE } from "@/config";
+import { slugifyStr } from "@/utils/slugify";
+
+export interface Props {
+  talk: CollectionEntry<"talks">;
+}
+
+const { talk } = Astro.props;
+
+const {
+  title,
+  event,
+  date,
+  venue,
+  slideUrl,
+  videoUrl,
+  eventUrl,
+  ogpImage,
+  tags,
+} = talk.data;
+
+const { Content } = await render(talk);
+
+// フォーマット済みの日付
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const layoutProps = {
+  title: `${title} | ${SITE.title}`,
+  description: `${event}での登壇: ${title}`,
+  ogImage: ogpImage,
+  scrollSmooth: true,
+};
+---
+
+<Layout {...layoutProps}>
+  <Header />
+  <BackButton />
+  <main
+    id="main-content"
+    class:list={[
+      "mx-auto w-full max-w-app px-4 pb-12",
+      { "mt-8": !SITE.showBackButton },
+    ]}
+  >
+    <article class="prose prose-lg mx-auto">
+      <!-- OGP画像 -->
+      {
+        ogpImage && (
+          <div class="mb-8 overflow-hidden rounded-lg">
+            <img
+              src={ogpImage}
+              alt={title}
+              class="w-full h-auto object-cover"
+              loading="eager"
+            />
+          </div>
+        )
+      }
+
+      <!-- タイトル -->
+      <h1 class="text-2xl font-bold text-skin-accent sm:text-3xl mb-4">
+        {title}
+      </h1>
+
+      <!-- イベント情報 -->
+      <div class="mb-6 text-skin-base">
+        <p class="text-lg font-medium">{event}</p>
+        {venue && <p class="text-skin-muted">@ {venue}</p>}
+        <p class="text-skin-muted text-sm">{formatDate(date)}</p>
+      </div>
+
+      <!-- リンクボタン -->
+      <div class="mb-8 flex flex-wrap gap-3 not-prose">
+        {
+          slideUrl && (
+            <a
+              href={slideUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 rounded-lg bg-skin-accent px-5 py-2.5 text-sm font-medium text-skin-inverted transition-all hover:opacity-90 shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              <span>Slides</span>
+            </a>
+          )
+        }
+        {
+          videoUrl && (
+            <a
+              href={videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 rounded-lg border-2 border-skin-line bg-skin-card px-5 py-2.5 text-sm font-medium text-skin-base transition-all hover:border-skin-accent hover:bg-skin-fill shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Video</span>
+            </a>
+          )
+        }
+        {
+          eventUrl && (
+            <a
+              href={eventUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 rounded-lg border-2 border-skin-line bg-skin-card px-5 py-2.5 text-sm font-medium text-skin-base transition-all hover:border-skin-accent hover:bg-skin-fill shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>Event Page</span>
+            </a>
+          )
+        }
+      </div>
+
+      <!-- タグ -->
+      {
+        tags.length > 0 && (
+          <ul class="mb-8 flex flex-wrap gap-x-2 gap-y-1 not-prose">
+            {tags.map(tag => (
+              <Tag tag={slugifyStr(tag)} tagName={tag} />
+            ))}
+          </ul>
+        )
+      }
+
+      <!-- Markdownコンテンツ -->
+      <div class="prose-headings:text-skin-base prose-p:text-skin-base prose-a:text-skin-accent prose-blockquote:text-skin-base prose-strong:text-skin-base prose-code:text-skin-base prose-pre:bg-skin-fill prose-ol:text-skin-base prose-ul:text-skin-base">
+        <Content />
+      </div>
+    </article>
+  </main>
+  <Footer />
+</Layout>

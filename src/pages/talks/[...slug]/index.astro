@@ -1,0 +1,20 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+import TalkDetails from "@/layouts/TalkDetails.astro";
+
+export interface Props {
+  talk: CollectionEntry<"talks">;
+}
+
+export async function getStaticPaths() {
+  const talks = await getCollection("talks");
+  return talks.map(talk => ({
+    params: { slug: talk.id },
+    props: { talk },
+  }));
+}
+
+const { talk } = Astro.props;
+---
+
+<TalkDetails talk={talk} />

@@ -1,0 +1,152 @@
+---
+interface ArchiveItem {
+  date: Date;
+  title: string;
+  url: string;
+}
+
+interface Props {
+  items: ArchiveItem[];
+  title?: string;
+}
+
+const { items, title = "Archive" } = Astro.props;
+
+// 年月ごとにグループ化
+type YearMonthMap = Map<number, Map<number, ArchiveItem[]>>;
+
+const groupedByYearMonth: YearMonthMap = new Map();
+
+items.forEach(item => {
+  const year = item.date.getFullYear();
+  const month = item.date.getMonth() + 1; // 0-indexed なので +1
+
+  if (!groupedByYearMonth.has(year)) {
+    groupedByYearMonth.set(year, new Map());
+  }
+
+  const yearMap = groupedByYearMonth.get(year)!;
+  if (!yearMap.has(month)) {
+    yearMap.set(month, []);
+  }
+
+  yearMap.get(month)!.push(item);
+});
+
+// 年を降順にソート
+const sortedYears = Array.from(groupedByYearMonth.keys()).sort((a, b) => b - a);
+
+const monthNames = [
+  "1月", "2月", "3月", "4月", "5月", "6月",
+  "7月", "8月", "9月", "10月", "11月", "12月"
+];
+---
+
+<aside class="archive-sidebar">
+  <h2 class="text-lg font-semibold mb-4">{title}</h2>
+  <nav class="archive-nav">
+    {sortedYears.map(year => {
+      const yearMap = groupedByYearMonth.get(year)!;
+      const sortedMonths = Array.from(yearMap.keys()).sort((a, b) => b - a);
+
+      return (
+        <details class="year-group" open={year === sortedYears[0]}>
+          <summary class="year-label cursor-pointer text-base font-medium py-2 hover:text-skin-accent transition-colors">
+            {year}年
+            <span class="text-skin-muted text-sm ml-1">
+              ({Array.from(yearMap.values()).reduce((sum, items) => sum + items.length, 0)})
+            </span>
+          </summary>
+          <div class="year-content ml-3">
+            {sortedMonths.map(month => {
+              const items = yearMap.get(month)!;
+
+              return (
+                <details class="month-group" open={year === sortedYears[0] && month === sortedMonths[0]}>
+                  <summary class="month-label cursor-pointer text-sm py-1.5 hover:text-skin-accent transition-colors">
+                    {monthNames[month - 1]}
+                    <span class="text-skin-muted text-xs ml-1">
+                      ({items.length})
+                    </span>
+                  </summary>
+                  <ul class="month-content ml-3 space-y-1.5 mt-1">
+                    {items
+                      .sort((a, b) => b.date.getTime() - a.date.getTime())
+                      .map(item => (
+                        <li>
+                          <a
+                            href={item.url}
+                            class="block text-sm py-1 hover:text-skin-accent transition-colors line-clamp-2"
+                            title={item.title}
+                          >
+                            {item.title}
+                          </a>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                </details>
+              );
+            })}
+          </div>
+        </details>
+      );
+    })}
+  </nav>
+</aside>
+
+<style>
+  .archive-sidebar {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+  }
+
+  .year-group,
+  .month-group {
+    margin-bottom: 0.5rem;
+  }
+
+  summary {
+    list-style: none;
+    user-select: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::before {
+    content: "▶";
+    display: inline-block;
+    margin-right: 0.5rem;
+    transition: transform 0.2s;
+    font-size: 0.75em;
+  }
+
+  details[open] > summary::before {
+    transform: rotate(90deg);
+  }
+
+  .archive-sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .archive-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .archive-sidebar::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+  }
+
+  .archive-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+  }
+</style>

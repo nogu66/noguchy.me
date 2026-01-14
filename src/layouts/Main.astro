@@ -5,12 +5,14 @@ import { SITE } from "@/config";
 interface StringTitleProp {
   pageTitle: string;
   pageDesc?: string;
+  withSidebar?: boolean;
 }
 
 interface ArrayTitleProp {
   pageTitle: [string, string];
   titleTransition: string;
   pageDesc?: string;
+  withSidebar?: boolean;
 }
 
 export type Props = StringTitleProp | ArrayTitleProp;
@@ -18,29 +20,68 @@ export type Props = StringTitleProp | ArrayTitleProp;
 const { props } = Astro;
 
 const backUrl = SITE.showBackButton ? Astro.url.pathname : "/";
+const hasSidebar = props.withSidebar ?? false;
 ---
 
 <Breadcrumb />
-<main
-  data-backUrl={backUrl}
-  id="main-content"
-  class="mx-auto w-full max-w-app px-4 pb-4"
->
-  {
-    "titleTransition" in props ? (
-      <h1 class="text-2xl font-semibold sm:text-3xl">
-        {props.pageTitle[0]}
-        <span transition:name={props.titleTransition}>
-          {props.pageTitle[1]}
-        </span>
-      </h1>
-    ) : (
-      <h1 class="text-2xl font-semibold sm:text-3xl">{props.pageTitle}</h1>
-    )
+<div class="mx-auto w-full max-w-app px-4 pb-4">
+  <div class:list={["layout-container", { "with-sidebar": hasSidebar }]}>
+    <main data-backUrl={backUrl} id="main-content" class="main-content">
+      {
+        "titleTransition" in props ? (
+          <h1 class="text-2xl font-semibold sm:text-3xl">
+            {props.pageTitle[0]}
+            <span transition:name={props.titleTransition}>
+              {props.pageTitle[1]}
+            </span>
+          </h1>
+        ) : (
+          <h1 class="text-2xl font-semibold sm:text-3xl">{props.pageTitle}</h1>
+        )
+      }
+      <p class="mt-2 mb-6 italic">{props.pageDesc}</p>
+      <slot />
+    </main>
+    {hasSidebar && (
+      <aside class="sidebar-container">
+        <slot name="sidebar" />
+      </aside>
+    )}
+  </div>
+</div>
+
+<style>
+  .layout-container {
+    display: flex;
+    gap: 2rem;
+    align-items: start;
   }
-  <p class="mt-2 mb-6 italic">{props.pageDesc}</p>
-  <slot />
-</main>
+
+  .layout-container.with-sidebar {
+    flex-direction: row;
+  }
+
+  .main-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sidebar-container {
+    width: 280px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 1024px) {
+    .layout-container.with-sidebar {
+      flex-direction: column;
+    }
+
+    .sidebar-container {
+      width: 100%;
+      order: -1;
+    }
+  }
+</style>
 
 <script>
   document.addEventListener("astro:page-load", () => {

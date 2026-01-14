@@ -7,23 +7,39 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Card from "@/components/Card.astro";
 import Pagination from "@/components/Pagination.astro";
+import ArchiveSidebar from "@/components/ArchiveSidebar.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
 import { SITE } from "@/config";
 
 export const getStaticPaths = (async ({ paginate }) => {
   const posts = await getCollection("blog", ({ data }) => data.published);
-  return paginate(getSortedPosts(posts), { pageSize: SITE.postPerPage });
+  const sortedPosts = getSortedPosts(posts);
+  return paginate(sortedPosts, {
+    pageSize: SITE.postPerPage,
+    props: { allPosts: sortedPosts }
+  });
 }) satisfies GetStaticPaths;
 
-const { page } = Astro.props;
+const { page, allPosts } = Astro.props;
+
+// サイドバー用のアーカイブアイテムを作成
+const archiveItems = allPosts.map((post: any) => ({
+  date: post.data.pubDatetime,
+  title: post.data.title,
+  url: `/posts/${post.id}/`
+}));
 ---
 
 <Layout title={`Posts | ${SITE.title}`}>
   <Header />
-  <Main pageTitle="Posts" pageDesc="All the articles I've posted.">
+  <Main pageTitle="Posts" pageDesc="All the articles I've posted." withSidebar={false}>
     <ul>
       {page.data.map(data => <Card {...data} />)}
     </ul>
+
+    <!-- サイドバー（一時的に非表示）
+    <ArchiveSidebar slot="sidebar" items={archiveItems} title="記事アーカイブ" />
+    -->
   </Main>
 
   <Pagination {page} />

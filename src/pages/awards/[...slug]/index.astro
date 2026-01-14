@@ -1,0 +1,20 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+import AwardDetails from "@/layouts/AwardDetails.astro";
+
+export interface Props {
+  award: CollectionEntry<"awards">;
+}
+
+export async function getStaticPaths() {
+  const awards = await getCollection("awards");
+  return awards.map(award => ({
+    params: { slug: award.id },
+    props: { award },
+  }));
+}
+
+const { award } = Astro.props;
+---
+
+<AwardDetails award={award} />

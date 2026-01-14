@@ -37,6 +37,7 @@ const talks = defineCollection({
       slideUrl: z.string().url().optional(), // スライドURL
       videoUrl: z.string().url().optional(), // 動画URL
       eventUrl: z.string().url().optional(), // イベントURL
+      ogpImage: z.string().url().optional(), // OGP画像URL
       tags: z.array(z.string()).default([]),
     }),
 });
