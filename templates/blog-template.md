@@ -3,7 +3,7 @@ title: ""
 pubDatetime: {{DATETIME}}
 slug: ""
 featured: false
-draft: true
+published: false
 tags: []
 description: ""
 timezone: "Asia/Tokyo"

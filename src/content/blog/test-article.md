@@ -3,7 +3,7 @@ title: "TypeScriptの型システムについて"
 pubDatetime: 2026-01-13T14:30:00
 slug: "test-article"
 featured: false
-draft: false
+published: false
 tags: ["TypeScript", "プログラミング"]
 description: "TypeScriptの型システムの基本的な使い方について簡単に解説します"
 timezone: "Asia/Tokyo"
