@@ -1,0 +1,160 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Main from "@/layouts/Main.astro";
+import Hr from "@/components/Hr.astro";
+
+// 登壇情報を取得（日付降順）
+const talks = await getCollection("talks");
+const sortedTalks = talks.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
+
+// 入賞情報を取得（日付降順）
+const awards = await getCollection("awards");
+const sortedAwards = awards.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
+
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+---
+
+<Layout>
+  <Header activeNav="activities" />
+  <Main pageTitle="Activities" pageDesc="登壇・入賞情報">
+    <!-- 登壇情報 -->
+    <section class="mb-12">
+      <h2 class="mb-6 text-xl font-semibold">Talks</h2>
+      {
+        sortedTalks.length === 0 ? (
+          <p class="text-skin-muted">登壇情報はまだありません</p>
+        ) : (
+          <ul class="space-y-6">
+            {sortedTalks.map(talk => (
+              <li class="border-skin-line border-b pb-4">
+                <h3 class="text-lg font-medium">{talk.data.title}</h3>
+                <p class="text-skin-muted mt-1">
+                  {talk.data.event}
+                  {talk.data.venue && ` @ ${talk.data.venue}`}
+                </p>
+                <p class="text-skin-muted text-sm">
+                  {formatDate(talk.data.date)}
+                </p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  {talk.data.slideUrl && (
+                    <a
+                      href={talk.data.slideUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-skin-accent hover:underline text-sm"
+                    >
+                      Slides
+                    </a>
+                  )}
+                  {talk.data.videoUrl && (
+                    <a
+                      href={talk.data.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-skin-accent hover:underline text-sm"
+                    >
+                      Video
+                    </a>
+                  )}
+                  {talk.data.eventUrl && (
+                    <a
+                      href={talk.data.eventUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-skin-accent hover:underline text-sm"
+                    >
+                      Event
+                    </a>
+                  )}
+                </div>
+                {talk.data.tags.length > 0 && (
+                  <div class="mt-2 flex flex-wrap gap-1">
+                    {talk.data.tags.map(tag => (
+                      <span class="bg-skin-card text-skin-muted rounded px-2 py-0.5 text-xs">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </section>
+
+    <Hr />
+
+    <!-- 入賞情報 -->
+    <section class="mt-12">
+      <h2 class="mb-6 text-xl font-semibold">Awards</h2>
+      {
+        sortedAwards.length === 0 ? (
+          <p class="text-skin-muted">入賞情報はまだありません</p>
+        ) : (
+          <ul class="space-y-6">
+            {sortedAwards.map(award => (
+              <li class="border-skin-line border-b pb-4">
+                <div class="flex items-start justify-between gap-2">
+                  <h3 class="text-lg font-medium">{award.data.title}</h3>
+                  <span class="bg-skin-accent text-skin-inverted shrink-0 rounded px-2 py-0.5 text-sm font-medium">
+                    {award.data.award}
+                  </span>
+                </div>
+                <p class="text-skin-muted mt-1">{award.data.event}</p>
+                <p class="text-skin-muted text-sm">
+                  {formatDate(award.data.date)}
+                </p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  {award.data.projectUrl && (
+                    <a
+                      href={award.data.projectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-skin-accent hover:underline text-sm"
+                    >
+                      Project
+                    </a>
+                  )}
+                  {award.data.eventUrl && (
+                    <a
+                      href={award.data.eventUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-skin-accent hover:underline text-sm"
+                    >
+                      Event
+                    </a>
+                  )}
+                </div>
+                {award.data.tags.length > 0 && (
+                  <div class="mt-2 flex flex-wrap gap-1">
+                    {award.data.tags.map(tag => (
+                      <span class="bg-skin-card text-skin-muted rounded px-2 py-0.5 text-xs">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </section>
+  </Main>
+  <Footer />
+</Layout>
