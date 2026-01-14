@@ -4,7 +4,7 @@ export const SITE = {
   profile: "https://noguchy.me/",
   desc: "個人ブログ",
   title: "noguchy.me",
-  ogImage: "astropaper-og.jpg",
+  ogImage: "ogp.png",
   lightAndDarkMode: true,
   postPerIndex: 4,
   postPerPage: 4,
