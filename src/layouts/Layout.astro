@@ -33,33 +33,35 @@ const {
 
 const socialImageURL = new URL(ogImage, Astro.url);
 
-const structuredData = pubDatetime ? {
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  headline: `${title}`,
-  image: `${socialImageURL}`,
-  datePublished: `${pubDatetime.toISOString()}`,
-  ...(modDatetime && { dateModified: modDatetime.toISOString() }),
-  author: [
-    {
-      "@type": "Person",
-      name: `${author}`,
-      ...(profile && { url: profile }),
-    },
-  ],
-  mainEntityOfPage: {
-    "@type": "WebPage",
-    "@id": `${canonicalURL}`,
-  },
-  publisher: {
-    "@type": "Organization",
-    name: `${SITE.title}`,
-    logo: {
-      "@type": "ImageObject",
-      url: `${new URL(SITE.ogImage ? `/${SITE.ogImage}` : "/og.png", Astro.url)}`,
-    },
-  },
-} : null;
+const structuredData = pubDatetime
+  ? {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: `${title}`,
+      image: `${socialImageURL}`,
+      datePublished: `${pubDatetime.toISOString()}`,
+      ...(modDatetime && { dateModified: modDatetime.toISOString() }),
+      author: [
+        {
+          "@type": "Person",
+          name: `${author}`,
+          ...(profile && { url: profile }),
+        },
+      ],
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${canonicalURL}`,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: `${SITE.title}`,
+        logo: {
+          "@type": "ImageObject",
+          url: `${new URL(SITE.ogImage ? `/${SITE.ogImage}` : "/og.png", Astro.url)}`,
+        },
+      },
+    }
+  : null;
 ---
 
 <!doctype html>
@@ -115,17 +117,27 @@ const structuredData = pubDatetime ? {
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={socialImageURL} />
-    {SITE.twitterId && <meta property="twitter:site" content={SITE.twitterId} />}
-    {SITE.twitterId && <meta property="twitter:creator" content={SITE.twitterId} />}
+    {
+      SITE.twitterId && (
+        <meta property="twitter:site" content={SITE.twitterId} />
+      )
+    }
+    {
+      SITE.twitterId && (
+        <meta property="twitter:creator" content={SITE.twitterId} />
+      )
+    }
 
     <!-- Google JSON-LD Structured data -->
-    {structuredData && (
-      <script
-        type="application/ld+json"
-        is:inline
-        set:html={JSON.stringify(structuredData)}
-      />
-    )}
+    {
+      structuredData && (
+        <script
+          type="application/ld+json"
+          is:inline
+          set:html={JSON.stringify(structuredData)}
+        />
+      )
+    }
 
     <!-- Enable RSS feed auto-discovery  -->
     <!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery -->

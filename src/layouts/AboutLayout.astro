@@ -21,7 +21,8 @@ const personStructuredData = {
   "@type": "Person",
   name: SITE.author,
   url: SITE.website,
-  image: new URL(SITE.ogImage ? `/${SITE.ogImage}` : "/og.png", SITE.website).href,
+  image: new URL(SITE.ogImage ? `/${SITE.ogImage}` : "/og.png", SITE.website)
+    .href,
   sameAs: SOCIALS.map(social => social.href),
   description: SITE.desc,
 };
