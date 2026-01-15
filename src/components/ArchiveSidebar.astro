@@ -37,61 +37,80 @@ items.forEach(item => {
 const sortedYears = Array.from(groupedByYearMonth.keys()).sort((a, b) => b - a);
 
 const monthNames = [
-  "1月", "2月", "3月", "4月", "5月", "6月",
-  "7月", "8月", "9月", "10月", "11月", "12月"
+  "1月",
+  "2月",
+  "3月",
+  "4月",
+  "5月",
+  "6月",
+  "7月",
+  "8月",
+  "9月",
+  "10月",
+  "11月",
+  "12月",
 ];
 ---
 
 <aside class="archive-sidebar">
-  <h2 class="text-lg font-semibold mb-4">{title}</h2>
+  <h2 class="mb-4 text-lg font-semibold">{title}</h2>
   <nav class="archive-nav">
-    {sortedYears.map(year => {
-      const yearMap = groupedByYearMonth.get(year)!;
-      const sortedMonths = Array.from(yearMap.keys()).sort((a, b) => b - a);
+    {
+      sortedYears.map(year => {
+        const yearMap = groupedByYearMonth.get(year)!;
+        const sortedMonths = Array.from(yearMap.keys()).sort((a, b) => b - a);
 
-      return (
-        <details class="year-group" open={year === sortedYears[0]}>
-          <summary class="year-label cursor-pointer text-base text-foreground font-medium py-2 hover:text-accent transition-colors">
-            {year}年
-            <span class="text-muted text-sm ml-1">
-              ({Array.from(yearMap.values()).reduce((sum, items) => sum + items.length, 0)})
-            </span>
-          </summary>
-          <div class="year-content ml-3">
-            {sortedMonths.map(month => {
-              const items = yearMap.get(month)!;
+        return (
+          <details class="year-group" open={year === sortedYears[0]}>
+            <summary class="year-label cursor-pointer py-2 text-base font-medium text-foreground transition-colors hover:text-accent">
+              {year}年
+              <span class="ml-1 text-sm text-muted">
+                (
+                {Array.from(yearMap.values()).reduce(
+                  (sum, items) => sum + items.length,
+                  0
+                )}
+                )
+              </span>
+            </summary>
+            <div class="year-content ml-3">
+              {sortedMonths.map(month => {
+                const items = yearMap.get(month)!;
 
-              return (
-                <details class="month-group" open={year === sortedYears[0] && month === sortedMonths[0]}>
-                  <summary class="month-label cursor-pointer text-sm text-foreground py-1.5 hover:text-accent transition-colors">
-                    {monthNames[month - 1]}
-                    <span class="text-muted text-xs ml-1">
-                      ({items.length})
-                    </span>
-                  </summary>
-                  <ul class="month-content ml-3 space-y-1.5 mt-1">
-                    {items
-                      .sort((a, b) => b.date.getTime() - a.date.getTime())
-                      .map(item => (
-                        <li>
-                          <a
-                            href={item.url}
-                            class="block text-sm text-foreground py-1 hover:text-accent transition-colors line-clamp-2"
-                            title={item.title}
-                          >
-                            {item.title}
-                          </a>
-                        </li>
-                      ))
-                    }
-                  </ul>
-                </details>
-              );
-            })}
-          </div>
-        </details>
-      );
-    })}
+                return (
+                  <details
+                    class="month-group"
+                    open={year === sortedYears[0] && month === sortedMonths[0]}
+                  >
+                    <summary class="month-label cursor-pointer py-1.5 text-sm text-foreground transition-colors hover:text-accent">
+                      {monthNames[month - 1]}
+                      <span class="ml-1 text-xs text-muted">
+                        ({items.length})
+                      </span>
+                    </summary>
+                    <ul class="month-content mt-1 ml-3 space-y-1.5">
+                      {items
+                        .sort((a, b) => b.date.getTime() - a.date.getTime())
+                        .map(item => (
+                          <li>
+                            <a
+                              href={item.url}
+                              class="line-clamp-2 block py-1 text-sm text-foreground transition-colors hover:text-accent"
+                              title={item.title}
+                            >
+                              {item.title}
+                            </a>
+                          </li>
+                        ))}
+                    </ul>
+                  </details>
+                );
+              })}
+            </div>
+          </details>
+        );
+      })
+    }
   </nav>
 </aside>
 

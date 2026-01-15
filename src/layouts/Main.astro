@@ -42,11 +42,13 @@ const hasSidebar = props.withSidebar ?? false;
       <p class="mt-2 mb-6 italic">{props.pageDesc}</p>
       <slot />
     </main>
-    {hasSidebar && (
-      <aside class="sidebar-container">
-        <slot name="sidebar" />
-      </aside>
-    )}
+    {
+      hasSidebar && (
+        <aside class="sidebar-container">
+          <slot name="sidebar" />
+        </aside>
+      )
+    }
   </div>
 </div>
 
