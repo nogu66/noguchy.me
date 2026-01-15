@@ -141,14 +141,10 @@ const structuredData = {
             async
             src={`https://www.googletagmanager.com/gtag/js?id=${PUBLIC_GOOGLE_ANALYTICS_ID}`}
           />
-          <script is:inline define:vars={{ PUBLIC_GOOGLE_ANALYTICS_ID }}>
-            window.dataLayer = window.dataLayer || [];
-            function gtag() {
-              dataLayer.push(arguments);
-            }
-            gtag("js", new Date());
-            gtag("config", PUBLIC_GOOGLE_ANALYTICS_ID);
-          </script>
+          <script
+            is:inline
+            set:html={`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${PUBLIC_GOOGLE_ANALYTICS_ID}');`}
+          />
         </>
       )
     }
@@ -160,15 +156,10 @@ const structuredData = {
     {
       // Google Analytics - View Transitions support
       PUBLIC_GOOGLE_ANALYTICS_ID && (
-        <script is:inline define:vars={{ PUBLIC_GOOGLE_ANALYTICS_ID }}>
-          document.addEventListener("astro:page-load", () => {
-            if (typeof gtag === "function" && PUBLIC_GOOGLE_ANALYTICS_ID) {
-              gtag("config", PUBLIC_GOOGLE_ANALYTICS_ID, {
-                page_path: window.location.pathname,
-              });
-            }
-          });
-        </script>
+        <script
+          is:inline
+          set:html={`document.addEventListener("astro:page-load", () => { if (typeof gtag === "function" && "${PUBLIC_GOOGLE_ANALYTICS_ID}") { gtag("config", "${PUBLIC_GOOGLE_ANALYTICS_ID}", { page_path: window.location.pathname }); } });`}
+        />
       )
     }
   </head>

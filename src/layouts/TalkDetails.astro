@@ -55,7 +55,7 @@ const layoutProps = {
       { "mt-8": !SITE.showBackButton },
     ]}
   >
-    <article class="prose prose-lg mx-auto">
+    <article class="mx-auto prose prose-lg">
       <!-- OGP画像 -->
       {
         ogpImage && (
@@ -63,7 +63,7 @@ const layoutProps = {
             <img
               src={ogpImage}
               alt={title}
-              class="w-full h-auto object-cover"
+              class="h-auto w-full object-cover"
               loading="eager"
             />
           </div>
@@ -71,31 +71,40 @@ const layoutProps = {
       }
 
       <!-- タイトル -->
-      <h1 class="text-2xl font-bold text-skin-accent sm:text-3xl mb-4">
+      <h1 class="mb-4 text-2xl font-bold text-accent sm:text-3xl">
         {title}
       </h1>
 
       <!-- イベント情報 -->
-      <div class="mb-6 text-skin-base">
+      <div class="mb-6 text-foreground">
         <p class="text-lg font-medium">{event}</p>
-        {venue && <p class="text-skin-muted">@ {venue}</p>}
-        <p class="text-skin-muted text-sm">{formatDate(date)}</p>
+        {venue && <p class="text-muted">@ {venue}</p>}
+        <p class="text-sm text-muted">{formatDate(date)}</p>
       </div>
 
       <!-- リンクボタン -->
-      <div class="mb-8 flex flex-wrap gap-3 not-prose">
+      <div class="not-prose mb-8 flex flex-wrap gap-3">
         {
           slideUrl && (
             <a
               href={slideUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-lg bg-skin-accent px-5 py-2.5 text-sm font-medium text-skin-inverted transition-all hover:opacity-90 shadow-sm"
+              class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-background shadow-sm transition-all hover:opacity-90"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
               </svg>
               <span>Slides</span>
             </a>
@@ -107,10 +116,19 @@ const layoutProps = {
               href={videoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-lg border-2 border-skin-line bg-skin-card px-5 py-2.5 text-sm font-medium text-skin-base transition-all hover:border-skin-accent hover:bg-skin-fill shadow-sm"
+              class="inline-flex items-center gap-2 rounded-lg border-2 border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all hover:border-accent hover:bg-muted"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
               <span>Video</span>
             </a>
@@ -122,13 +140,22 @@ const layoutProps = {
               href={eventUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-lg border-2 border-skin-line bg-skin-card px-5 py-2.5 text-sm font-medium text-skin-base transition-all hover:border-skin-accent hover:bg-skin-fill shadow-sm"
+              class="inline-flex items-center gap-2 rounded-lg border-2 border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all hover:border-accent hover:bg-muted"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
               <span>Event Page</span>
             </a>
@@ -138,8 +165,8 @@ const layoutProps = {
 
       <!-- タグ -->
       {
-        tags.length > 0 && (
-          <ul class="mb-8 flex flex-wrap gap-x-2 gap-y-1 not-prose">
+        tags && tags.length > 0 && (
+          <ul class="not-prose mb-8 flex flex-wrap gap-x-2 gap-y-1">
             {tags.map(tag => (
               <Tag tag={slugifyStr(tag)} tagName={tag} />
             ))}
@@ -148,7 +175,9 @@ const layoutProps = {
       }
 
       <!-- Markdownコンテンツ -->
-      <div class="prose-headings:text-skin-base prose-p:text-skin-base prose-a:text-skin-accent prose-blockquote:text-skin-base prose-strong:text-skin-base prose-code:text-skin-base prose-pre:bg-skin-fill prose-ol:text-skin-base prose-ul:text-skin-base">
+      <div
+        class="prose-headings:text-foreground prose-p:text-foreground prose-a:text-accent prose-blockquote:text-foreground prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-ol:text-foreground prose-ul:text-foreground"
+      >
         <Content />
       </div>
     </article>
