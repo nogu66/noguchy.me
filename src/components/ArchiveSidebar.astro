@@ -51,9 +51,9 @@ const monthNames = [
 
       return (
         <details class="year-group" open={year === sortedYears[0]}>
-          <summary class="year-label cursor-pointer text-base font-medium py-2 hover:text-skin-accent transition-colors">
+          <summary class="year-label cursor-pointer text-base text-foreground font-medium py-2 hover:text-accent transition-colors">
             {year}年
-            <span class="text-skin-muted text-sm ml-1">
+            <span class="text-muted text-sm ml-1">
               ({Array.from(yearMap.values()).reduce((sum, items) => sum + items.length, 0)})
             </span>
           </summary>
@@ -63,9 +63,9 @@ const monthNames = [
 
               return (
                 <details class="month-group" open={year === sortedYears[0] && month === sortedMonths[0]}>
-                  <summary class="month-label cursor-pointer text-sm py-1.5 hover:text-skin-accent transition-colors">
+                  <summary class="month-label cursor-pointer text-sm text-foreground py-1.5 hover:text-accent transition-colors">
                     {monthNames[month - 1]}
-                    <span class="text-skin-muted text-xs ml-1">
+                    <span class="text-muted text-xs ml-1">
                       ({items.length})
                     </span>
                   </summary>
@@ -76,7 +76,7 @@ const monthNames = [
                         <li>
                           <a
                             href={item.url}
-                            class="block text-sm py-1 hover:text-skin-accent transition-colors line-clamp-2"
+                            class="block text-sm text-foreground py-1 hover:text-accent transition-colors line-clamp-2"
                             title={item.title}
                           >
                             {item.title}

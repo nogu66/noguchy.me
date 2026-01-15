@@ -7,6 +7,5 @@ eventUrl: "https://luma.com/efebvv48?tk=S4gprE"
 tags: ["ハッカソン", "AI"]
 ---
 
-シリコンバレーのスタートアップCommand Centerが主催するハッカソンで3位入賞。
-
-開催地：LY Corporation Head Office, LODGE(17階)、東京
+**日時**: 2026年1月10日
+**場所**: LY Corporation Head Office, LODGE(17階)、東京

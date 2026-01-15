@@ -7,7 +7,5 @@ eventUrl: "https://luma.com/i64wcg74?tk=fZ5ihD"
 tags: ["ハッカソン", "AI", "Vibe Coding"]
 ---
 
-「Vibe Codingを実際に使い、アプリ開発をするハッカソン」で3位入賞。
-
-開催地：東京都渋谷区
-スポンサー：BytePlus、TRAE、Wavespeed、MINARA
+**日時**: 2025年10月25日
+**場所**: 東京都渋谷区
