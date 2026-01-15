@@ -48,7 +48,6 @@ const awards = defineCollection({
   schema: () =>
     z.object({
       title: z.string(), // プロジェクト名
-      event: z.string(), // イベント名
       date: z.date(), // 開催日
       award: z.string(), // 受賞名（最優秀賞、優秀賞など）
       projectUrl: z.string().url().optional(), // プロジェクトURL
