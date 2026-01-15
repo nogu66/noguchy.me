@@ -33,21 +33,35 @@ const {
 
 const socialImageURL = new URL(ogImage, Astro.url);
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  headline: `${title}`,
-  image: `${socialImageURL}`,
-  datePublished: `${pubDatetime?.toISOString()}`,
-  ...(modDatetime && { dateModified: modDatetime.toISOString() }),
-  author: [
-    {
-      "@type": "Person",
-      name: `${author}`,
-      ...(profile && { url: profile }),
-    },
-  ],
-};
+const structuredData = pubDatetime
+  ? {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: `${title}`,
+      image: `${socialImageURL}`,
+      datePublished: `${pubDatetime.toISOString()}`,
+      ...(modDatetime && { dateModified: modDatetime.toISOString() }),
+      author: [
+        {
+          "@type": "Person",
+          name: `${author}`,
+          ...(profile && { url: profile }),
+        },
+      ],
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${canonicalURL}`,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: `${SITE.title}`,
+        logo: {
+          "@type": "ImageObject",
+          url: `${new URL(SITE.ogImage ? `/${SITE.ogImage}` : "/og.png", Astro.url)}`,
+        },
+      },
+    }
+  : null;
 ---
 
 <!doctype html>
@@ -72,10 +86,12 @@ const structuredData = {
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={pubDatetime ? "article" : "website"} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={socialImageURL} />
+    <meta property="og:locale" content="ja_JP" />
 
     <!-- Article Published/Modified time -->
     {
@@ -101,13 +117,27 @@ const structuredData = {
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={socialImageURL} />
+    {
+      SITE.twitterId && (
+        <meta property="twitter:site" content={SITE.twitterId} />
+      )
+    }
+    {
+      SITE.twitterId && (
+        <meta property="twitter:creator" content={SITE.twitterId} />
+      )
+    }
 
     <!-- Google JSON-LD Structured data -->
-    <script
-      type="application/ld+json"
-      is:inline
-      set:html={JSON.stringify(structuredData)}
-    />
+    {
+      structuredData && (
+        <script
+          type="application/ld+json"
+          is:inline
+          set:html={JSON.stringify(structuredData)}
+        />
+      )
+    }
 
     <!-- Enable RSS feed auto-discovery  -->
     <!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery -->
@@ -118,7 +148,7 @@ const structuredData = {
       href={new URL("rss.xml", Astro.site)}
     />
 
-    <meta name="theme-color" content="" />
+    <meta name="theme-color" content="#fdfdfd" />
 
     {
       // If PUBLIC_GOOGLE_SITE_VERIFICATION is set in the environment variable,
@@ -162,6 +192,8 @@ const structuredData = {
         />
       )
     }
+
+    <slot name="head" />
   </head>
   <body>
     <slot />
