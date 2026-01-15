@@ -5,7 +5,6 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Main from "@/layouts/Main.astro";
 import Hr from "@/components/Hr.astro";
-import ArchiveSidebar from "@/components/ArchiveSidebar.astro";
 
 // 登壇情報を取得（日付降順）
 const talks = await getCollection("talks");
@@ -26,20 +25,6 @@ const formatDate = (date: Date) => {
     day: "numeric",
   });
 };
-
-// サイドバー用のアーカイブアイテムを作成（登壇情報と入賞情報を統合）
-const archiveItems = [
-  ...sortedTalks.map(talk => ({
-    date: talk.data.date,
-    title: `${talk.data.title}`,
-    url: `/talks/${talk.id}/`
-  })),
-  ...sortedAwards.map(award => ({
-    date: award.data.date,
-    title: `${award.data.title}`,
-    url: `/awards/${award.id}/`
-  }))
-].sort((a, b) => b.date.getTime() - a.date.getTime());
 ---
 
 <Layout>
