@@ -16,7 +16,6 @@ const { award } = Astro.props;
 
 const {
   title,
-  event,
   date,
   award: awardName,
   projectUrl,
@@ -37,7 +36,7 @@ const formatDate = (date: Date) => {
 
 const layoutProps = {
   title: `${title} | ${SITE.title}`,
-  description: `${event}で${awardName}を受賞: ${title}`,
+  description: `${title}で${awardName}を受賞`,
   scrollSmooth: true,
 };
 ---
@@ -63,9 +62,8 @@ const layoutProps = {
         </span>
       </div>
 
-      <!-- イベント情報 -->
+      <!-- 日付情報 -->
       <div class="mb-6 text-foreground">
-        <p class="text-lg font-medium">{event}</p>
         <p class="text-muted text-sm">{formatDate(date)}</p>
       </div>
 

@@ -1,6 +1,5 @@
 ---
 title: "<WaytoAGI>Vibe Codingハッカソン"
-event: "<WaytoAGI>Vibe Codingハッカソン"
 date: 2025-10-25
 award: "3位"
 eventUrl: "https://luma.com/i64wcg74?tk=fZ5ihD"
