@@ -173,12 +173,7 @@ const formatDate = (date: Date) => {
                   <h3 class="line-clamp-2 text-lg font-medium transition-colors group-hover:text-accent">
                     {award.data.title}
                   </h3>
-                  <div class="mt-2 flex items-center gap-2">
-                    <span class="rounded bg-accent px-3 py-1 text-sm font-medium text-background">
-                      {award.data.award}
-                    </span>
-                  </div>
-                  <p class="mt-1 text-xs text-muted">
+                  <p class="mt-2 text-xs text-muted">
                     {formatDate(award.data.date)}
                   </p>
                   {award.data.tags && award.data.tags.length > 0 && (
