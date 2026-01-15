@@ -82,7 +82,7 @@ const archiveItems = [
                   <p class="text-muted text-xs mt-1">
                     {formatDate(talk.data.date)}
                   </p>
-                  {talk.data.tags.length > 0 && (
+                  {talk.data.tags && talk.data.tags.length > 0 && (
                     <div class="mt-3 flex flex-wrap gap-1">
                       {talk.data.tags.map(tag => (
                         <span class="bg-muted text-muted rounded px-2 py-0.5 text-xs">
@@ -151,13 +151,10 @@ const archiveItems = [
                       {award.data.award}
                     </span>
                   </div>
-                  <p class="text-muted mt-3 text-sm">
-                    {award.data.event}
-                  </p>
-                  <p class="text-muted text-xs mt-1">
+                  <p class="text-muted text-xs mt-3">
                     {formatDate(award.data.date)}
                   </p>
-                  {award.data.tags.length > 0 && (
+                  {award.data.tags && award.data.tags.length > 0 && (
                     <div class="mt-3 flex flex-wrap gap-1">
                       {award.data.tags.map(tag => (
                         <span class="bg-muted text-muted rounded px-2 py-0.5 text-xs">
