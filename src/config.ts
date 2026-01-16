@@ -1,6 +1,6 @@
 export const SITE = {
   website: "https://noguchy.me/", // replace this with your deployed domain
-  author: "noguchy",
+  author: "nogu",
   profile: "https://noguchy.me/",
   desc: "noguの個人サイト。AIエージェント開発・生成AI推進に取り組むソフトウェアエンジニア。Claude Code、Manus等のAIツールやプロダクト開発、SNSマーケティングについて発信中。",
   title: "noguchy.me",
