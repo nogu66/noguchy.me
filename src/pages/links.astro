@@ -10,7 +10,6 @@ const profile = {
   avatar: "/profile.png",
 };
 
-
 // メインリンク
 const linkUrls = [
   "https://noguchy.me/",
@@ -132,23 +131,27 @@ const pageDesc = profile.bio;
               class="group block overflow-hidden rounded-lg border border-border bg-background transition-all hover:border-accent hover:shadow-md"
             >
               {link.image && (
-                <div class:list={[
-                  "w-full overflow-hidden",
-                  link.isGithubChart ? "p-4 bg-white" : "aspect-[1.91/1] bg-foreground/5"
-                ]}>
+                <div
+                  class:list={[
+                    "w-full overflow-hidden",
+                    link.isGithubChart
+                      ? "bg-white p-4"
+                      : "aspect-[1.91/1] bg-foreground/5",
+                  ]}
+                >
                   <img
                     src={link.image}
                     alt={link.title}
                     class:list={[
                       "w-full transition-transform group-hover:scale-105",
-                      link.isGithubChart ? "h-auto" : "h-full object-cover"
+                      link.isGithubChart ? "h-auto" : "h-full object-cover",
                     ]}
                     loading="lazy"
                   />
                 </div>
               )}
               <div class="flex items-center justify-between gap-2 p-3">
-                <div class="font-medium line-clamp-1 transition-colors group-hover:text-accent">
+                <div class="line-clamp-1 font-medium transition-colors group-hover:text-accent">
                   {link.title}
                 </div>
                 <div class="flex shrink-0 items-center gap-1 text-xs text-muted">
