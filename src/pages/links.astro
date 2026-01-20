@@ -1,0 +1,242 @@
+---
+import { SITE } from "@/config";
+import "@/styles/global.css";
+
+// プロフィール情報
+const profile = {
+  name: "nogu",
+  title: "Software Engineer / AI promoter",
+  bio: "デジタルデータに関するシステム開発、AIエージェント開発・生成AI推進に取り組む。また、個人として、生成AI活用ノウハウの発信を行う。",
+  avatar: "/profile.png",
+};
+
+// メインリンク
+const linkUrls = [
+  "https://noguchy.me/",
+  "https://zenn.dev/nogu66",
+  "https://github.com/nogu66",
+];
+
+// OGP情報を取得する関数
+async function fetchOgp(url: string) {
+  // GitHubユーザーページの場合は草グラフを使用
+  const githubUserMatch = url.match(/^https?:\/\/github\.com\/([^\/]+)\/?$/);
+  if (githubUserMatch) {
+    const username = githubUserMatch[1];
+    return {
+      url,
+      title: `${username} - GitHub`,
+      image: `https://ghchart.rshah.org/${username}`,
+      siteName: "github.com",
+      isGithubChart: true,
+    };
+  }
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; OGP Fetcher)",
+      },
+    });
+    const html = await response.text();
+
+    const getMetaContent = (property: string): string | null => {
+      const regex = new RegExp(
+        `<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']*)["']|<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["']${property}["']`,
+        "i"
+      );
+      const match = html.match(regex);
+      return match ? match[1] || match[2] : null;
+    };
+
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+
+    return {
+      url,
+      title: getMetaContent("og:title") || titleMatch?.[1] || url,
+      image: getMetaContent("og:image") || null,
+      siteName: getMetaContent("og:site_name") || new URL(url).hostname,
+      isGithubChart: false,
+    };
+  } catch {
+    return {
+      url,
+      title: url,
+      image: null,
+      siteName: new URL(url).hostname,
+      isGithubChart: false,
+    };
+  }
+}
+
+// ビルド時にOGP情報を取得
+const links = await Promise.all(linkUrls.map(fetchOgp));
+
+const pageTitle = `${profile.name} | Links`;
+const pageDesc = profile.bio;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
+    <meta property="og:image" content={`${SITE.website}profile.png`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={`${SITE.website}links`} />
+    <meta name="twitter:card" content="summary" />
+    <script is:inline src="/toggle-theme.js"></script>
+  </head>
+  <body
+    class="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12"
+  >
+    <div class="w-full max-w-md">
+      <!-- プロフィール -->
+      <div class="mb-8 flex flex-col items-center text-center">
+        <div
+          class="mb-4 h-24 w-24 overflow-hidden rounded-full bg-accent/10 ring-2 ring-accent/20"
+        >
+          {
+            profile.avatar ? (
+              <img
+                src={profile.avatar}
+                alt={profile.name}
+                class="h-full w-full object-cover"
+              />
+            ) : (
+              <div class="flex h-full w-full items-center justify-center text-3xl font-bold text-accent">
+                {profile.name.charAt(0).toUpperCase()}
+              </div>
+            )
+          }
+        </div>
+        <h1 class="text-xl font-bold">{profile.name}</h1>
+        {profile.title && <p class="text-sm text-muted">{profile.title}</p>}
+        {profile.bio && <p class="mt-2 text-sm text-muted">{profile.bio}</p>}
+      </div>
+
+      <!-- OGPリンクカード -->
+      <div class="flex flex-col gap-4">
+        {
+          links.map(link => (
+            <a
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group block overflow-hidden rounded-lg border border-border bg-background transition-all hover:border-accent hover:shadow-md"
+            >
+              {link.image && (
+                <div
+                  class:list={[
+                    "w-full overflow-hidden",
+                    link.isGithubChart
+                      ? "bg-white p-4"
+                      : "aspect-[1.91/1] bg-foreground/5",
+                  ]}
+                >
+                  <img
+                    src={link.image}
+                    alt={link.title}
+                    class:list={[
+                      "w-full transition-transform group-hover:scale-105",
+                      link.isGithubChart ? "h-auto" : "h-full object-cover",
+                    ]}
+                    loading="lazy"
+                  />
+                </div>
+              )}
+              <div class="flex items-center justify-between gap-2 p-3">
+                <div class="line-clamp-1 font-medium transition-colors group-hover:text-accent">
+                  {link.title}
+                </div>
+                <div class="flex shrink-0 items-center gap-1 text-xs text-muted">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                  {link.siteName}
+                </div>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+
+      <!-- テーマ切り替え -->
+      <div class="mt-8 flex justify-center">
+        <button
+          id="theme-btn"
+          class="rounded-full p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+          title="テーマ切り替え"
+          aria-label="テーマ切り替え"
+        >
+          <svg
+            id="sun-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            class="hidden h-5 w-5 dark:block"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg
+            id="moon-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            class="block h-5 w-5 dark:hidden"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <script>
+      function setupThemeToggle() {
+        const themeBtn = document.getElementById("theme-btn");
+        if (!themeBtn) return;
+
+        themeBtn.addEventListener("click", () => {
+          const html = document.documentElement;
+          const currentTheme = html.getAttribute("data-theme");
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
+          html.setAttribute("data-theme", newTheme);
+          localStorage.setItem("theme", newTheme);
+        });
+      }
+
+      setupThemeToggle();
+    </script>
+  </body>
+</html>
