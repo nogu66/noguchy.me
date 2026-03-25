@@ -1,6 +1,9 @@
 import { defineConfig, envField } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
 import sitemap from "@astrojs/sitemap";
+import react from "@astrojs/react";
+import mdx from "@astrojs/mdx";
+import AutoImport from "astro-auto-import";
 import remarkToc from "remark-toc";
 import remarkCollapse from "remark-collapse";
 import {
@@ -15,6 +18,16 @@ import { SITE } from "./src/config";
 export default defineConfig({
   site: SITE.website,
   integrations: [
+    react(),
+    AutoImport({
+      imports: [
+        "@/components/shortcodes/Accordion",
+        "@/components/shortcodes/Notice",
+        "@/components/shortcodes/Tab",
+        "@/components/shortcodes/Tabs",
+      ],
+    }),
+    mdx(),
     sitemap({
       filter: page => SITE.showArchives || !page.endsWith("/archives"),
     }),

@@ -1,5 +1,4 @@
 ---
-import Hr from "./Hr.astro";
 import IconX from "@/assets/icons/IconX.svg";
 import IconMoon from "@/assets/icons/IconMoon.svg";
 import IconSearch from "@/assets/icons/IconSearch.svg";
@@ -7,6 +6,7 @@ import IconArchive from "@/assets/icons/IconArchive.svg";
 import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
 import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
 import LinkButton from "./LinkButton.astro";
+import SearchModal from "./SearchModal.astro";
 import { SITE } from "@/config";
 
 const { pathname } = Astro.url;
@@ -23,7 +23,9 @@ const isActive = (path: string) => {
 };
 ---
 
-<header>
+<header
+  class="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm"
+>
   <a
     id="skip-to-content"
     href="#main-content"
@@ -37,17 +39,17 @@ const isActive = (path: string) => {
   >
     <div
       id="top-nav-wrap"
-      class="relative flex w-full items-baseline justify-between bg-background p-4 sm:items-center sm:py-6"
+      class="relative flex w-full items-baseline justify-between p-4 sm:items-center sm:py-4"
     >
       <a
         href="/"
-        class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"
+        class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap text-foreground-dark sm:static sm:my-auto sm:text-2xl sm:leading-none"
       >
         {SITE.title}
       </a>
       <nav
         id="nav-menu"
-        class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
+        class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-2 sm:py-0"
       >
         <button
           id="menu-btn"
@@ -63,9 +65,9 @@ const isActive = (path: string) => {
           id="menu-items"
           class:list={[
             "mt-4 grid w-44 grid-cols-2 place-content-center gap-2",
-            "[&>li>a]:block [&>li>a]:px-4 [&>li>a]:py-3 [&>li>a]:text-center [&>li>a]:font-medium [&>li>a]:hover:text-accent sm:[&>li>a]:px-2 sm:[&>li>a]:py-1",
+            "[&>li>a]:block [&>li>a]:px-4 [&>li>a]:py-3 [&>li>a]:text-center [&>li>a]:font-medium [&>li>a]:hover:text-accent sm:[&>li>a]:px-3 sm:[&>li>a]:py-1",
             "hidden",
-            "sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0",
+            "sm:mt-0 sm:flex sm:w-auto sm:gap-x-2 sm:gap-y-0 xl:gap-x-4",
           ]}
         >
           <li class="col-span-2">
@@ -99,7 +101,7 @@ const isActive = (path: string) => {
                   class:list={[
                     "focus-outline flex justify-center p-3 sm:p-1",
                     {
-                      "active-nav [&>svg]:stroke-accent": isActive("/archives"),
+                      "active-nav": isActive("/archives"),
                     },
                   ]}
                   ariaLabel="archives"
@@ -111,26 +113,25 @@ const isActive = (path: string) => {
               </li>
             )
           }
-          <li class="col-span-1 flex items-center justify-center">
-            <LinkButton
-              href="/search"
-              class:list={[
-                "focus-outline flex p-3 sm:p-1",
-                { "[&>svg]:stroke-accent": isActive("/search") },
-              ]}
-              ariaLabel="search"
-              title="Search"
+          <li
+            class="col-span-1 flex items-center justify-center border-l border-border pl-2 sm:ml-2"
+          >
+            <button
+              data-search-trigger
+              class="focus-outline flex p-3 text-muted hover:text-accent sm:p-1"
+              aria-label="Search"
+              title="Search (Ctrl+K / ⌘K)"
             >
               <IconSearch />
               <span class="sr-only">Search</span>
-            </LinkButton>
+            </button>
           </li>
           {
             SITE.lightAndDarkMode && (
               <li class="col-span-1 flex items-center justify-center">
                 <button
                   id="theme-btn"
-                  class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent"
+                  class="focus-outline relative size-12 p-4 text-muted hover:text-accent sm:size-8 hover:[&>svg]:stroke-current"
                   title="Toggles light & dark"
                   aria-label="auto"
                   aria-live="polite"
@@ -145,7 +146,6 @@ const isActive = (path: string) => {
       </nav>
     </div>
   </div>
-  <Hr />
 </header>
 
 <script>
@@ -174,3 +174,5 @@ const isActive = (path: string) => {
   // Runs on view transitions navigation
   document.addEventListener("astro:after-swap", toggleNav);
 </script>
+
+<SearchModal />

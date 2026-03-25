@@ -1,0 +1,237 @@
+---
+
+---
+
+<div id="searchModal" class="search-modal">
+  <div id="searchModalOverlay" class="search-modal-overlay"></div>
+  <div class="search-wrapper">
+    <div class="search-wrapper-header">
+      <label for="searchInput">
+        <span class="sr-only">search icon</span>
+        <svg
+          id="searchIconSvg"
+          viewBox="0 0 512 512"
+          height="18"
+          width="18"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentcolor"
+            d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0 416 93.1 416 208zM208 352a144 144 0 100-288 144 144 0 100 288z"
+          ></path>
+        </svg>
+        <svg
+          id="clearIconSvg"
+          class="hidden"
+          viewBox="0 0 512 512"
+          height="18"
+          width="18"
+          aria-hidden="true"
+          style="cursor:pointer"
+        >
+          <path
+            fill="currentcolor"
+            d="M256 512A256 256 0 10256 0a256 256 0 100 512zM175 175c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z"
+          ></path>
+        </svg>
+      </label>
+      <input
+        id="searchInput"
+        placeholder="検索... (Ctrl+K / ⌘K)"
+        class="search-wrapper-header-input"
+        type="text"
+        name="search"
+        autocomplete="off"
+      />
+    </div>
+    <div id="searchWrapperBody" class="search-wrapper-body">
+      <div class="search-result-empty">入力して検索...</div>
+    </div>
+    <div class="search-wrapper-footer">
+      <span class="flex items-center gap-1">
+        <kbd>↑</kbd><kbd>↓</kbd> ナビゲーション
+      </span>
+      <span class="flex items-center gap-1">
+        <kbd>↵</kbd> 選択
+      </span>
+      <span id="searchStats"></span>
+      <span><kbd>ESC</kbd> 閉じる</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initSearchModal() {
+    const modal = document.getElementById("searchModal");
+    const overlay = document.getElementById("searchModalOverlay");
+    const input = document.getElementById(
+      "searchInput"
+    ) as HTMLInputElement | null;
+    const body = document.getElementById("searchWrapperBody");
+    const stats = document.getElementById("searchStats");
+    const searchIconSvg = document.getElementById("searchIconSvg");
+    const clearIconSvg = document.getElementById("clearIconSvg");
+
+    if (!modal || !overlay || !input || !body) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let pagefind: any = null;
+    let selectedIndex = -1;
+
+    const loadPagefind = async () => {
+      if (!pagefind) {
+        try {
+          const pagefindPath = "/_pagefind/pagefind.js";
+          pagefind = await import(/* @vite-ignore */ pagefindPath);
+          await pagefind.init();
+        } catch {
+          // pagefind not available in dev mode
+        }
+      }
+      return pagefind;
+    };
+
+    const openModal = () => {
+      modal.classList.add("show");
+      input.focus();
+      selectedIndex = -1;
+      void loadPagefind();
+    };
+
+    const closeModal = () => {
+      modal.classList.remove("show");
+      input.value = "";
+      body.innerHTML = '<div class="search-result-empty">入力して検索...</div>';
+      if (stats) stats.textContent = "";
+      searchIconSvg?.classList.remove("hidden");
+      clearIconSvg?.classList.add("hidden");
+      selectedIndex = -1;
+    };
+
+    document.querySelectorAll("[data-search-trigger]").forEach(btn => {
+      btn.addEventListener("click", openModal);
+    });
+
+    overlay.addEventListener("click", closeModal);
+
+    document.addEventListener("keydown", e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        if (modal.classList.contains("show")) {
+          closeModal();
+        } else {
+          openModal();
+        }
+        return;
+      }
+      if (!modal.classList.contains("show")) return;
+
+      const items = Array.from(body.querySelectorAll(".search-result-item"));
+      if (e.key === "Escape") {
+        closeModal();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+      } else if (e.key === "Enter") {
+        const active = body.querySelector(
+          ".search-result-item-active a"
+        ) as HTMLAnchorElement | null;
+        active?.click();
+        return;
+      }
+
+      items.forEach((item, i) => {
+        item.classList.toggle("search-result-item-active", i === selectedIndex);
+        if (i === selectedIndex) {
+          item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+    });
+
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    input.addEventListener("input", () => {
+      const query = input.value.trim();
+
+      if (query) {
+        searchIconSvg?.classList.add("hidden");
+        clearIconSvg?.classList.remove("hidden");
+      } else {
+        searchIconSvg?.classList.remove("hidden");
+        clearIconSvg?.classList.add("hidden");
+      }
+
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => doSearch(query), 200);
+    });
+
+    clearIconSvg?.addEventListener("click", () => {
+      input.value = "";
+      input.focus();
+      searchIconSvg?.classList.remove("hidden");
+      clearIconSvg?.classList.add("hidden");
+      body.innerHTML = '<div class="search-result-empty">入力して検索...</div>';
+      if (stats) stats.textContent = "";
+      selectedIndex = -1;
+    });
+
+    const doSearch = async (query: string) => {
+      selectedIndex = -1;
+
+      if (!query) {
+        body.innerHTML =
+          '<div class="search-result-empty">入力して検索...</div>';
+        if (stats) stats.textContent = "";
+        return;
+      }
+
+      const pf = await loadPagefind();
+      if (!pf) {
+        body.innerHTML = `<div class="search-result-empty">
+          <p>開発モードでは検索できません。<br>先に <code>pnpm build</code> を実行してください。</p>
+        </div>`;
+        return;
+      }
+
+      const startTime = performance.now();
+      const search = await pf.debouncedSearch(query);
+      if (!search || search.results.length === 0) {
+        body.innerHTML = `<div class="search-result-empty"><p><strong>"${query}"</strong> の結果が見つかりませんでした。</p></div>`;
+        if (stats) stats.textContent = "";
+        return;
+      }
+
+      const resultData = await Promise.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        search.results.slice(0, 10).map((r: any) => r.data())
+      );
+      const endTime = performance.now();
+      const totalTime = ((endTime - startTime) / 1000).toFixed(3);
+
+      if (stats) {
+        stats.innerHTML = `<strong>${search.results.length}</strong> 件 / <strong>${totalTime}</strong>秒`;
+      }
+
+      body.innerHTML = resultData
+        .map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (result: any) => `
+        <div class="search-result-item">
+          <div class="search-result-item-body">
+            <a href="${result.url}" class="search-result-item-title search-result-item-link">
+              ${result.meta?.title ?? "無題"}
+            </a>
+            ${result.excerpt ? `<p class="search-result-item-content">${result.excerpt}</p>` : ""}
+          </div>
+        </div>
+      `
+        )
+        .join("");
+    };
+  }
+
+  initSearchModal();
+  document.addEventListener("astro:after-swap", initSearchModal);
+</script>
