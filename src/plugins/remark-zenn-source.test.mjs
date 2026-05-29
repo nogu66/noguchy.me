@@ -55,4 +55,34 @@ describe("remark-zenn-source", () => {
     const html = await render("# 見出し\n\n本文\n", [remarkZennSource]);
     expect(html).toContain("<h1>見出し</h1>");
   });
+
+  it("width + height 両方指定", async () => {
+    const html = await render("![](https://ex.com/a.png =250x100)\n", [
+      remarkZennSource,
+    ]);
+    expect(html).toContain('width="250"');
+    expect(html).toContain('height="100"');
+  });
+
+  it(":::details はタイトル省略時に既定値", async () => {
+    const html = await render(":::details\n中身\n:::\n", [remarkZennSource]);
+    expect(html).toContain("<summary>詳細</summary>");
+  });
+
+  it("コードフェンス内の :::message と画像幅は変換しない", async () => {
+    const md =
+      "```md\n:::message\n例\n:::\n![](https://ex.com/a.png =250x)\n```\n";
+    const html = await render(md, [remarkZennSource]);
+    expect(html).not.toContain("zenn-msg");
+    expect(html).not.toContain("<img");
+    expect(html).toContain(":::message"); // 文字列として残る
+  });
+
+  it("コロン数が一致しない閉じフェンスは無視され文字も残さない", async () => {
+    const md = "::::details 親\n中身\n:::\n::::\n";
+    const html = await render(md, [remarkZennSource]);
+    expect(html).toContain("<details");
+    expect(html).toContain("中身");
+    expect(html).not.toContain("<p>:::</p>");
+  });
 });

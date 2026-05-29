@@ -29,19 +29,50 @@ function transformSource(src) {
   const out = [];
   const stack = []; // { colons: number, close: string }
 
-  for (let line of lines) {
+  // コードフェンス状態: null or { char: string, len: number }
+  let codeFence = null;
+
+  for (const line of lines) {
+    // コードフェンス内かどうか判定
+    if (codeFence === null) {
+      // コードフェンスの開始チェック: ``` or ~~~（3文字以上）
+      const cfOpen = line.match(/^(`{3,}|~{3,})/);
+      if (cfOpen) {
+        const char = cfOpen[1][0];
+        const len = cfOpen[1].length;
+        codeFence = { char, len };
+        out.push(line);
+        continue;
+      }
+    } else {
+      // コードフェンス内: 閉じフェンスかチェック
+      const cfClose = line.match(/^(`{3,}|~{3,})\s*$/);
+      if (
+        cfClose &&
+        cfClose[1][0] === codeFence.char &&
+        cfClose[1].length >= codeFence.len
+      ) {
+        codeFence = null;
+      }
+      out.push(line);
+      continue;
+    }
+
+    // コードフェンス外: Zenn 構文の変換
     const fence = line.match(/^(:{3,})(.*)$/);
     if (fence) {
       const colons = fence[1].length;
       const rest = fence[2].trim();
 
       if (rest === "") {
-        // 閉じフェンス（同じコロン数なら閉じる）
+        // 閉じフェンス形状: コロン数が一致すれば閉じる、一致しなければ DROP
         if (stack.length && stack[stack.length - 1].colons === colons) {
           const top = stack.pop();
           out.push("", top.close, "");
           continue;
         }
+        // 一致しない（またはスタックが空）→ 行を DROP（何も push しない）
+        continue;
       } else {
         // 開きフェンス
         const sp = rest.indexOf(" ");
@@ -88,7 +119,7 @@ function transformImageWidth(line) {
     /!\[([^\]]*)\]\(([^)\s]+)\s+=(\d+)x(\d*)\)/g,
     (_, alt, url, w, h) => {
       const height = h ? ` height="${h}"` : "";
-      return `<img src="${url}" alt="${escapeHtml(alt)}" width="${w}"${height} />`;
+      return `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" width="${w}"${height} />`;
     }
   );
 }
