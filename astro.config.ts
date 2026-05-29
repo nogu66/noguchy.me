@@ -6,6 +6,7 @@ import mdx from "@astrojs/mdx";
 import AutoImport from "astro-auto-import";
 import remarkToc from "remark-toc";
 import remarkCollapse from "remark-collapse";
+import remarkZennSource from "./src/plugins/remark-zenn-source.mjs";
 import remarkZennCode from "./src/plugins/remark-zenn-code.mjs";
 import remarkZennMermaid from "./src/plugins/remark-zenn-mermaid.mjs";
 import { transformerZennDiff } from "./src/utils/transformers/zennDiff";
@@ -37,6 +38,7 @@ export default defineConfig({
   ],
   markdown: {
     remarkPlugins: [
+      remarkZennSource,
       remarkZennCode,
       remarkZennMermaid,
       remarkToc,
