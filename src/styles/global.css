@@ -8,7 +8,8 @@ html[data-theme="light"] {
   --background: #fff;
   --foreground: #444;
   --foreground-dark: #040404;
-  --accent: #121212;
+  --accent: #0057e7;
+  --accent-hover: #0040b0;
   --muted: #717171;
   --border: #eaeaea;
   --light: #f6f6f6;
@@ -18,7 +19,8 @@ html[data-theme="dark"] {
   --background: #1c1c1c;
   --foreground: #b4afb6;
   --foreground-dark: #fff;
-  --accent: #fff;
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
   --muted: #b4afb6;
   --border: #3e3e3e;
   --light: #222;
@@ -29,6 +31,7 @@ html[data-theme="dark"] {
   --color-foreground: var(--foreground);
   --color-foreground-dark: var(--foreground-dark);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-light: var(--light);
@@ -98,7 +101,7 @@ html[data-theme="dark"] {
   @apply bg-accent text-background;
 }
 .btn-primary:hover {
-  opacity: 0.9;
+  @apply bg-accent-hover;
 }
 .btn-outline-primary {
   @apply border-accent bg-transparent text-accent;
