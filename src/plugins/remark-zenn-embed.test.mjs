@@ -38,4 +38,25 @@ describe("remark-zenn-embed", () => {
     expect(html).toContain('href="https://example.com/fail"');
     expect(html).not.toContain("zenn-link-card");
   });
+
+  it("@[card](url) は OGP カードになる", async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      text: async () => `<meta property="og:title" content="カード記事">`,
+    }));
+    const html = await render("@[card](https://example.com/x)\n", [
+      remarkZennEmbed,
+    ]);
+    expect(html).toContain("zenn-link-card");
+    expect(html).toContain("カード記事");
+  });
+
+  it("数値文字参照を含む OGP タイトルをデコードする", async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      text: async () => `<meta property="og:title" content="&#12354;&#x3044;">`,
+    }));
+    const html = await render("https://example.com/y\n", [remarkZennEmbed]);
+    expect(html).toContain("あい");
+  });
 });

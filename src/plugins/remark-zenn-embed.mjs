@@ -45,10 +45,18 @@ export default function remarkZennEmbed() {
         ) {
           const provider = b.children[0].value;
           const arg = b.url;
-          const html = providerEmbed(provider, arg);
-          if (html) {
+          if (provider === "youtube" || provider === "tweet") {
             a.value = a.value.slice(0, -1);
-            node.children[i + 1] = { type: "html", value: html };
+            node.children[i + 1] = {
+              type: "html",
+              value: providerEmbed(provider, arg),
+            };
+          } else if (provider === "card" || provider === "github") {
+            a.value = a.value.slice(0, -1);
+            const childIndex = i + 1;
+            tasks.push(async () => {
+              node.children[childIndex] = await urlToNode(arg);
+            });
           }
         }
       }
@@ -77,10 +85,6 @@ function providerEmbed(provider, arg) {
       return youtubeIframe(arg);
     case "tweet":
       return tweetEmbed(arg);
-    case "github":
-      return `<a href="${escapeAttr(arg)}">${escapeHtml(arg)}</a>`;
-    case "card":
-      return `<a class="zenn-link-card-fallback" href="${escapeAttr(arg)}">${escapeHtml(arg)}</a>`;
     default:
       return null;
   }
@@ -201,6 +205,10 @@ function htmlTitle(html) {
 
 function decodeEntities(str) {
   return str
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) =>
+      String.fromCodePoint(parseInt(h, 16))
+    )
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
