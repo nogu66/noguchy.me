@@ -42,6 +42,7 @@ export default defineConfig({
   ],
   markdown: {
     remarkPlugins: [
+      // remarkZennSource はソースを再パースしてツリーを置き換えるため必ず先頭に置くこと
       remarkZennSource,
       remarkZennCode,
       remarkZennMermaid,

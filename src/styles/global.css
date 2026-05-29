@@ -480,6 +480,9 @@ pre.mermaid {
   display: grid;
   place-items: center;
 }
+.zenn-msg-info::before {
+  background: #3b82f6;
+}
 .zenn-msg-alert {
   background: rgb(244 63 94 / 0.1);
   border-color: rgb(244 63 94 / 0.4);

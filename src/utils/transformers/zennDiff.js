@@ -5,7 +5,7 @@
  */
 export const transformerZennDiff = () => ({
   name: "zenn-diff",
-  code() {
+  preprocess() {
     const raw = this.options.meta?.__raw || "";
     if (!raw.includes("zenn-diff")) {
       this._zennDiffAdd = null;
