@@ -10,6 +10,7 @@ import remarkZennSource from "./src/plugins/remark-zenn-source.mjs";
 import remarkZennCode from "./src/plugins/remark-zenn-code.mjs";
 import remarkZennMermaid from "./src/plugins/remark-zenn-mermaid.mjs";
 import remarkZennFigure from "./src/plugins/remark-zenn-figure.mjs";
+import remarkZennEmbed from "./src/plugins/remark-zenn-embed.mjs";
 import { transformerZennDiff } from "./src/utils/transformers/zennDiff";
 import {
   transformerNotationDiff,
@@ -43,6 +44,7 @@ export default defineConfig({
       remarkZennCode,
       remarkZennMermaid,
       remarkZennFigure,
+      remarkZennEmbed,
       remarkToc,
       [remarkCollapse, { test: "Table of contents" }],
     ],

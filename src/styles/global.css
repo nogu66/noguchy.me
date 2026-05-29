@@ -526,3 +526,62 @@ pre.mermaid {
   font-size: 0.85em;
   color: var(--muted);
 }
+
+.zenn-link-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  background: var(--background);
+}
+.zenn-link-card:hover {
+  border-color: var(--accent);
+}
+.zenn-link-card-body {
+  padding: 0.8rem 1rem;
+  min-width: 0;
+}
+.zenn-link-card-title {
+  margin: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zenn-link-card-desc {
+  margin: 0.3rem 0 0;
+  font-size: 0.85em;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.zenn-link-card-host {
+  margin: 0.4rem 0 0;
+  font-size: 0.8em;
+  color: var(--muted);
+}
+.zenn-link-card-image {
+  flex: none;
+  width: 8rem;
+}
+.zenn-link-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.zenn-embed-youtube {
+  position: relative;
+  margin: 1.5rem 0;
+  aspect-ratio: 16 / 9;
+}
+.zenn-embed-youtube iframe {
+  width: 100%;
+  height: 100%;
+}
