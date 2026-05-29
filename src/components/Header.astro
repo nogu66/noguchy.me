@@ -2,6 +2,7 @@
 import IconX from "@/assets/icons/IconX.svg";
 import IconMoon from "@/assets/icons/IconMoon.svg";
 import IconSearch from "@/assets/icons/IconSearch.svg";
+import IconRss from "@/assets/icons/IconRss.svg";
 import IconArchive from "@/assets/icons/IconArchive.svg";
 import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
 import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
@@ -116,6 +117,18 @@ const isActive = (path: string) => {
           <li
             class="col-span-1 flex items-center justify-center border-l border-border pl-2 sm:ml-2"
           >
+            <a
+              href="/rss.xml"
+              target="_blank"
+              class="focus-outline flex p-3 text-muted hover:text-accent sm:p-1"
+              aria-label="rss feed"
+              title="RSS Feed"
+            >
+              <IconRss />
+              <span class="sr-only">RSS Feed</span>
+            </a>
+          </li>
+          <li class="col-span-1 flex items-center justify-center">
             <button
               data-search-trigger
               class="focus-outline flex p-3 text-muted hover:text-accent sm:p-1"

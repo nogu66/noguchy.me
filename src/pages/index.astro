@@ -6,7 +6,6 @@ import Footer from "@/components/Footer.astro";
 import Card from "@/components/Card.astro";
 import Hr from "@/components/Hr.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
-import IconRss from "@/assets/icons/IconRss.svg";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
 import { SITE } from "@/config";
 
@@ -52,20 +51,6 @@ const websiteStructuredData = {
           >
             noguchy.me
           </h1>
-          <a
-            target="_blank"
-            href="/rss.xml"
-            class="inline-block"
-            aria-label="rss feed"
-            title="RSS Feed"
-          >
-            <IconRss
-              width={20}
-              height={20}
-              class="scale-125 stroke-accent stroke-3 rtl:-rotate-90"
-            />
-            <span class="sr-only">RSS Feed</span>
-          </a>
         </section>
 
         <Hr />
