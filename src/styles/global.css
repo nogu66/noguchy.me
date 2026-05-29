@@ -448,3 +448,10 @@ html[data-theme="dark"] {
 .tab-content-panel {
   padding: 1.5rem;
 }
+
+pre.mermaid {
+  display: flex;
+  justify-content: center;
+  background: transparent;
+  padding: 1rem 0;
+}
