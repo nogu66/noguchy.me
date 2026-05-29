@@ -455,3 +455,62 @@ pre.mermaid {
   background: transparent;
   padding: 1rem 0;
 }
+
+/* Zenn 風メッセージ */
+.zenn-msg {
+  display: flex;
+  gap: 0.6rem;
+  margin: 1.5rem 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--light);
+  border: 1px solid var(--border);
+  font-size: 0.95em;
+}
+.zenn-msg::before {
+  content: "!";
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: var(--muted);
+  color: var(--background);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: grid;
+  place-items: center;
+}
+.zenn-msg-alert {
+  background: rgb(244 63 94 / 0.1);
+  border-color: rgb(244 63 94 / 0.4);
+}
+.zenn-msg-alert::before {
+  background: #f43f5e;
+}
+.zenn-msg-body > :first-child {
+  margin-top: 0;
+}
+.zenn-msg-body > :last-child {
+  margin-bottom: 0;
+}
+
+/* Zenn 風アコーディオン */
+.zenn-details {
+  margin: 1.5rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.zenn-details > summary {
+  cursor: pointer;
+  padding: 0.7rem 1rem;
+  background: var(--light);
+  font-weight: 600;
+  list-style: revert;
+}
+.zenn-details-body {
+  padding: 0.5rem 1rem 0.9rem;
+}
+.zenn-details-body > :first-child {
+  margin-top: 0;
+}
