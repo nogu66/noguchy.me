@@ -11,7 +11,8 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "new-post": "node scripts/create-post.js"
+    "new-post": "node scripts/create-post.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.2",
@@ -49,7 +50,13 @@
     "prettier": "^3.7.4",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.51.0"
+    "typescript-eslint": "^8.51.0",
+    "unified": "^11.0.5",
+    "vitest": "^4.1.7"
   }
 }
