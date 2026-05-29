@@ -4,17 +4,9 @@ import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkZennCode from "./remark-zenn-code.mjs";
 
+const processor = unified().use(remarkParse).use(remarkGfm).use(remarkZennCode);
 function parse(md) {
-  const tree = unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkZennCode)
-    .parse(md);
-  return unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkZennCode)
-    .runSync(tree);
+  return processor.runSync(processor.parse(md));
 }
 function firstCode(tree) {
   return tree.children.find(n => n.type === "code");
@@ -35,6 +27,7 @@ describe("remark-zenn-code", () => {
     expect(code.meta).toContain("zenn-diff");
     expect(code.meta).toContain('zenn-diff-add="1"');
     expect(code.meta).toContain('zenn-diff-del="2"');
+    expect(code.value).toBe("added\nremoved\n const x = 1;");
   });
 
   it("converts `diff js:foo.js` into js lang + file + diff", () => {

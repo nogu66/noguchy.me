@@ -18,7 +18,8 @@ export default function remarkZennCode() {
         const [realLang, ...fileParts] = langToken.split(":");
         node.lang = realLang;
         const file = fileParts.join(":");
-        const { add, del } = collectDiffLines(node.value);
+        const { add, del, stripped } = collectDiffLines(node.value);
+        node.value = stripped;
         const pieces = [...tokens];
         if (file) pieces.push(`file="${file}"`);
         pieces.push("zenn-diff");
@@ -39,13 +40,19 @@ export default function remarkZennCode() {
   };
 }
 
-/** value の各行先頭の +/- を見て 1 始まりの行番号を集める（マーカー文字は残す） */
+/** value の各行先頭の +/- を見て 1 始まりの行番号を集め、マーカーを除去した文字列も返す */
 function collectDiffLines(code) {
   const add = [];
   const del = [];
-  code.split("\n").forEach((line, i) => {
-    if (line.startsWith("+")) add.push(i + 1);
-    else if (line.startsWith("-")) del.push(i + 1);
+  const lines = code.split("\n").map((line, i) => {
+    if (line.startsWith("+")) {
+      add.push(i + 1);
+      return line.slice(1);
+    } else if (line.startsWith("-")) {
+      del.push(i + 1);
+      return line.slice(1);
+    }
+    return line;
   });
-  return { add, del };
+  return { add, del, stripped: lines.join("\n") };
 }

@@ -5,13 +5,21 @@
  */
 export const transformerZennDiff = () => ({
   name: "zenn-diff",
-  line(node, line) {
+  code() {
     const raw = this.options.meta?.__raw || "";
-    if (!raw.includes("zenn-diff")) return;
-    const add = parseLineList(raw, "zenn-diff-add");
-    const del = parseLineList(raw, "zenn-diff-del");
-    if (add.includes(line)) this.addClassToHast(node, "diff add");
-    else if (del.includes(line)) this.addClassToHast(node, "diff remove");
+    if (!raw.includes("zenn-diff")) {
+      this._zennDiffAdd = null;
+      this._zennDiffDel = null;
+      return;
+    }
+    this._zennDiffAdd = new Set(parseLineList(raw, "zenn-diff-add"));
+    this._zennDiffDel = new Set(parseLineList(raw, "zenn-diff-del"));
+  },
+  line(node, line) {
+    if (!this._zennDiffAdd) return;
+    if (this._zennDiffAdd.has(line)) this.addClassToHast(node, "diff add");
+    else if (this._zennDiffDel.has(line))
+      this.addClassToHast(node, "diff remove");
   },
 });
 
