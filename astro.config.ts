@@ -6,6 +6,14 @@ import mdx from "@astrojs/mdx";
 import AutoImport from "astro-auto-import";
 import remarkToc from "remark-toc";
 import remarkCollapse from "remark-collapse";
+import remarkZennSource from "./src/plugins/remark-zenn-source.mjs";
+import remarkZennCode from "./src/plugins/remark-zenn-code.mjs";
+import remarkZennMermaid from "./src/plugins/remark-zenn-mermaid.mjs";
+import remarkZennFigure from "./src/plugins/remark-zenn-figure.mjs";
+import remarkZennEmbed from "./src/plugins/remark-zenn-embed.mjs";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import { transformerZennDiff } from "./src/utils/transformers/zennDiff";
 import {
   transformerNotationDiff,
   transformerNotationHighlight,
@@ -33,7 +41,18 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    remarkPlugins: [remarkToc, [remarkCollapse, { test: "Table of contents" }]],
+    remarkPlugins: [
+      // remarkZennSource はソースを再パースしてツリーを置き換えるため必ず先頭に置くこと
+      remarkZennSource,
+      remarkZennCode,
+      remarkZennMermaid,
+      remarkZennFigure,
+      remarkZennEmbed,
+      remarkMath,
+      remarkToc,
+      [remarkCollapse, { test: "Table of contents" }],
+    ],
+    rehypePlugins: [rehypeKatex],
     shikiConfig: {
       // For more themes, visit https://shiki.style/themes
       themes: { light: "min-light", dark: "night-owl" },
@@ -44,6 +63,7 @@ export default defineConfig({
         transformerNotationHighlight(),
         transformerNotationWordHighlight(),
         transformerNotationDiff({ matchAlgorithm: "v3" }),
+        transformerZennDiff(),
       ],
     },
   },
