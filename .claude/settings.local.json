@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:speakerdeck.com)"
+      "WebFetch(domain:speakerdeck.com)",
+      "WebFetch(domain:luma.com)",
+      "Bash(gh api:*)",
+      "Bash(pnpm run:*)"
     ]
   }
 }

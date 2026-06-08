@@ -1,0 +1,78 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Skip to content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e5]:
+      - link "noguchy.me" [ref=e6] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e7]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "Posts" [ref=e10] [cursor=pointer]:
+              - /url: /posts
+          - listitem [ref=e11]:
+            - link "Tags" [ref=e12] [cursor=pointer]:
+              - /url: /tags
+          - listitem [ref=e13]:
+            - link "About" [ref=e14] [cursor=pointer]:
+              - /url: /about
+          - listitem [ref=e15]:
+            - link "Activities" [ref=e16] [cursor=pointer]:
+              - /url: /activities
+          - listitem [ref=e17]:
+            - link "archives" [ref=e18] [cursor=pointer]:
+              - /url: /archives
+              - img [ref=e19]
+              - generic [ref=e23]: Archives
+          - listitem [ref=e24]:
+            - button "Search" [ref=e25] [cursor=pointer]:
+              - img [ref=e26]
+              - generic [ref=e30]: Search
+          - listitem [ref=e31]:
+            - button "light" [ref=e32] [cursor=pointer]:
+              - img [ref=e33]
+              - img
+  - main [ref=e38]:
+    - generic [ref=e39]:
+      - heading "noguchy.me" [level=1] [ref=e40]
+      - link "rss feed" [ref=e41] [cursor=pointer]:
+        - /url: /rss.xml
+        - img [ref=e42]
+        - generic [ref=e47]: RSS Feed
+    - separator [ref=e49]
+    - generic [ref=e50]:
+      - heading "Recent Posts" [level=2] [ref=e51]
+      - list [ref=e52]:
+        - listitem [ref=e53]:
+          - link "Vibe coding が App Store を破壊し始めた" [ref=e54] [cursor=pointer]:
+            - /url: /posts/vibe-coding-app-store
+            - heading "Vibe coding が App Store を破壊し始めた" [level=3] [ref=e55]
+          - generic [ref=e56]:
+            - img [ref=e57]
+            - time [ref=e60]: 21 Feb, 2026
+          - paragraph [ref=e61]: iOSアプリの新規リリース数が2025年12月に前年比60%急増。Vibe codingが参入障壁を解消し、非エンジニアでもアプリ開発が可能になった時代を考察する。
+          - generic [ref=e62]:
+            - generic [ref=e63]: "#AI"
+            - generic [ref=e64]: "#Vibe coding"
+            - generic [ref=e65]: "#App Store"
+    - link "All Posts" [ref=e67] [cursor=pointer]:
+      - /url: /posts/
+      - text: All Posts
+      - img [ref=e68]
+  - contentinfo [ref=e72]:
+    - paragraph [ref=e74]: Copyright © 2026 nogu. All rights reserved.
+  - generic [ref=e77]:
+    - button "Menu" [ref=e78]:
+      - img [ref=e80]
+      - generic: Menu
+    - button "Inspect" [ref=e84]:
+      - img [ref=e86]
+      - generic: Inspect
+    - button "Audit" [ref=e88]:
+      - generic [ref=e89]:
+        - img [ref=e90]
+        - img [ref=e93]
+      - generic: Audit
+    - button "Settings" [ref=e96]:
+      - img [ref=e98]
+      - generic: Settings

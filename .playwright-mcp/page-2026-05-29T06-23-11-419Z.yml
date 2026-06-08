@@ -1,0 +1,75 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Skip to content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e5]:
+      - link "noguchy.me" [ref=e6] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e7]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "Posts" [ref=e10] [cursor=pointer]:
+              - /url: /posts
+          - listitem [ref=e11]:
+            - link "Tags" [ref=e12] [cursor=pointer]:
+              - /url: /tags
+          - listitem [ref=e13]:
+            - link "About" [ref=e14] [cursor=pointer]:
+              - /url: /about
+          - listitem [ref=e15]:
+            - link "Activities" [ref=e16] [cursor=pointer]:
+              - /url: /activities
+          - listitem [ref=e17]:
+            - link "archives" [ref=e18] [cursor=pointer]:
+              - /url: /archives
+              - img [ref=e19]
+              - generic [ref=e23]: Archives
+          - listitem [ref=e24]:
+            - button "Search" [ref=e25] [cursor=pointer]:
+              - img [ref=e26]
+              - generic [ref=e30]: Search
+          - listitem [ref=e31]:
+            - button "light" [ref=e32] [cursor=pointer]:
+              - img [ref=e33]
+              - img
+  - navigation "breadcrumb" [ref=e36]:
+    - list [ref=e37]:
+      - listitem [ref=e38]:
+        - link "Home" [ref=e39] [cursor=pointer]:
+          - /url: /
+        - text: »
+      - listitem [ref=e40]: tags
+  - main [ref=e43]:
+    - heading "Tags" [level=1] [ref=e44]
+    - paragraph [ref=e45]: All the tags used in posts.
+    - list [ref=e46]:
+      - listitem [ref=e47]:
+        - link "AI" [ref=e48] [cursor=pointer]:
+          - /url: /tags/ai/
+          - img [ref=e49]
+          - text: AI
+      - listitem [ref=e53]:
+        - link "App Store" [ref=e54] [cursor=pointer]:
+          - /url: /tags/app-store/
+          - img [ref=e55]
+          - text: App Store
+      - listitem [ref=e59]:
+        - link "Vibe coding" [ref=e60] [cursor=pointer]:
+          - /url: /tags/vibe-coding/
+          - img [ref=e61]
+          - text: Vibe coding
+  - contentinfo [ref=e65]:
+    - paragraph [ref=e67]: Copyright © 2026 nogu. All rights reserved.
+  - generic [ref=e70]:
+    - button "Menu" [ref=e71]:
+      - img [ref=e73]
+      - generic: Menu
+    - button "Inspect" [ref=e77]:
+      - img [ref=e79]
+      - generic: Inspect
+    - button "Audit" [ref=e81]:
+      - img [ref=e83]
+      - generic: Audit
+    - button "Settings" [ref=e86]:
+      - img [ref=e88]
+      - generic: Settings
