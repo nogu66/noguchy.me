@@ -3,7 +3,7 @@ title: "AI時代にコンピューターサイエンスを学ぶ"
 pubDatetime: 2026-01-13T14:30:00
 slug: "how-to-learn-computer-science-in-ai-era"
 featured: false
-published: true
+published: false
 tags: ["AI", "CS"]
 description: "TypeScriptの型システムの基本的な使い方について簡単に解説します"
 timezone: "Asia/Tokyo"
