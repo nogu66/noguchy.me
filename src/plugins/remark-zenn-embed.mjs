@@ -19,7 +19,9 @@ export default function remarkZennEmbed() {
       if (!parent || index === null) return;
 
       // パターン1: 裸 URL（段落が単一リンクで、表示テキスト === URL）
+      // Zenn 互換: トップレベルの単独行のみカード化（箇条書き・文中・引用内は除外）
       if (
+        parent.type === "root" &&
         node.children.length === 1 &&
         node.children[0].type === "link" &&
         node.children[0].children.length === 1 &&

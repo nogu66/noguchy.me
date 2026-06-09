@@ -111,6 +111,39 @@ describe("remark-zenn-embed", () => {
     expect(html).not.toContain("zenn-link-card-github");
   });
 
+  it("箇条書きの中の裸 URL はカード化せず通常リンクのまま", async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      text: async () => `<meta property="og:title" content="X">`,
+    }));
+    const html = await render(
+      "- https://example.com/a\n- https://example.com/b\n",
+      [remarkZennEmbed]
+    );
+    expect(html).not.toContain("zenn-link-card");
+    expect(html).toContain("<li>");
+    expect(html).toContain('href="https://example.com/a"');
+  });
+
+  it("箇条書きの中の GitHub URL もカード化しない", async () => {
+    const html = await render("- https://github.com/nogu66/repo\n", [
+      remarkZennEmbed,
+    ]);
+    expect(html).not.toContain("zenn-link-card-github");
+    expect(html).toContain('href="https://github.com/nogu66/repo"');
+  });
+
+  it("文章中の裸 URL はカード化しない", async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      text: async () => `<meta property="og:title" content="X">`,
+    }));
+    const html = await render("詳しくは https://example.com/a を参照。\n", [
+      remarkZennEmbed,
+    ]);
+    expect(html).not.toContain("zenn-link-card");
+  });
+
   it("数値文字参照を含む OGP タイトルをデコードする", async () => {
     global.fetch = vi.fn(async () => ({
       ok: true,
