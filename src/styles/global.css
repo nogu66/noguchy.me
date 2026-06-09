@@ -579,6 +579,37 @@ pre.mermaid {
   height: 100%;
   object-fit: cover;
 }
+.zenn-link-card-github {
+  flex-direction: column;
+  gap: 0;
+  max-width: 640px;
+}
+.zenn-link-card-github-image {
+  width: 100%;
+}
+.zenn-link-card-github-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+.zenn-link-card-github-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  min-width: 0;
+}
+.zenn-link-card-github-mark {
+  flex: none;
+}
+.zenn-link-card-github-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .zenn-embed-youtube {
   position: relative;
   margin: 1.5rem 0;

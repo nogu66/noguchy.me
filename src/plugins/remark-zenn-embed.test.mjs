@@ -51,6 +51,43 @@ describe("remark-zenn-embed", () => {
     expect(html).toContain("カード記事");
   });
 
+  it("github.com のリポジトリ URL を GitHub カードにする", async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      text: async () =>
+        `<meta property="og:title" content="nogu66/noguchy.me"><meta property="og:image" content="https://opengraph.githubassets.com/abc/nogu66/noguchy.me">`,
+    }));
+    const html = await render("https://github.com/nogu66/noguchy.me\n", [
+      remarkZennEmbed,
+    ]);
+    expect(html).toContain("zenn-link-card-github");
+    expect(html).toContain("opengraph.githubassets.com/abc/nogu66/noguchy.me");
+    expect(html).toContain("nogu66/noguchy.me");
+    // 汎用カードの右寄せ小画像レイアウトにはならない
+    expect(html).not.toContain("zenn-link-card-image");
+  });
+
+  it("github.com の PR/Issue URL も GitHub カードにする", async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      text: async () =>
+        `<meta property="og:title" content="PR #1"><meta property="og:image" content="https://opengraph.githubassets.com/x/pull">`,
+    }));
+    const html = await render("https://github.com/nogu66/noguchy.me/pull/1\n", [
+      remarkZennEmbed,
+    ]);
+    expect(html).toContain("zenn-link-card-github");
+  });
+
+  it("gist は従来通り script 埋め込み（GitHub カードにしない）", async () => {
+    const html = await render("https://gist.github.com/nogu66/abc123\n", [
+      remarkZennEmbed,
+    ]);
+    expect(html).toContain("<script");
+    expect(html).toContain("gist.github.com/nogu66/abc123.js");
+    expect(html).not.toContain("zenn-link-card-github");
+  });
+
   it("数値文字参照を含む OGP タイトルをデコードする", async () => {
     global.fetch = vi.fn(async () => ({
       ok: true,
