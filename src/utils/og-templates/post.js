@@ -28,7 +28,7 @@ function getTemplateImageBase64() {
 }
 
 // タイトル省略処理
-function truncateTitle(title, maxLength = 80) {
+function truncateTitle(title, maxLength = 60) {
   if (title.length <= maxLength) return title;
   return title.slice(0, maxLength - 1) + "...";
 }
@@ -66,11 +66,11 @@ export default async post => {
               type: "p",
               props: {
                 style: {
-                  fontSize: 48,
+                  fontSize: 64,
                   fontWeight: "bold",
                   color: "#333333",
                   textAlign: "center",
-                  lineHeight: 1.4,
+                  lineHeight: 1.3,
                   wordBreak: "break-word",
                   overflow: "hidden",
                 },
