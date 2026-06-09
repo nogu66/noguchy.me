@@ -70,9 +70,10 @@ export default function remarkZennEmbed() {
 async function urlToNode(url) {
   const known = providerEmbedFromUrl(url);
   if (known) return { type: "html", value: known };
-  const ogp = await fetchOgp(url);
+  const ogp = await fetchOgp(url, ogpUserAgent(url));
   if (ogp) {
     if (isGithubUrl(url)) return { type: "html", value: githubCard(url, ogp) };
+    if (isXUrl(url)) return { type: "html", value: xCard(url, ogp) };
     return { type: "html", value: linkCard(url, ogp) };
   }
   return {
@@ -91,6 +92,25 @@ function isGithubUrl(url) {
   } catch {
     return false;
   }
+}
+
+/** x.com / twitter.com の URL か（ツイートは別途埋め込みになる） */
+function isXUrl(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return host === "x.com" || host === "twitter.com";
+  } catch {
+    return false;
+  }
+}
+
+const DEFAULT_UA = "noguchy.me-ogp-bot";
+// X はクローラー UA でないと OGP メタを返さないため Twitterbot を名乗る
+const X_UA = "Mozilla/5.0 (compatible; Twitterbot/1.0)";
+
+/** URL に応じた OGP 取得用 User-Agent を返す */
+function ogpUserAgent(url) {
+  return isXUrl(url) ? X_UA : DEFAULT_UA;
 }
 
 /** @[provider](arg) → 埋め込み HTML */
@@ -123,7 +143,9 @@ function providerEmbedFromUrl(url) {
     return youtubeIframe(u.pathname.slice(1));
   }
   if (host === "twitter.com" || host === "x.com") {
-    return tweetEmbed(url);
+    // ツイートは埋め込み、それ以外（プロフィール等）は OGP カードに回す
+    if (/\/status\/\d+/.test(u.pathname)) return tweetEmbed(url);
+    return null;
   }
   if (host === "gist.github.com") {
     return `<script src="${escapeAttr(url)}.js"></script>`;
@@ -195,12 +217,44 @@ function githubCard(url, { title, image }) {
   );
 }
 
-async function fetchOgp(url) {
+// X（旧 Twitter）マーク
+const X_MARK_SVG =
+  `<svg class="zenn-link-card-x-mark" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">` +
+  `<path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>` +
+  `</svg>`;
+
+/** X 専用カード: プロフィール等の OGP（アバター + bio）を X マーク付きで表示 */
+function xCard(url, { title, description, image }) {
+  const img = image
+    ? `<div class="zenn-link-card-image"><img src="${escapeAttr(image)}" alt="" loading="lazy" /></div>`
+    : "";
+  const desc = description
+    ? `<p class="zenn-link-card-desc">${escapeHtml(description)}</p>`
+    : "";
+  let host = "x.com";
+  try {
+    host = new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    host = "x.com";
+  }
+  return (
+    `<a class="zenn-link-card zenn-link-card-x" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">` +
+    `<div class="zenn-link-card-body">` +
+    `<p class="zenn-link-card-title">${escapeHtml(title)}</p>` +
+    desc +
+    `<p class="zenn-link-card-host">${X_MARK_SVG}<span>${escapeHtml(host)}</span></p>` +
+    `</div>` +
+    img +
+    `</a>`
+  );
+}
+
+async function fetchOgp(url, userAgent = DEFAULT_UA) {
   if (ogpCache.has(url)) return ogpCache.get(url);
   let result = null;
   try {
     const res = await fetch(url, {
-      headers: { "user-agent": "noguchy.me-ogp-bot" },
+      headers: { "user-agent": userAgent },
       signal: AbortSignal.timeout(5000),
     });
     if (res.ok) {

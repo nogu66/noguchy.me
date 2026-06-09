@@ -79,6 +79,29 @@ describe("remark-zenn-embed", () => {
     expect(html).toContain("zenn-link-card-github");
   });
 
+  it("x.com のプロフィール URL を X カードにする", async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      text: async () =>
+        `<meta property="og:title" content="nogu (@_nogu66) on X"><meta property="og:description" content="Software Engineer"><meta property="og:image" content="https://pbs.twimg.com/profile_images/abc_200x200.jpg">`,
+    }));
+    const html = await render("https://x.com/_nogu66\n", [remarkZennEmbed]);
+    expect(html).toContain("zenn-link-card-x");
+    expect(html).toContain("nogu (@_nogu66) on X");
+    expect(html).toContain("pbs.twimg.com/profile_images/abc_200x200.jpg");
+    expect(html).toContain("zenn-link-card-x-mark");
+    // ツイート埋め込み（blockquote）にはならない
+    expect(html).not.toContain("twitter-tweet");
+  });
+
+  it("x.com のツイート URL は従来通りツイート埋め込みにする", async () => {
+    const html = await render("https://x.com/_nogu66/status/123\n", [
+      remarkZennEmbed,
+    ]);
+    expect(html).toContain("twitter-tweet");
+    expect(html).not.toContain("zenn-link-card-x");
+  });
+
   it("gist は従来通り script 埋め込み（GitHub カードにしない）", async () => {
     const html = await render("https://gist.github.com/nogu66/abc123\n", [
       remarkZennEmbed,

@@ -610,6 +610,15 @@ pre.mermaid {
   white-space: nowrap;
 }
 
+.zenn-link-card-x .zenn-link-card-host {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.zenn-link-card-x-mark {
+  flex: none;
+}
+
 .zenn-embed-youtube {
   position: relative;
   margin: 1.5rem 0;
