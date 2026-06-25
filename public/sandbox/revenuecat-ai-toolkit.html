@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RevenueCat AI Toolkit 技術解説</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: #fafafa;
+  color: #1a1a1a;
+  line-height: 1.6;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.tab {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.tab:hover { color: #555; }
+.tab.active { color: #d35400; border-bottom-color: #d35400; }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Cards */
+.card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.card p, .card li { font-size: 13px; color: #444; }
+.card ul { padding-left: 18px; margin-top: 6px; }
+.card li { margin-bottom: 4px; }
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+.badge-blue { background: #4A90D9; }
+.badge-green { background: #3DDC84; }
+.badge-purple { background: #7F52FF; }
+.badge-cyan { background: #0891b2; }
+.badge-orange { background: #d35400; }
+.badge-gray { background: #888; }
+
+/* Architecture diagram */
+.arch-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.arch-box {
+  flex: 1;
+  min-width: 100px;
+  background: #f0f4f8;
+  border: 1px solid #d0d8e0;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.arch-box.highlight {
+  background: #fff3e6;
+  border-color: #d35400;
+}
+.arch-box h4 { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+.arch-box p { font-size: 11px; color: #666; margin: 0; }
+.arch-arrow {
+  text-align: center;
+  color: #bbb;
+  font-size: 18px;
+  margin: 4px 0;
+}
+
+/* Skill grid */
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+.skill-item {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.skill-item:hover { border-color: #d35400; box-shadow: 0 2px 8px rgba(211,84,0,0.08); }
+.skill-item h4 { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+.skill-item p { font-size: 11px; color: #888; margin: 0; }
+.skill-item.expanded { grid-column: 1 / -1; }
+.skill-detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  font-size: 12px;
+  color: #444;
+  line-height: 1.5;
+}
+.skill-detail ul { padding-left: 16px; margin-top: 4px; }
+.skill-detail li { margin-bottom: 3px; }
+
+/* Code block */
+pre {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border-radius: 8px;
+  padding: 14px;
+  overflow-x: auto;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+pre .kw { color: #cba6f7; }
+pre .str { color: #a6e3a1; }
+pre .cm { color: #6c7086; font-style: italic; }
+pre .fn { color: #89b4fa; }
+pre .tp { color: #f9e2af; }
+
+/* MCP tools table */
+.tools-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.tools-table th {
+  text-align: left;
+  padding: 6px 10px;
+  background: #f5f5f5;
+  font-weight: 600;
+  border-bottom: 2px solid #e0e0e0;
+}
+.tools-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+.tools-table tr:hover td { background: #fafafa; }
+.tool-cat { font-weight: 600; color: #d35400; }
+
+/* Section header */
+.section-header {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 18px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+/* Comparison table */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.compare .card { margin-bottom: 0; }
+
+/* Key insight box */
+.insight {
+  background: #fff8f0;
+  border-left: 3px solid #d35400;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.insight strong { color: #d35400; }
+</style>
+</head>
+<body>
+
+<h1>RevenueCat AI Toolkit</h1>
+<p class="subtitle">技術者向け完全解説 — アーキテクチャ・MCP Tools・スキル・Swift実装パターン</p>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-tab="overview">概要</div>
+  <div class="tab" data-tab="architecture">アーキテクチャ</div>
+  <div class="tab" data-tab="mcp">MCP Tools</div>
+  <div class="tab" data-tab="skills">スキル一覧</div>
+  <div class="tab" data-tab="swift">Swift実装</div>
+  <div class="tab" data-tab="playbilling">Play Billing</div>
+</div>
+
+<!-- ===== OVERVIEW ===== -->
+<div class="panel active" id="panel-overview">
+  <div class="card">
+    <h3>何をするプラグインか</h3>
+    <p>アプリ内課金バックエンド「RevenueCat」をAIコーディングエージェントから直接操作するためのプラグインマーケットプレイス。ダッシュボードを開かずにプロジェクト作成・商品設定・KPI分析・A/Bテスト結果取得まで完結する。</p>
+  </div>
+
+  <div class="card">
+    <h3>構成</h3>
+    <div class="compare">
+      <div class="card" style="border-color: #4A90D9;">
+        <h3><span class="badge badge-blue">Plugin 1</span> RevenueCat</h3>
+        <p>メインプラグイン。MCPサーバー + 14スキル。iOS / Android / Flutter / React Native / KMP をカバー。</p>
+      </div>
+      <div class="card" style="border-color: #3DDC84;">
+        <h3><span class="badge badge-green">Plugin 2</span> play-billing</h3>
+        <p>Android特化。Google Play Billingライフサイクルに関する19スキル。MCP無し（スキルのみ）。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>対応IDE</h3>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
+      <span class="badge badge-orange">Claude Code</span>
+      <span class="badge badge-gray">Cursor</span>
+      <span class="badge badge-gray">OpenAI Codex</span>
+      <span class="badge badge-gray">VS Code</span>
+      <span class="badge badge-gray">Gemini CLI</span>
+    </div>
+    <p style="margin-top:8px; font-size:12px; color:#888;">各IDE用のアダプター（.claude-plugin/ .codex-plugin/ .cursor-plugin/ gemini-extension.json）を同一リポジトリ内に配置し、同じスキルとMCPを共有する設計。</p>
+  </div>
+
+  <div class="card">
+    <h3>認証</h3>
+    <p>ブラウザベースOAuth。RevenueCatアカウントの権限に基づくアクセス制御。APIキーの手動設定は不要。</p>
+  </div>
+</div>
+
+<!-- ===== ARCHITECTURE ===== -->
+<div class="panel" id="panel-architecture">
+  <h3 class="section-header">全体アーキテクチャ</h3>
+
+  <div class="arch-row">
+    <div class="arch-box"><h4>IDE / Agent</h4><p>Claude Code, Cursor, etc.</p></div>
+  </div>
+  <div class="arch-arrow">↓ プラグインマーケットプレイス</div>
+  <div class="arch-row">
+    <div class="arch-box highlight"><h4>Skills (Markdown)</h4><p>AIへのドメイン知識注入<br/>手順書・コードテンプレート</p></div>
+    <div class="arch-box highlight"><h4>MCP Client</h4><p>IDE内蔵のMCPクライアント<br/>ツール呼び出し</p></div>
+  </div>
+  <div class="arch-arrow">↓ HTTP (OAuth)</div>
+  <div class="arch-row">
+    <div class="arch-box" style="background:#e8f4fd; border-color:#4A90D9;">
+      <h4>mcp.revenuecat.ai/mcp</h4>
+      <p>リモートHTTP MCPサーバー<br/>RevenueCat API ラッパー</p>
+    </div>
+  </div>
+  <div class="arch-arrow">↓ REST API</div>
+  <div class="arch-row">
+    <div class="arch-box"><h4>RevenueCat Backend</h4><p>プロジェクト・商品・分析データ</p></div>
+  </div>
+
+  <div class="insight">
+    <strong>技術的特徴:</strong> MCPサーバーをSaaS（リモートHTTP）として提供。ローカルnpxプロセスではなくクラウドホスト型。認証はOAuthで完結し、ユーザーがAPIキーを手動設定する必要がない。
+  </div>
+
+  <h3 class="section-header">スキルの役割</h3>
+  <div class="card">
+    <p>スキル = 「MCPツールをどの順番で・どう使うか」をAIに教えるMarkdownベースの手順書。YAML frontmatter（name, description）+ ステップバイステップの指示で構成される。</p>
+    <ul>
+      <li><strong>プラットフォーム自動検出:</strong> プロジェクトのファイル構成（Package.swift, pubspec.yaml等）からiOS/Android/Flutter/RN/KMPを判定</li>
+      <li><strong>プラットフォーム別サブファイル:</strong> 各スキルが <code>platforms/ios.md</code> 等を持ち、検出結果に応じたコードを提供</li>
+      <li><strong>ドメイン知識の埋め込み:</strong> 「サブスクの4つの力」等のビジネスロジックをAIに注入</li>
+      <li><strong>検証ステップ:</strong> 各スキルに「完了と言ってよい条件」が明示されている</li>
+    </ul>
+  </div>
+
+  <h3 class="section-header">リポジトリ構造</h3>
+<pre>
+<span class="cm">RevenueCat/ai-toolkit/</span>
+├── .claude-plugin/marketplace.json  <span class="cm"># Claude Code用マーケットプレイス定義</span>
+├── .codex-plugin/                   <span class="cm"># OpenAI Codex用</span>
+├── .cursor-plugin/                  <span class="cm"># Cursor用</span>
+├── revenuecat/                      <span class="cm"># Plugin 1: メインプラグイン</span>
+│   ├── .mcp.json                    <span class="cm"># MCPサーバー接続設定</span>
+│   ├── .claude-plugin/plugin.json   <span class="cm"># プラグインマニフェスト</span>
+│   └── skills/
+│       ├── create-revenuecat-project/
+│       │   └── SKILL.md
+│       ├── integrate-revenuecat/
+│       │   ├── SKILL.md
+│       │   └── platforms/
+│       │       ├── ios.md           <span class="cm"># Swift実装</span>
+│       │       ├── android.md
+│       │       ├── flutter.md
+│       │       ├── kmp.md
+│       │       └── react-native.md
+│       ├── revenuecat-charts/
+│       ├── revenuecat-experiment-analysis/
+│       └── ... (14スキル)
+└── revenuecat-play-billing/         <span class="cm"># Plugin 2: Android特化</span>
+    └── skills/ (19スキル)
+</pre>
+</div>
+
+<!-- ===== MCP TOOLS ===== -->
+<div class="panel" id="panel-mcp">
+  <div class="card">
+    <h3>MCP Server</h3>
+    <p><code>https://mcp.revenuecat.ai/mcp</code> — リモートHTTP MCP。OAuth認証。</p>
+  </div>
+
+  <table class="tools-table">
+    <thead><tr><th>カテゴリ</th><th>ツール名</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td class="tool-cat" rowspan="3">プロジェクト</td><td>list-projects</td><td>アクセス可能なプロジェクト一覧</td></tr>
+      <tr><td>create-project</td><td>新規プロジェクト作成</td></tr>
+      <tr><td>list-public-api-keys</td><td>公開SDKキー取得（appl_ / goog_）</td></tr>
+
+      <tr><td class="tool-cat" rowspan="2">アプリ</td><td>create-app</td><td>App Store / Play Store アプリ登録</td></tr>
+      <tr><td>list-app-public-api-keys</td><td>アプリ別APIキー取得</td></tr>
+
+      <tr><td class="tool-cat" rowspan="3">商品設計</td><td>create-product</td><td>サブスク/一括購入商品の作成</td></tr>
+      <tr><td>create-entitlement</td><td>エンタイトルメント（アクセス権）作成</td></tr>
+      <tr><td>attach-products-to-entitlement</td><td>商品→エンタイトルメント紐付け</td></tr>
+
+      <tr><td class="tool-cat" rowspan="3">オファリング</td><td>create-offering</td><td>オファリング（商品グループ）作成</td></tr>
+      <tr><td>create-package</td><td>パッケージ（monthly等）作成</td></tr>
+      <tr><td>attach-products-to-package</td><td>商品→パッケージ紐付け</td></tr>
+
+      <tr><td class="tool-cat" rowspan="2">分析</td><td>get-chart-options-schema</td><td>チャートの利用可能フィルタ/セグメント取得</td></tr>
+      <tr><td>get-chart-data</td><td>KPIデータ取得（MRR, 解約率等）</td></tr>
+
+      <tr><td class="tool-cat" rowspan="3">実験</td><td>list-experiments</td><td>A/Bテスト一覧</td></tr>
+      <tr><td>get-experiment</td><td>実験詳細（バリアント、ペイウォール）</td></tr>
+      <tr><td>get-experiment-results</td><td>実験結果データ</td></tr>
+
+      <tr><td class="tool-cat">ペイウォール</td><td>render-paywall-screenshot</td><td>ペイウォールのプレビュー画像生成</td></tr>
+      <tr><td class="tool-cat">ストア</td><td>get-product-store-state</td><td>ストア側の商品状態確認</td></tr>
+    </tbody>
+  </table>
+
+  <div class="insight" style="margin-top:14px;">
+    <strong>ポイント:</strong> MCPツールはRevenueCatダッシュボードの操作をそのままAPI化したもの。商品→エンタイトルメント→パッケージ→オファリングの依存関係があり、スキルがこの順序制御を担う。
+  </div>
+</div>
+
+<!-- ===== SKILLS ===== -->
+<div class="panel" id="panel-skills">
+  <h3 class="section-header">RevenueCat Plugin（14スキル）</h3>
+  <div class="skill-grid" id="skill-grid-main"></div>
+
+  <h3 class="section-header" style="margin-top:20px;">Play Billing Plugin（19スキル）</h3>
+  <div class="skill-grid" id="skill-grid-play"></div>
+</div>
+
+<!-- ===== SWIFT ===== -->
+<div class="panel" id="panel-swift">
+  <h3 class="section-header">Swift実装ベストプラクティス（スキルに含まれる内容）</h3>
+
+  <div class="card">
+    <h3>1. SDK統合（integrate-revenuecat）</h3>
+    <p>SPM / CocoaPods 両対応。SwiftUI App / UIKit AppDelegate 双方のエントリポイントをカバー。</p>
+<pre>
+<span class="cm">// SwiftUI App — init()で1回だけconfigure</span>
+<span class="kw">import</span> <span class="tp">RevenueCat</span>
+
+<span class="kw">@main struct</span> <span class="tp">MyApp</span>: <span class="tp">App</span> {
+    <span class="kw">init</span>() {
+        <span class="tp">Purchases</span>.logLevel = .debug <span class="cm">// リリース時は削除</span>
+        <span class="tp">Purchases</span>.<span class="fn">configure</span>(withAPIKey: <span class="str">"appl_YOUR_KEY"</span>)
+    }
+    <span class="kw">var</span> body: <span class="kw">some</span> <span class="tp">Scene</span> {
+        <span class="tp">WindowGroup</span> { <span class="tp">ContentView</span>() }
+    }
+}
+</pre>
+    <ul>
+      <li><code>configure()</code> はアプリ起動時に1回だけ呼ぶ</li>
+      <li>公開SDKキー（<code>appl_</code>）のみ使用。シークレットキーはクライアントに入れない</li>
+      <li>APIキーは <code>.xcconfig</code> でソース管理外に</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>2. 課金フロー（purchase-flow）</h3>
+<pre>
+<span class="kw">enum</span> <span class="tp">PurchaseOutcome</span> {
+    <span class="kw">case</span> purchased, cancelled, failed(<span class="tp">Error</span>)
+}
+
+<span class="kw">func</span> <span class="fn">buy</span>(_ package: <span class="tp">Package</span>) <span class="kw">async</span> -> <span class="tp">PurchaseOutcome</span> {
+    <span class="kw">do</span> {
+        <span class="kw">let</span> result = <span class="kw">try await</span> <span class="tp">Purchases</span>.shared.<span class="fn">purchase</span>(package: package)
+        <span class="kw">if</span> result.userCancelled { <span class="kw">return</span> .cancelled }
+        <span class="kw">return</span> .purchased <span class="cm">// ここでコンテンツ解放しない</span>
+    } <span class="kw">catch</span> {
+        <span class="kw">let</span> ns = error <span class="kw">as</span> <span class="tp">NSError</span>
+        <span class="kw">if</span> ns.code == <span class="tp">ErrorCode</span>.purchaseCancelledError.rawValue {
+            <span class="kw">return</span> .cancelled
+        }
+        <span class="kw">return</span> .failed(error)
+    }
+}
+</pre>
+    <ul>
+      <li><strong>キャンセル = エラーではない。</strong>アラートを出さず静かに戻す</li>
+      <li><strong>購入コールバック内でコンテンツ解放しない。</strong>entitlementsリスナーに一元化</li>
+      <li><strong>購入中はボタンを <code>.disabled</code></strong> にして二重課金防止</li>
+      <li><strong>Restore ボタンは必須</strong>（App Store審査要件）</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>3. Entitlementゲート（entitlements-gate）</h3>
+<pre>
+<span class="cm">// AsyncStreamで購読状態をリアクティブ監視</span>
+<span class="kw">@MainActor final class</span> <span class="tp">EntitlementsModel</span>: <span class="tp">ObservableObject</span> {
+    <span class="kw">@Published var</span> hasPremium = <span class="kw">false</span>
+
+    <span class="kw">func</span> <span class="fn">observe</span>() <span class="kw">async</span> {
+        <span class="kw">for await</span> info <span class="kw">in</span> <span class="tp">Purchases</span>.shared.customerInfoStream {
+            hasPremium = info.entitlements[<span class="str">"premium"</span>]?.isActive == <span class="kw">true</span>
+        }
+    }
+}
+
+<span class="kw">struct</span> <span class="tp">RootView</span>: <span class="tp">View</span> {
+    <span class="kw">@StateObject private var</span> model = <span class="tp">EntitlementsModel</span>()
+    <span class="kw">var</span> body: <span class="kw">some</span> <span class="tp">View</span> {
+        <span class="tp">Group</span> {
+            <span class="kw">if</span> model.hasPremium { <span class="tp">PremiumView</span>() }
+            <span class="kw">else</span> { <span class="tp">PaywallView</span>() }
+        }
+        .<span class="fn">task</span> { <span class="kw">await</span> model.<span class="fn">observe</span>() }
+    }
+}
+</pre>
+    <ul>
+      <li><code>customerInfoStream</code>（AsyncStream）で購入・復元・期限切れを自動検知</li>
+      <li><code>.task</code> modifier で開始・キャンセルを自動管理</li>
+      <li><strong><code>.active</code> のみチェック。</strong><code>.all</code> には期限切れも含まれる</li>
+      <li>product IDではなくentitlement ID（<code>"premium"</code>等）でゲート</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>4. カバーされていないこと</h3>
+    <ul>
+      <li>Swift全般のアーキテクチャ（MVVM, TCA, DI等）</li>
+      <li>StoreKit 2 ネイティブAPIの直接利用パターン</li>
+      <li>UIデザイン / カスタムペイウォールのUI実装</li>
+      <li>サーバーサイド検証（webhook受信側の実装）</li>
+    </ul>
+    <p style="margin-top:6px; font-size:12px; color:#888;">RevenueCatがStoreKit 2をラップしているため、開発者はStoreKitの複雑さをほぼ意識せずに済む設計。</p>
+  </div>
+</div>
+
+<!-- ===== PLAY BILLING ===== -->
+<div class="panel" id="panel-playbilling">
+  <div class="card">
+    <h3>revenuecat-play-billing プラグイン</h3>
+    <p>Google Play Billing Library に特化した19スキルのコレクション。MCPサーバーは持たず、メインプラグインのMCPを併用する前提。ソースは <code>RevenueCat/play-billing-skills</code> から同期。ライセンスは Apache-2.0。</p>
+  </div>
+
+  <div class="insight">
+    <strong>なぜ分離されているか:</strong> Google Play Billingのライフサイクル（プラン変更、価格変更、支払い回復、キャンセル/一時停止/ウィンバック）は非常に複雑で、iOS側にはない概念が多い。必要な開発者だけがインストールする設計。
+  </div>
+
+  <div class="skill-grid" id="skill-grid-play-detail"></div>
+</div>
+
+<script>
+// Tab switching
+document.getElementById('tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+});
+
+// Skills data
+const mainSkills = [
+  { id: 'create-revenuecat-project', name: 'create-project', desc: 'プロジェクト新規作成', detail: 'Discovery（プラットフォーム・ビジネスモデルのヒアリング）→ Create Resources（MCP呼び出しの正しい依存順序でリソース作成）→ Summary（APIキー表示）の3フェーズ。' },
+  { id: 'integrate-revenuecat', name: 'integrate', desc: 'SDK統合ガイド', detail: 'ダッシュボード側（プロジェクト/アプリ/APIキー）とアプリ側（SDKインストール + configure()）の両方をカバー。プラットフォーム自動検出。' },
+  { id: 'revenuecat-charts', name: 'charts', desc: 'KPI分析・収益データ', detail: 'Acquisition, Conversion, Retention, Reactivationの「4つの力」フレームワーク。ダッシュボードURLの直接生成にも対応。' },
+  { id: 'revenuecat-experiment-analysis', name: 'experiment', desc: 'A/Bテスト分析', detail: '5ステップ: 実験ID取得 → 詳細取得（バリアント・ペイウォール）→ チャートデータで文脈補足 → 結果取得 → 解釈。' },
+  { id: 'revenuecat-paywall', name: 'paywall', desc: 'ペイウォール設定', detail: 'ダッシュボードで設定したペイウォールの表示実装。RevenueCatUIフレームワークの利用。' },
+  { id: 'revenuecat-purchase-flow', name: 'purchase-flow', desc: '課金フロー実装', detail: 'getOfferings → purchase(package) → restorePurchases の一連のフロー。キャンセルハンドリング、二重課金防止。' },
+  { id: 'revenuecat-entitlements-gate', name: 'entitlements-gate', desc: '機能ゲーティング', detail: 'entitlements.activeでの権限チェック。customerInfoStreamによるリアクティブ監視。' },
+  { id: 'revenuecat-identify-user', name: 'identify-user', desc: 'ユーザー識別', detail: 'logIn / logOut のアプリ認証連携。Anonymous → Identified の移行。' },
+  { id: 'revenuecat-customer-center', name: 'customer-center', desc: 'カスタマーセンター', detail: 'サブスク管理UI。キャンセル・プラン変更のセルフサービス。' },
+  { id: 'revenuecat-status', name: 'status', desc: 'プロジェクト状態確認', detail: 'プロジェクトの設定状態をサマリー表示。アプリ数、商品数、エンタイトルメント数等。' },
+  { id: 'revenuecat-testing-setup', name: 'testing-setup', desc: 'テスト環境構築', detail: 'サンドボックス/StoreKit Configuration Fileの設定。テスト用アカウント管理。' },
+  { id: 'revenuecat-troubleshoot', name: 'troubleshoot', desc: 'トラブルシューティング', detail: 'オファリング・商品・エンタイトルメントの問題診断。ストア接続エラーの解決。' },
+  { id: 'revenuecat-migrate', name: 'migrate', desc: '移行ガイド', detail: '既存の課金実装からRevenueCatへの移行手順。' },
+  { id: 'revenuecat', name: 'revenuecat (汎用)', desc: 'キャッチオール', detail: '他のスキルにマッチしない一般的なRevenueCat関連の質問に対応。' },
+];
+
+const playSkills = [
+  { name: 'purchase-flow', desc: '購入フロー' },
+  { name: 'plan-changes', desc: 'プラン変更' },
+  { name: 'price-changes', desc: '価格変更' },
+  { name: 'payment-recovery', desc: '支払い回復' },
+  { name: 'cancellations-pauses-winback', desc: 'キャンセル・一時停止・ウィンバック' },
+  { name: 'subscription-states', desc: 'サブスク状態管理' },
+  { name: 'subscriptions', desc: 'サブスク基礎' },
+  { name: 'one-time-products', desc: '一括購入商品' },
+  { name: 'catalog-management', desc: '商品カタログ管理' },
+  { name: 'webhooks', desc: 'Webhook連携' },
+  { name: 'security', desc: 'セキュリティ' },
+  { name: 'error-handling', desc: 'エラーハンドリング' },
+  { name: 'testing', desc: 'テスト手法' },
+  { name: 'setup', desc: 'セットアップ' },
+  { name: 'configuring-the-sdk', desc: 'SDK設定詳細' },
+  { name: 'backend', desc: 'バックエンド連携' },
+  { name: 'alternative-billing', desc: '代替課金フロー' },
+  { name: 'revenuecat-vs-raw-billing', desc: 'RC vs 生Play Billing比較' },
+  { name: 'understanding-revenuecat', desc: 'コンセプト概要' },
+];
+
+function renderSkillGrid(containerId, skills, expandable) {
+  const grid = document.getElementById(containerId);
+  skills.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'skill-item';
+    div.innerHTML = `<h4>${s.name}</h4><p>${s.desc}</p>`;
+    if (expandable && s.detail) {
+      div.addEventListener('click', () => {
+        const isExpanded = div.classList.contains('expanded');
+        grid.querySelectorAll('.skill-item').forEach(el => {
+          el.classList.remove('expanded');
+          const d = el.querySelector('.skill-detail');
+          if (d) d.remove();
+        });
+        if (!isExpanded) {
+          div.classList.add('expanded');
+          const detail = document.createElement('div');
+          detail.className = 'skill-detail';
+          detail.textContent = s.detail;
+          div.appendChild(detail);
+        }
+      });
+      div.style.cursor = 'pointer';
+    }
+    grid.appendChild(div);
+  });
+}
+
+renderSkillGrid('skill-grid-main', mainSkills, true);
+renderSkillGrid('skill-grid-play', playSkills, false);
+renderSkillGrid('skill-grid-play-detail', playSkills, false);
+</script>
+</body>
+</html>

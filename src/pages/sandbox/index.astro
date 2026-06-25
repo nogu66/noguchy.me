@@ -1,0 +1,81 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import fs from "node:fs";
+import path from "node:path";
+
+const sandboxDir = path.join(process.cwd(), "public", "sandbox");
+const files: { name: string; href: string }[] = [];
+
+if (fs.existsSync(sandboxDir)) {
+  const entries = fs.readdirSync(sandboxDir, { recursive: true }) as string[];
+  for (const entry of entries) {
+    if (entry.endsWith(".html")) {
+      files.push({
+        name: entry,
+        href: `/sandbox/${entry}`,
+      });
+    }
+  }
+  files.sort((a, b) => a.name.localeCompare(b.name));
+}
+---
+
+<Layout title="Sandbox | noguchy.me">
+  <meta slot="head" name="robots" content="noindex, nofollow" />
+  <Header />
+  <div class="mx-auto flex w-full max-w-3xl justify-start px-2">
+    <nav class="mb-4 text-sm">
+      <a href="/" class="text-accent hover:underline">Home</a>
+      <span class="mx-1">/</span>
+      <span>Sandbox</span>
+    </nav>
+  </div>
+  <main id="main-content" class="mx-auto w-full max-w-3xl px-4 pb-12">
+    <h1 class="text-2xl font-bold">Sandbox</h1>
+    <p class="mt-2 text-muted">雑に置いた HTML ファイルの一覧です。</p>
+
+    {
+      files.length > 0 ? (
+        <ul class="mt-6 space-y-2">
+          {files.map(file => (
+            <li>
+              <a
+                href={file.href}
+                class="inline-flex items-center gap-2 text-accent underline-offset-4 hover:underline"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
+                {file.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="mt-6 text-muted">
+          まだファイルがありません。
+          <code class="rounded bg-foreground/10 px-1.5 py-0.5 text-sm">
+            public/sandbox/
+          </code>{" "}
+          に HTML ファイルを置いてください。
+        </p>
+      )
+    }
+  </main>
+  <Footer />
+</Layout>
