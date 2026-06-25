@@ -8,18 +8,19 @@ import path from "node:path";
 const sandboxDir = path.join(process.cwd(), "public", "sandbox");
 const files: { name: string; href: string }[] = [];
 
-if (fs.existsSync(sandboxDir)) {
-  const entries = fs.readdirSync(sandboxDir, { recursive: true }) as string[];
-  for (const entry of entries) {
-    if (entry.endsWith(".html")) {
-      files.push({
-        name: entry,
-        href: `/sandbox/${entry}`,
-      });
+function walkDir(dir: string, base = "") {
+  if (!fs.existsSync(dir)) return;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      walkDir(path.join(dir, entry.name), rel);
+    } else if (entry.name.endsWith(".html")) {
+      files.push({ name: rel, href: `/sandbox/${rel}` });
     }
   }
-  files.sort((a, b) => a.name.localeCompare(b.name));
 }
+walkDir(sandboxDir);
+files.sort((a, b) => a.name.localeCompare(b.name));
 ---
 
 <Layout title="Sandbox | noguchy.me">
