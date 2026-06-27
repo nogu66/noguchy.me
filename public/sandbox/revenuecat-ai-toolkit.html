@@ -20,6 +20,38 @@ body {
 h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
 .subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
 
+/* Main tabs (top-level) */
+.maintabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.maintab {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: #888;
+  background: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.maintab:hover { color: #555; }
+.maintab.active {
+  color: #fff;
+  background: #d35400;
+  border-color: #d35400;
+}
+.maintab .mt-sub { display: block; font-size: 11px; font-weight: 500; opacity: 0.85; margin-top: 2px; }
+
+.maingroup { display: none; }
+.maingroup.active { display: block; }
+
 /* Tabs */
 .tabs {
   display: flex;
@@ -215,14 +247,22 @@ pre .tp { color: #f9e2af; }
 <h1>RevenueCat AI Toolkit</h1>
 <p class="subtitle">技術者向け完全解説 — アーキテクチャ・MCP Tools・スキル・Swift実装パターン</p>
 
-<div class="tabs" id="tabs">
+<!-- ===== MAIN TABS (top-level) ===== -->
+<div class="maintabs" id="maintabs">
+  <div class="maintab active" data-main="rc">RevenueCat AI Toolkit<span class="mt-sub">課金バックエンド側を操作</span></div>
+  <div class="maintab" data-main="asc">asc CLI<span class="mt-sub">App Store Connect 側を操作</span></div>
+</div>
+
+<!-- ================= GROUP: RevenueCat AI Toolkit ================= -->
+<div class="maingroup active" id="main-rc">
+
+<div class="tabs">
   <div class="tab active" data-tab="overview">概要</div>
   <div class="tab" data-tab="architecture">アーキテクチャ</div>
   <div class="tab" data-tab="mcp">MCP Tools</div>
   <div class="tab" data-tab="skills">スキル一覧</div>
   <div class="tab" data-tab="swift">Swift実装</div>
   <div class="tab" data-tab="playbilling">Play Billing</div>
-  <div class="tab" data-tab="asccli">asc CLI 連携</div>
 </div>
 
 <!-- ===== OVERVIEW ===== -->
@@ -511,8 +551,19 @@ pre .tp { color: #f9e2af; }
   <div class="skill-grid" id="skill-grid-play-detail"></div>
 </div>
 
-<!-- ===== ASC CLI ===== -->
-<div class="panel" id="panel-asccli">
+</div><!-- /main-rc -->
+
+<!-- ================= GROUP: asc CLI ================= -->
+<div class="maingroup" id="main-asc">
+
+<div class="tabs">
+  <div class="tab active" data-tab="asc-overview">概要</div>
+  <div class="tab" data-tab="asc-features">機能・導入</div>
+  <div class="tab" data-tab="asc-integration">ai-toolkit 連携</div>
+</div>
+
+<!-- ===== ASC OVERVIEW ===== -->
+<div class="panel active" id="panel-asc-overview">
   <div class="card" style="border-color:#0891b2;">
     <h3><span class="badge badge-cyan">asc CLI</span> App Store Connect をターミナルから操作</h3>
     <p><strong>asc-cli</strong> は App Store Connect の管理をコマンドラインから自動化する Swift 製の CLI ツール。Xcode を開かずに、ビルドのアップロード・TestFlight 配布・審査提出・メタデータ更新・<strong>App内課金（IAP）/サブスクの作成</strong>まで完結できる。</p>
@@ -522,6 +573,13 @@ pre .tp { color: #f9e2af; }
     </p>
   </div>
 
+  <div class="insight">
+    <strong>位置づけ:</strong> RevenueCat AI Toolkit が <strong>課金バックエンド（RevenueCat）側</strong>を担うのに対し、asc-cli は <strong>App Store Connect（ストア）側</strong>を担う。両者は補完関係にあり、AIエージェントから扱える点も共通する。
+  </div>
+</div>
+
+<!-- ===== ASC FEATURES ===== -->
+<div class="panel" id="panel-asc-features">
   <div class="card">
     <h3>主な機能</h3>
     <ul>
@@ -547,7 +605,10 @@ asc auth login \
 </pre>
     <p style="font-size:12px; color:#888; margin-top:4px;">App Store Connect API キー（.p8）を発行して登録すれば、以降はターミナルから直接 ASC を操作できる。</p>
   </div>
+</div>
 
+<!-- ===== ASC INTEGRATION ===== -->
+<div class="panel" id="panel-asc-integration">
   <h3 class="section-header">ai-toolkit との組み合わせ</h3>
   <div class="card">
     <p>RevenueCat AI Toolkit（MCP）は <strong>RevenueCat 側</strong>の設定を担うが、その手前にある <strong>App Store Connect 側</strong>のアプリ登録・IAP/サブスク作成は本来手作業が必要。ここを <strong>asc-cli</strong> が埋めることで、AIエージェントが両側をまたいで一気通貫にセットアップでき、導入のハードルが大きく下がる。</p>
@@ -578,15 +639,30 @@ asc auth login \
   </div>
 </div>
 
+</div><!-- /main-asc -->
+
 <script>
-// Tab switching
-document.getElementById('tabs').addEventListener('click', e => {
-  const tab = e.target.closest('.tab');
-  if (!tab) return;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  tab.classList.add('active');
-  document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+// Main tab switching (top-level)
+document.getElementById('maintabs').addEventListener('click', e => {
+  const mt = e.target.closest('.maintab');
+  if (!mt) return;
+  document.querySelectorAll('.maintab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.maingroup').forEach(g => g.classList.remove('active'));
+  mt.classList.add('active');
+  document.getElementById('main-' + mt.dataset.main).classList.add('active');
+});
+
+// Sub-tab switching (scoped within each group)
+document.querySelectorAll('.maingroup .tabs').forEach(tabsEl => {
+  tabsEl.addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    const group = tabsEl.closest('.maingroup');
+    group.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    group.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
 });
 
 // Skills data
