@@ -251,6 +251,7 @@ pre .tp { color: #f9e2af; }
 <div class="maintabs" id="maintabs">
   <div class="maintab active" data-main="rc">RevenueCat AI Toolkit<span class="mt-sub">課金バックエンド側を操作</span></div>
   <div class="maintab" data-main="asc">asc CLI<span class="mt-sub">App Store Connect 側を操作</span></div>
+  <div class="maintab" data-main="synergy">連携シナジー<span class="mt-sub">組み合わせで何が変わるか</span></div>
 </div>
 
 <!-- ================= GROUP: RevenueCat AI Toolkit ================= -->
@@ -558,7 +559,10 @@ pre .tp { color: #f9e2af; }
 
 <div class="tabs">
   <div class="tab active" data-tab="asc-overview">概要</div>
-  <div class="tab" data-tab="asc-features">機能・導入</div>
+  <div class="tab" data-tab="asc-architecture">アーキテクチャ</div>
+  <div class="tab" data-tab="asc-commands">コマンド一覧</div>
+  <div class="tab" data-tab="asc-skills">スキル一覧</div>
+  <div class="tab" data-tab="asc-cicd">CI/CD</div>
   <div class="tab" data-tab="asc-integration">ai-toolkit 連携</div>
 </div>
 
@@ -566,44 +570,347 @@ pre .tp { color: #f9e2af; }
 <div class="panel active" id="panel-asc-overview">
   <div class="card" style="border-color:#0891b2;">
     <h3><span class="badge badge-cyan">asc CLI</span> App Store Connect をターミナルから操作</h3>
-    <p><strong>asc-cli</strong> は App Store Connect の管理をコマンドラインから自動化する Swift 製の CLI ツール。Xcode を開かずに、ビルドのアップロード・TestFlight 配布・審査提出・メタデータ更新・<strong>App内課金（IAP）/サブスクの作成</strong>まで完結できる。</p>
+    <p><strong>asc</strong>（App Store Connect CLI）は、App Store Connect API をスクリプタブルに操作する Go 製の CLI ツール。Xcode や ASC ダッシュボードを開かずに、ビルドのアップロード・TestFlight 配布・審査提出・メタデータ更新・App内課金設定まで完結する。JSON-first・対話プロンプトなしの設計で、CI/CD や AI エージェントとの統合に最適化されている。</p>
     <p style="margin-top:8px;">
       🔗 <a href="https://asccli.sh/" target="_blank" rel="noopener" style="color:#0891b2; font-weight:600;">asccli.sh</a>
-      ／ <a href="https://github.com/tddworks/asc-cli" target="_blank" rel="noopener" style="color:#0891b2; font-weight:600;">github.com/tddworks/asc-cli</a>
+      ／ <a href="https://github.com/rorkai/App-Store-Connect-CLI" target="_blank" rel="noopener" style="color:#0891b2; font-weight:600;">github.com/rorkai/App-Store-Connect-CLI</a>
     </p>
   </div>
 
-  <div class="insight">
-    <strong>位置づけ:</strong> RevenueCat AI Toolkit が <strong>課金バックエンド（RevenueCat）側</strong>を担うのに対し、asc-cli は <strong>App Store Connect（ストア）側</strong>を担う。両者は補完関係にあり、AIエージェントから扱える点も共通する。
-  </div>
-</div>
-
-<!-- ===== ASC FEATURES ===== -->
-<div class="panel" id="panel-asc-features">
   <div class="card">
-    <h3>主な機能</h3>
+    <h3>構成</h3>
+    <div class="compare">
+      <div class="card" style="border-color: #0891b2;">
+        <h3><span class="badge badge-cyan">Core</span> asc CLI 本体</h3>
+        <p>Go 製の CLI バイナリ。App Store Connect API の全機能をカバー。Homebrew / install script / WinGet でインストール。</p>
+      </div>
+      <div class="card" style="border-color: #7F52FF;">
+        <h3><span class="badge badge-purple">Skills</span> Agent Skills（22スキル）</h3>
+        <p>AI エージェント向けのスキル集。ビルド・TestFlight・メタデータ・審査提出・署名のワークフローを自動化。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>設計思想</h3>
     <ul>
-      <li><strong>ビルド/リリース:</strong> Xcodeプロジェクトのアーカイブ・IPA/PKGエクスポート・アップロード・審査提出</li>
-      <li><strong>TestFlight:</strong> ベータ配布、テスター/グループ管理</li>
-      <li><strong>App内課金・サブスク:</strong> IAP（消耗型/非消耗型）の作成、サブスクのイントロ/プロモオファー設定、地域別価格、オファーコード/ウィンバック</li>
-      <li><strong>メタデータ:</strong> スクリーンショット・プレビュー動画・「最新情報」のロケール別更新、年齢制限・カテゴリ</li>
-      <li><strong>チーム/権限:</strong> 複数アカウントのクレデンシャル管理、ユーザー招待・ロール割り当て</li>
+      <li><strong>JSON-first:</strong> パイプ/CI 環境では自動的に JSON 出力。TTY では table 表示。<code>--output json|table|markdown</code> で明示的に切替可</li>
+      <li><strong>対話プロンプトなし:</strong> すべての入力はフラグで指定。AI エージェントやスクリプトから安全に呼び出せる</li>
+      <li><strong>Dry-run サポート:</strong> <code>--dry-run</code> で破壊的操作をプレビュー。エージェントが実行前に確認できる</li>
+      <li><strong>複数アカウント:</strong> 名前付きプロファイルで複数の ASC アカウントを切り替え</li>
     </ul>
   </div>
 
   <div class="card">
-    <h3>インストールと認証</h3>
-<pre>
-<span class="cm"># Homebrew でインストール</span>
-brew install asccli
+    <h3>対応プラットフォーム</h3>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
+      <span class="badge badge-blue">iOS</span>
+      <span class="badge badge-blue">macOS</span>
+      <span class="badge badge-blue">tvOS</span>
+      <span class="badge badge-purple">visionOS</span>
+    </div>
+    <p style="margin-top:8px; font-size:12px; color:#888;">App Store Connect API がサポートする全 Apple プラットフォームに対応。</p>
+  </div>
 
-<span class="cm"># API キーで認証（複数アカウント対応）</span>
-asc auth login \
-  --key-id <span class="str">&lt;ID&gt;</span> \
-  --issuer-id <span class="str">&lt;ID&gt;</span> \
-  --private-key-path <span class="str">&lt;path/to/AuthKey.p8&gt;</span>
+  <div class="card">
+    <h3>インストール</h3>
+<pre>
+<span class="cm"># Homebrew（推奨）</span>
+brew install asc
+
+<span class="cm"># Install script（macOS / Linux）</span>
+curl -fsSL https://asccli.sh/install | bash
+
+<span class="cm"># WinGet（Windows）</span>
+winget install asc
 </pre>
-    <p style="font-size:12px; color:#888; margin-top:4px;">App Store Connect API キー（.p8）を発行して登録すれば、以降はターミナルから直接 ASC を操作できる。</p>
+  </div>
+
+  <div class="card">
+    <h3>認証</h3>
+<pre>
+<span class="cm"># キーチェーン連携（ローカル開発向け）</span>
+asc auth login \
+  --name <span class="str">"MyApp"</span> \
+  --key-id <span class="str">"ABC123"</span> \
+  --issuer-id <span class="str">"DEF456"</span> \
+  --private-key <span class="str">/path/to/AuthKey.p8</span> \
+  --network
+
+<span class="cm"># CI/ヘッドレス環境（キーチェーンバイパス）</span>
+asc auth login \
+  --bypass-keychain \
+  --name <span class="str">"MyCIKey"</span> \
+  --key-id <span class="str">"ABC123"</span> \
+  --issuer-id <span class="str">"DEF456"</span> \
+  --private-key <span class="str">/path/to/AuthKey.p8</span>
+</pre>
+    <p style="font-size:12px; color:#888; margin-top:4px;">App Store Connect API キー（.p8）を <a href="https://appstoreconnect.apple.com/access/integrations/api" target="_blank" rel="noopener">appstoreconnect.apple.com</a> で発行して登録。<code>asc auth doctor</code> でトラブルシュート。</p>
+  </div>
+
+  <div class="insight">
+    <strong>位置づけ:</strong> RevenueCat AI Toolkit が <strong>課金バックエンド（RevenueCat）側</strong>を担うのに対し、asc CLI は <strong>App Store Connect（ストア）側</strong>を担う。両者は補完関係にあり、AI エージェントから扱える点も共通する。
+  </div>
+</div>
+
+<!-- ===== ASC ARCHITECTURE ===== -->
+<div class="panel" id="panel-asc-architecture">
+  <h3 class="section-header">全体アーキテクチャ</h3>
+
+  <div class="arch-row">
+    <div class="arch-box"><h4>開発者 / AI エージェント</h4><p>CLI 直接実行 or Agent Skills 経由</p></div>
+  </div>
+  <div class="arch-arrow">↓ コマンド実行</div>
+  <div class="arch-row">
+    <div class="arch-box highlight">
+      <h4>asc CLI（Go バイナリ）</h4>
+      <p>JSON-first・対話プロンプトなし<br/>Dry-run サポート</p>
+    </div>
+    <div class="arch-box highlight">
+      <h4>Agent Skills（22 スキル）</h4>
+      <p>Markdown ベースの手順書<br/>ワークフロー自動化</p>
+    </div>
+  </div>
+  <div class="arch-arrow">↓ REST API（JWT 認証）</div>
+  <div class="arch-row">
+    <div class="arch-box" style="background:#e0f7fa; border-color:#0891b2;">
+      <h4>App Store Connect API</h4>
+      <p>アプリ・ビルド・TestFlight<br/>メタデータ・IAP・審査</p>
+    </div>
+    <div class="arch-box" style="background:#e8f4fd; border-color:#4A90D9;">
+      <h4>Apple Ads API</h4>
+      <p>キャンペーン・レポート<br/>（別 OAuth 認証）</p>
+    </div>
+  </div>
+  <div class="arch-arrow">↓ 管理対象</div>
+  <div class="arch-row">
+    <div class="arch-box"><h4>App Store</h4><p>アプリ公開・審査</p></div>
+    <div class="arch-box"><h4>TestFlight</h4><p>ベータ配布</p></div>
+    <div class="arch-box"><h4>Xcode Cloud</h4><p>クラウドビルド</p></div>
+  </div>
+
+  <div class="insight">
+    <strong>技術的特徴:</strong> Go 製のシングルバイナリ。API キー（.p8）による JWT 認証を内蔵し、キーチェーン連携 or 環境変数ベースのヘッドレス認証をサポート。TTY 判定による自動出力フォーマット切替（table / json）で、人間と機械の両方に対応。
+  </div>
+
+  <h3 class="section-header">Agent Skills の役割</h3>
+  <div class="card">
+    <p>Agent Skills = 「asc コマンドをどの順番で・どう組み合わせるか」を AI エージェントに教える Markdown ベースの手順書。RevenueCat AI Toolkit のスキルと同じ思想。</p>
+    <ul>
+      <li><strong>SKILL.md:</strong> エージェントへの指示（手順・判断基準・検証ステップ）</li>
+      <li><strong>scripts/:</strong> 補助スクリプト（オプション）</li>
+      <li><strong>references/:</strong> 参照ドキュメント（オプション）</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>スキルのインストール</h3>
+<pre>
+<span class="cm"># asc CLI から直接インストール</span>
+asc install-skills
+
+<span class="cm"># npx 経由で特定エージェント向けにインストール</span>
+npx skills add rorkai/app-store-connect-cli-skills --global --agent codex
+</pre>
+    <p style="font-size:12px; color:#888; margin-top:4px;">グローバルインストールすると全プロジェクトでスキルが利用可能になる。</p>
+  </div>
+
+  <h3 class="section-header">リポジトリ構造</h3>
+<pre>
+<span class="cm">rorkai/App-Store-Connect-CLI/</span>
+├── cmd/                     <span class="cm"># CLIエントリポイント</span>
+├── commands/                <span class="cm"># コマンド実装</span>
+├── internal/                <span class="cm"># 内部ライブラリ</span>
+├── docs/
+│   ├── CI_CD.md             <span class="cm"># CI/CD 統合ガイド</span>
+│   └── WORKFLOWS.md         <span class="cm"># ワークフロー定義</span>
+├── guides/                  <span class="cm"># 各種ガイド</span>
+└── .asc/
+    ├── config.json           <span class="cm"># ローカル認証設定</span>
+    ├── deployment.json       <span class="cm"># ビルド番号注入マニフェスト</span>
+    └── workflow.json         <span class="cm"># ワークフロー定義</span>
+
+<span class="cm">rorkai/app-store-connect-cli-skills/</span>
+└── skills/
+    ├── asc-cli-usage/
+    │   └── SKILL.md
+    ├── asc-testflight-orchestration/
+    │   └── SKILL.md
+    ├── asc-release-flow/
+    │   └── SKILL.md
+    └── ... (22スキル)
+</pre>
+</div>
+
+<!-- ===== ASC COMMANDS ===== -->
+<div class="panel" id="panel-asc-commands">
+  <div class="card">
+    <h3>コマンド体系</h3>
+    <p><code>asc &lt;domain&gt; &lt;action&gt; [flags]</code> — ドメインごとにサブコマンドが整理されている。すべてのコマンドが <code>--output json|table|markdown</code> をサポート。</p>
+  </div>
+
+  <table class="tools-table">
+    <thead><tr><th>カテゴリ</th><th>コマンド</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td class="tool-cat" rowspan="3">認証</td><td>auth login</td><td>API キー登録（キーチェーン / バイパス / ローカル）</td></tr>
+      <tr><td>auth status</td><td>アクティブプロファイルの検証</td></tr>
+      <tr><td>auth doctor</td><td>認証トラブルシュート</td></tr>
+
+      <tr><td class="tool-cat" rowspan="2">アプリ</td><td>apps list</td><td>アプリ一覧取得</td></tr>
+      <tr><td>apps info view</td><td>アプリ詳細表示</td></tr>
+
+      <tr><td class="tool-cat" rowspan="4">ビルド</td><td>builds upload</td><td>.ipa / .pkg アップロード</td></tr>
+      <tr><td>builds list</td><td>ビルド一覧</td></tr>
+      <tr><td>builds add-groups</td><td>TestFlight グループへの追加</td></tr>
+      <tr><td>builds next-build-number</td><td>次のビルド番号を算出</td></tr>
+
+      <tr><td class="tool-cat" rowspan="3">TestFlight</td><td>testflight groups list</td><td>配布グループ一覧</td></tr>
+      <tr><td>testflight feedback list</td><td>テスターフィードバック取得</td></tr>
+      <tr><td>testflight crashes list/log</td><td>クラッシュレポート・ログ</td></tr>
+
+      <tr><td class="tool-cat" rowspan="4">審査・リリース</td><td>publish appstore</td><td>App Store 提出（ビルド→提出の一括操作）</td></tr>
+      <tr><td>release stage</td><td>リリース計画プレビュー（dry-run 可）</td></tr>
+      <tr><td>validate</td><td>提出前チェック</td></tr>
+      <tr><td>submit status / cancel</td><td>審査状況確認・取り下げ</td></tr>
+
+      <tr><td class="tool-cat" rowspan="2">レビュー</td><td>review status</td><td>審査状態トラッキング</td></tr>
+      <tr><td>review doctor</td><td>審査ブロッカー診断</td></tr>
+
+      <tr><td class="tool-cat" rowspan="4">メタデータ</td><td>metadata init</td><td>メタデータテンプレート生成</td></tr>
+      <tr><td>metadata apply</td><td>ローカライズメタデータ適用</td></tr>
+      <tr><td>metadata sync</td><td>双方向メタデータ同期</td></tr>
+      <tr><td>metadata keywords audit</td><td>ASO キーワード監査</td></tr>
+
+      <tr><td class="tool-cat" rowspan="3">メディア</td><td>screenshots plan</td><td>キャプチャ要件レイアウト</td></tr>
+      <tr><td>screenshots apply / upload</td><td>フレーム付きスクリーンショットのアップロード</td></tr>
+      <tr><td>video-previews list</td><td>プレビュー動画一覧</td></tr>
+
+      <tr><td class="tool-cat" rowspan="3">署名</td><td>certificates list</td><td>コード署名証明書一覧</td></tr>
+      <tr><td>profiles list</td><td>プロビジョニングプロファイル一覧</td></tr>
+      <tr><td>bundle-ids list</td><td>Bundle ID 一覧</td></tr>
+
+      <tr><td class="tool-cat" rowspan="3">Xcode</td><td>xcode inject</td><td>バージョン/ビルド番号をプロジェクトに注入</td></tr>
+      <tr><td>xcode archive</td><td>.ipa / .pkg アーカイブ作成</td></tr>
+      <tr><td>xcode export</td><td>署名済みバイナリのエクスポート</td></tr>
+
+      <tr><td class="tool-cat" rowspan="2">Xcode Cloud</td><td>xcode-cloud run</td><td>クラウドビルドワークフロー実行</td></tr>
+      <tr><td>xcode-cloud build-runs get</td><td>ビルドラン詳細取得</td></tr>
+
+      <tr><td class="tool-cat" rowspan="3">Apple Ads</td><td>ads auth login / discover</td><td>Search Ads 認証・組織探索</td></tr>
+      <tr><td>ads campaigns</td><td>広告キャンペーン一覧</td></tr>
+      <tr><td>ads reports campaigns</td><td>パフォーマンスレポート</td></tr>
+
+      <tr><td class="tool-cat" rowspan="2">StoreKit</td><td>storekit auth login / doctor</td><td>IAP 認証設定・診断</td></tr>
+      <tr><td>storekit retention-messaging</td><td>リテンションメッセージ管理</td></tr>
+
+      <tr><td class="tool-cat" rowspan="2">ワークフロー</td><td>workflow validate</td><td>ワークフロー定義の検証</td></tr>
+      <tr><td>workflow run</td><td>定義済みワークフロー実行（dry-run 可）</td></tr>
+    </tbody>
+  </table>
+
+  <div class="insight" style="margin-top:14px;">
+    <strong>ポイント:</strong> RevenueCat AI Toolkit の MCP Tools が「課金バックエンドの CRUD」を提供するのに対し、asc CLI のコマンドは「ストア側のリリースライフサイクル全体」をカバー。認証→ビルド→TestFlight→メタデータ→審査→リリースの一連のフローを1つの CLI で完結できる。
+  </div>
+</div>
+
+<!-- ===== ASC SKILLS ===== -->
+<div class="panel" id="panel-asc-skills">
+  <h3 class="section-header">Agent Skills（22スキル）</h3>
+  <p style="font-size:13px; color:#666; margin-bottom:12px;">
+    <a href="https://github.com/rorkai/app-store-connect-cli-skills" target="_blank" rel="noopener" style="color:#0891b2; font-weight:600;">rorkai/app-store-connect-cli-skills</a> — <code>asc install-skills</code> でインストール。各スキルをクリックで詳細表示。
+  </p>
+  <div class="skill-grid" id="skill-grid-asc"></div>
+</div>
+
+<!-- ===== ASC CI/CD ===== -->
+<div class="panel" id="panel-asc-cicd">
+  <h3 class="section-header">CI/CD 統合パターン</h3>
+
+  <div class="card">
+    <h3>出力フォーマットの自動切替</h3>
+    <p>TTY（対話ターミナル）では <code>table</code>、パイプ/CI 環境では <code>json</code> を自動選択。AI エージェントやスクリプトが常に構造化データを受け取れる。</p>
+<pre>
+<span class="cm"># 対話環境（人間向け）</span>
+$ asc apps list
+<span class="cm"># → テーブル表示</span>
+
+<span class="cm"># パイプ / CI 環境（機械向け）</span>
+$ asc apps list | jq '.[] | .id'
+<span class="cm"># → JSON 自動出力</span>
+
+<span class="cm"># 明示的に切替</span>
+$ asc apps list --output markdown
+</pre>
+  </div>
+
+  <div class="card">
+    <h3>環境変数</h3>
+    <ul>
+      <li><code>ASC_BYPASS_KEYCHAIN=1</code> — キーチェーン無効化（ヘッドレス CI）</li>
+      <li><code>ASC_DEFAULT_OUTPUT</code> — デフォルト出力フォーマット</li>
+      <li><code>ASC_TELEMETRY_DISABLED=1</code> / <code>DO_NOT_TRACK=1</code> — テレメトリ無効化</li>
+      <li><code>ASC_DEBUG=api</code> — API デバッグ出力</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>ワークフロー定義</h3>
+    <p><code>.asc/workflow.json</code> でマルチステップの自動化グラフを定義。条件分岐・フック・バリデーションに対応。</p>
+<pre>
+<span class="cm"># ワークフロー検証</span>
+asc workflow validate
+
+<span class="cm"># ドライラン（実際には実行しない）</span>
+asc workflow run --dry-run <span class="str">my-release-flow</span>
+
+<span class="cm"># 実行</span>
+asc workflow run <span class="str">my-release-flow</span>
+</pre>
+  </div>
+
+  <div class="card">
+    <h3>ビルド番号注入</h3>
+<pre>
+<span class="cm"># deployment.json マニフェストからバージョン/ビルド番号を注入</span>
+asc xcode inject --manifest <span class="str">.asc/deployment.json</span>
+</pre>
+    <p style="font-size:12px; color:#888; margin-top:4px;">CI パイプラインでビルド番号を自動インクリメントし、Xcode プロジェクトに反映するパターン。</p>
+  </div>
+
+  <div class="card">
+    <h3>対応 CI サービス</h3>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
+      <span class="badge badge-gray">GitHub Actions</span>
+      <span class="badge badge-gray">GitLab CI</span>
+      <span class="badge badge-gray">Bitrise</span>
+      <span class="badge badge-gray">CircleCI</span>
+    </div>
+    <p style="margin-top:8px; font-size:12px; color:#888;"><code>docs/CI_CD.md</code> に各サービスの統合パターンが記載。<code>--bypass-keychain</code> + <code>--local</code> で <code>.asc/config.json</code> にリポジトリスコープの認証情報を格納。</p>
+  </div>
+
+  <div class="card">
+    <h3>Xcode → TestFlight ワークフロー例</h3>
+<pre>
+<span class="cm"># 1. ビルド番号算出</span>
+BUILD=$(<span class="fn">asc builds next-build-number</span> --app <span class="str">"123456789"</span>)
+
+<span class="cm"># 2. バージョン注入</span>
+asc xcode inject --manifest <span class="str">.asc/deployment.json</span>
+
+<span class="cm"># 3. アーカイブ & エクスポート</span>
+asc xcode archive --scheme <span class="str">"MyApp"</span>
+asc xcode export --method <span class="str">"app-store"</span>
+
+<span class="cm"># 4. アップロード</span>
+asc builds upload --app <span class="str">"123456789"</span> --ipa <span class="str">"./build/MyApp.ipa"</span>
+
+<span class="cm"># 5. TestFlight 配布</span>
+asc builds add-groups --app <span class="str">"123456789"</span> --groups <span class="str">"Internal Testers"</span>
+</pre>
+  </div>
+
+  <div class="insight">
+    <strong>エージェント連携のポイント:</strong> JSON-first 設計により、AI エージェントは asc コマンドの出力をそのまま解析できる。<code>--dry-run</code> で破壊的操作をプレビューし、安全にオーケストレーションを構築可能。
   </div>
 </div>
 
@@ -611,35 +918,466 @@ asc auth login \
 <div class="panel" id="panel-asc-integration">
   <h3 class="section-header">ai-toolkit との組み合わせ</h3>
   <div class="card">
-    <p>RevenueCat AI Toolkit（MCP）は <strong>RevenueCat 側</strong>の設定を担うが、その手前にある <strong>App Store Connect 側</strong>のアプリ登録・IAP/サブスク作成は本来手作業が必要。ここを <strong>asc-cli</strong> が埋めることで、AIエージェントが両側をまたいで一気通貫にセットアップでき、導入のハードルが大きく下がる。</p>
+    <p>RevenueCat AI Toolkit（MCP）は <strong>RevenueCat 側</strong>の設定を担うが、その手前にある <strong>App Store Connect 側</strong>のアプリ登録・IAP/サブスク作成は本来手作業が必要。ここを <strong>asc CLI</strong> が埋めることで、AI エージェントが両側をまたいで一気通貫にセットアップでき、導入のハードルが大きく下がる。</p>
   </div>
 
   <div class="arch-row">
-    <div class="arch-box highlight"><h4>AI エージェント</h4><p>Claude Code 等</p></div>
+    <div class="arch-box highlight"><h4>AI エージェント</h4><p>Claude Code / Codex / Cursor 等</p></div>
   </div>
   <div class="arch-arrow">↓ 2系統を駆動</div>
   <div class="arch-row">
     <div class="arch-box" style="background:#e0f7fa; border-color:#0891b2;">
-      <h4>asc-cli</h4>
-      <p>App Store Connect<br/>アプリ登録・IAP/サブスク作成</p>
+      <h4>asc CLI + Agent Skills</h4>
+      <p>App Store Connect<br/>アプリ登録・IAP/サブスク作成<br/>ビルド・TestFlight・審査</p>
     </div>
     <div class="arch-box" style="background:#fff3e6; border-color:#d35400;">
-      <h4>ai-toolkit (MCP)</h4>
-      <p>RevenueCat<br/>商品・エンタイトルメント設定</p>
+      <h4>ai-toolkit (MCP + Skills)</h4>
+      <p>RevenueCat<br/>商品・エンタイトルメント設定<br/>KPI 分析・A/B テスト</p>
     </div>
   </div>
   <div class="arch-arrow">↓ 連携</div>
   <div class="arch-row">
-    <div class="arch-box"><h4>App Store Connect</h4><p>ストア側の商品</p></div>
+    <div class="arch-box"><h4>App Store Connect</h4><p>ストア側の商品・アプリ</p></div>
     <div class="arch-box"><h4>RevenueCat Backend</h4><p>課金バックエンド</p></div>
   </div>
 
+  <div class="card" style="margin-top:14px;">
+    <h3>カタログ同期スキル</h3>
+    <p><code>asc-revenuecat-catalog-sync</code> スキルは、App Store Connect のサブスク/IAP と RevenueCat の Products・Offerings を照合し、差分を解消する。両ツールの橋渡し役。</p>
+<pre>
+<span class="cm"># asc 側: ASC の IAP 一覧を取得</span>
+asc storekit retention-messaging messages list --app <span class="str">"123456789"</span> --output json
+
+<span class="cm"># RevenueCat 側: MCP で商品一覧を取得</span>
+<span class="cm"># → 差分を検出し、不足分を自動作成</span>
+</pre>
+  </div>
+
+  <div class="card">
+    <h3>一気通貫ワークフロー例</h3>
+    <ul>
+      <li><strong>Step 1 (asc):</strong> <code>asc apps list</code> でアプリ ID を特定</li>
+      <li><strong>Step 2 (asc):</strong> App Store Connect で IAP/サブスク商品を作成</li>
+      <li><strong>Step 3 (ai-toolkit):</strong> RevenueCat で Product・Entitlement・Offering を設定</li>
+      <li><strong>Step 4 (ai-toolkit):</strong> <code>integrate-revenuecat</code> スキルで SDK 統合コードを生成</li>
+      <li><strong>Step 5 (asc):</strong> ビルド → TestFlight 配布 → 動作確認</li>
+      <li><strong>Step 6 (asc):</strong> メタデータ設定 → 審査提出</li>
+    </ul>
+  </div>
+
   <div class="insight">
-    <strong>なぜ相性が良いか:</strong> どちらも CLI/MCP として「AIエージェントから呼び出せる」設計（asc-cli はレスポンスに次の実行コマンドを埋め込む CAEOAS 設計）。ストア側（asc-cli）→ 課金バックエンド側（ai-toolkit）の作業をAIに任せられるため、ダッシュボードと ASC を行き来する初期設定の手間を大幅に削減できる。
+    <strong>なぜ相性が良いか:</strong> どちらも「AI エージェントから呼び出せる」設計。asc CLI は JSON-first + Agent Skills、ai-toolkit は MCP + Skills。ストア側（asc）→ 課金バックエンド側（ai-toolkit）の作業を AI に任せることで、ダッシュボードと ASC を行き来する初期設定の手間を大幅に削減できる。
   </div>
 </div>
 
 </div><!-- /main-asc -->
+
+<!-- ================= GROUP: 連携シナジー ================= -->
+<div class="maingroup" id="main-synergy">
+
+<div class="tabs">
+  <div class="tab active" data-tab="syn-shipathon">Shipathon 活用</div>
+  <div class="tab" data-tab="syn-why">なぜ組み合わせるのか</div>
+  <div class="tab" data-tab="syn-workflow">一気通貫ワークフロー</div>
+  <div class="tab" data-tab="syn-scenarios">実践シナリオ</div>
+</div>
+
+<!-- ===== SHIPATHON ===== -->
+<div class="panel active" id="panel-syn-shipathon">
+  <div class="card" style="border-color:#e67e22; background:linear-gradient(135deg, #fff8f0, #fff);">
+    <h3 style="font-size:16px;">Shipathon 2026 参加者のみなさんへ</h3>
+    <p><a href="https://jp.shipaton.com/" target="_blank" rel="noopener" style="color:#d35400; font-weight:600;">Shipathon 2026</a>（8/1〜9/30）は RevenueCat 主催の世界最大級モバイルアプリハッカソンです。参加条件は<strong>「アプリを公開し、RevenueCat で課金を実装すること」</strong>。このページで紹介する2つのツールを使えば、その両方を <strong>AI エージェントへの自然言語の指示だけ</strong>で完結できます。</p>
+    <p style="margin-top:8px; font-size:12px; color:#888;">賞金総額 1,000 万円超 / 参加資格不問 / 50,000人以上が参加（2025年実績）</p>
+  </div>
+
+  <h3 class="section-header">コードが書けなくても大丈夫</h3>
+  <div class="card">
+    <p>Shipathon で求められる「ストアに公開」「課金を実装」は、従来はエンジニアでないと難しい作業でした。しかし、AI コーディングエージェント + 本ページの2つのツールを組み合わせると、<strong>自然言語で指示するだけ</strong>で AI がコードの生成からストアへの提出まで代行してくれます。</p>
+  </div>
+
+  <div class="compare">
+    <div class="card">
+      <h3>従来のハードル</h3>
+      <ul>
+        <li>App Store Connect の複雑な設定画面</li>
+        <li>RevenueCat ダッシュボードの概念理解</li>
+        <li>Product / Entitlement / Offering の依存関係</li>
+        <li>Swift / Kotlin の課金コード実装</li>
+        <li>ビルド・署名・TestFlight の手順</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:#4caf50;">
+      <h3>AI ツールで変わること</h3>
+      <ul>
+        <li>日本語で「月額980円のサブスク付けて」と言うだけ</li>
+        <li>AI が設定の順序・依存関係を自動制御</li>
+        <li>課金コードはスキルがテンプレート提供</li>
+        <li>ビルドから審査提出まで CLI コマンドで完結</li>
+        <li>エラーが出ても AI が原因診断・修正</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="section-header">こんな指示で動きます（自然言語の例）</h3>
+
+  <div class="card" style="border-left:3px solid #3498db;">
+    <h3><span class="badge badge-blue">非エンジニア向け</span> アイデアからリリースまで</h3>
+<pre>
+<span class="str">"瞑想アプリを作りたい。無料で基本コースが使えて、
+月額480円のプレミアムで全コース解放。
+App Store に出すところまでやって"</span>
+</pre>
+    <p style="margin-top:6px; font-size:12px; color:#666;">AI エージェントがアプリ生成 → ASC でサブスク商品作成 → RevenueCat で課金バックエンド設定 → SDK 統合 → ビルド → 審査提出まで一気通貫で実行。</p>
+  </div>
+
+  <div class="card" style="border-left:3px solid #9b59b6;">
+    <h3><span class="badge badge-purple">非エンジニア向け</span> 課金部分だけ追加</h3>
+<pre>
+<span class="str">"もうアプリはできてる。ここに買い切り1,200円の
+広告非表示オプションを追加して、RevenueCatと
+App Store Connect の両方を設定して"</span>
+</pre>
+    <p style="margin-top:6px; font-size:12px; color:#666;">既存アプリに課金を後付けするパターン。AI がコードの変更箇所を特定し、ストア側・バックエンド側の設定を両方自動で行う。</p>
+  </div>
+
+  <div class="card" style="border-left:3px solid #0891b2;">
+    <h3><span class="badge badge-cyan">エンジニア向け</span> 設定作業の自動化</h3>
+<pre>
+<span class="str">"ASC の IAP 設定と RevenueCat のカタログを同期して。
+不足している商品があれば自動で作って、
+Offering に monthly と annual のパッケージを構成して"</span>
+</pre>
+    <p style="margin-top:6px; font-size:12px; color:#666;">エンジニアにとっても面倒な「2つのダッシュボードの整合性管理」を AI に任せることで、コア機能の開発に集中できる。</p>
+  </div>
+
+  <div class="card" style="border-left:3px solid #27ae60;">
+    <h3><span class="badge badge-green">エンジニア向け</span> リリースフロー自動化</h3>
+<pre>
+<span class="str">"ビルドして TestFlight で Internal Testers に配布。
+問題なければメタデータを日英で設定して審査に出して。
+リリースノートは直近の git log から生成して"</span>
+</pre>
+    <p style="margin-top:6px; font-size:12px; color:#666;">asc CLI のスキルがビルド→配布→メタデータ→審査の全ステップを自動化。Shipathon 期間中の高速イテレーションに最適。</p>
+  </div>
+
+  <h3 class="section-header">Shipathon で使うために必要なもの</h3>
+  <div class="card">
+    <table class="tools-table">
+      <thead><tr><th>項目</th><th>内容</th><th>必要度</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>AI エージェント</strong></td>
+          <td>Claude Code / Cursor / Codex など</td>
+          <td><span class="badge badge-orange">必須</span></td>
+        </tr>
+        <tr>
+          <td><strong>RevenueCat アカウント</strong></td>
+          <td><a href="https://www.revenuecat.com/" target="_blank" rel="noopener" style="color:#d35400;">revenuecat.com</a> で無料作成</td>
+          <td><span class="badge badge-orange">必須</span></td>
+        </tr>
+        <tr>
+          <td><strong>Apple Developer Program</strong></td>
+          <td>年額 12,980 円（iOS アプリ公開に必要）</td>
+          <td><span class="badge badge-orange">必須</span>（iOS の場合）</td>
+        </tr>
+        <tr>
+          <td><strong>RevenueCat AI Toolkit</strong></td>
+          <td>AI エージェントのプラグインマーケットプレイスからインストール</td>
+          <td><span class="badge badge-orange">必須</span></td>
+        </tr>
+        <tr>
+          <td><strong>asc CLI</strong></td>
+          <td><code>brew install asc</code></td>
+          <td><span class="badge badge-green">推奨</span></td>
+        </tr>
+        <tr>
+          <td><strong>asc Agent Skills</strong></td>
+          <td><code>asc install-skills</code></td>
+          <td><span class="badge badge-green">推奨</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="section-header">Shipathon タイムライン × ツール活用</h3>
+  <div class="card" style="border-left:3px solid #e67e22;">
+    <h3>Week 1-2: アイデア → プロトタイプ</h3>
+    <ul>
+      <li>AI エージェントにアプリのアイデアを伝えてプロトタイプを生成</li>
+      <li><strong>ai-toolkit:</strong> <code>create-revenuecat-project</code> でプロジェクト作成</li>
+      <li><strong>ai-toolkit:</strong> <code>integrate-revenuecat</code> で SDK 統合</li>
+    </ul>
+  </div>
+  <div class="card" style="border-left:3px solid #3498db;">
+    <h3>Week 3-4: 課金実装 → テスト</h3>
+    <ul>
+      <li><strong>asc:</strong> ASC で IAP / サブスク商品を作成</li>
+      <li><strong>ai-toolkit:</strong> RevenueCat で商品設定・ペイウォール構成</li>
+      <li><strong>ai-toolkit:</strong> <code>purchase-flow</code> + <code>entitlements-gate</code> で課金フロー実装</li>
+      <li><strong>asc:</strong> TestFlight でテスト配布</li>
+    </ul>
+  </div>
+  <div class="card" style="border-left:3px solid #27ae60;">
+    <h3>Week 5-8: ブラッシュアップ → リリース → 成長</h3>
+    <ul>
+      <li><strong>asc:</strong> メタデータ設定（多言語対応）→ 審査提出</li>
+      <li><strong>ai-toolkit:</strong> A/B テスト設定で価格やペイウォールを最適化</li>
+      <li><strong>ai-toolkit:</strong> <code>revenuecat-charts</code> で KPI モニタリング</li>
+      <li>改善 → 再ビルド → 再提出のサイクルを高速に回す</li>
+    </ul>
+  </div>
+
+  <div class="insight">
+    <strong>Shipathon のポイント:</strong> 2ヶ月間でアプリを「公開して成長させる」ことが求められる。AI ツールで初期セットアップを高速化することで、ユーザー獲得や機能改善に時間を使える。「作る」だけでなく「育てる」フェーズにリソースを集中できるのが最大のメリット。
+  </div>
+</div>
+
+<!-- ===== WHY COMBINE ===== -->
+<div class="panel" id="panel-syn-why">
+  <div class="card" style="border-color:#e67e22;">
+    <h3>2つのツールが埋める「溝」</h3>
+    <p>iOS/macOS アプリの課金実装には <strong>2つの管理画面</strong> が関わる。App Store Connect（ストア側）と RevenueCat（課金バックエンド側）。従来、開発者はこの2つのダッシュボードを行き来しながら手動で設定を揃える必要があった。</p>
+  </div>
+
+  <h3 class="section-header">Before：従来のワークフロー</h3>
+  <div class="arch-row">
+    <div class="arch-box"><h4>開発者</h4><p>2つのダッシュボードを手動操作</p></div>
+  </div>
+  <div class="arch-arrow">↓ ブラウザで手動操作</div>
+  <div class="arch-row">
+    <div class="arch-box" style="background:#fee; border-color:#e74c3c;">
+      <h4>App Store Connect</h4>
+      <p>IAP/サブスク作成<br/>メタデータ設定<br/>審査提出</p>
+    </div>
+    <div class="arch-box" style="background:#fee; border-color:#e74c3c;">
+      <h4>RevenueCat Dashboard</h4>
+      <p>Product 作成<br/>Entitlement 設定<br/>Offering 構成</p>
+    </div>
+  </div>
+  <div class="insight">
+    <strong>課題:</strong> 商品IDの手動コピペ、設定の同期漏れ、ダッシュボード間の行き来による時間ロス。初期設定だけで半日〜1日かかることも。
+  </div>
+
+  <h3 class="section-header">After：AI エージェント統合ワークフロー</h3>
+  <div class="arch-row">
+    <div class="arch-box highlight"><h4>AI エージェント</h4><p>Claude Code / Codex / Cursor</p></div>
+  </div>
+  <div class="arch-arrow">↓ 自然言語で指示するだけ</div>
+  <div class="arch-row">
+    <div class="arch-box" style="background:#e0f7fa; border-color:#0891b2;">
+      <h4>asc CLI + Agent Skills</h4>
+      <p>JSON-first CLI<br/>22 スキルで自動化</p>
+    </div>
+    <div class="arch-box" style="background:#fff3e6; border-color:#d35400;">
+      <h4>ai-toolkit (MCP + Skills)</h4>
+      <p>リモート MCP サーバー<br/>14 スキルで自動化</p>
+    </div>
+  </div>
+  <div class="arch-arrow">↓ 自動連携</div>
+  <div class="arch-row">
+    <div class="arch-box" style="background:#e8f5e9; border-color:#4caf50;">
+      <h4>App Store Connect</h4>
+      <p>設定済み</p>
+    </div>
+    <div class="arch-box" style="background:#e8f5e9; border-color:#4caf50;">
+      <h4>RevenueCat</h4>
+      <p>設定済み</p>
+    </div>
+  </div>
+  <div class="insight">
+    <strong>効果:</strong> AI エージェントが両側を統一的に操作。商品IDの受け渡し、設定の整合性チェック、不足リソースの自動作成まで一気通貫で完結。初期設定が数分に短縮。
+  </div>
+
+  <h3 class="section-header">組み合わせのメリット</h3>
+  <div class="compare">
+    <div class="card">
+      <h3>単体で使う場合</h3>
+      <ul>
+        <li>asc CLI だけ → ストア側の操作は自動化できるが、RevenueCat 側は手動設定が必要</li>
+        <li>ai-toolkit だけ → RevenueCat 側は自動化できるが、ASC での IAP 作成やビルド配布は手動</li>
+        <li>商品IDの手動コピペが残る</li>
+        <li>設定の整合性は開発者が目視確認</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:#4caf50;">
+      <h3>組み合わせた場合</h3>
+      <ul>
+        <li>ストア側 → 課金バックエンド側を AI が一気通貫で設定</li>
+        <li>商品IDの受け渡しを自動化（<code>asc-revenuecat-catalog-sync</code> スキル）</li>
+        <li>ビルド → TestFlight → 審査まで同じ AI セッションで完結</li>
+        <li>設定の不整合を AI が検出・修正</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== WORKFLOW ===== -->
+<div class="panel" id="panel-syn-workflow">
+  <h3 class="section-header">End-to-End ワークフロー</h3>
+  <p style="font-size:13px; color:#666; margin-bottom:14px;">AI エージェントに「サブスク課金付きアプリをリリースして」と指示した場合の全体フロー。</p>
+
+  <div class="card" style="border-left:3px solid #0891b2;">
+    <h3><span class="badge badge-cyan">Phase 1</span> ストア側セットアップ（asc CLI）</h3>
+    <ul>
+      <li><code>asc apps list</code> でアプリ ID を特定</li>
+      <li>App Store Connect で IAP / サブスクリプション商品を作成</li>
+      <li>商品 ID（<code>com.example.premium_monthly</code> 等）を取得</li>
+    </ul>
+<pre>
+<span class="cm"># アプリ確認</span>
+asc apps list --output json
+
+<span class="cm"># サブスク商品の状態確認</span>
+asc storekit retention-messaging messages list \
+  --app <span class="str">"123456789"</span> --output json
+</pre>
+  </div>
+
+  <div class="arch-arrow">↓ 商品 ID を受け渡し</div>
+
+  <div class="card" style="border-left:3px solid #d35400;">
+    <h3><span class="badge badge-orange">Phase 2</span> 課金バックエンド設定（ai-toolkit MCP）</h3>
+    <ul>
+      <li><code>create-product</code> で RevenueCat に商品登録（ASC の商品 ID を紐付け）</li>
+      <li><code>create-entitlement</code> でアクセス権定義（<code>"premium"</code>）</li>
+      <li><code>attach-products-to-entitlement</code> で商品→権限を紐付け</li>
+      <li><code>create-offering</code> → <code>create-package</code> → <code>attach-products-to-package</code> でペイウォール構成</li>
+    </ul>
+<pre>
+<span class="cm"># MCP 経由で RevenueCat に商品を作成</span>
+<span class="cm"># → entitlement 作成 → offering 構成</span>
+<span class="cm"># → 依存関係の順序はスキルが制御</span>
+</pre>
+  </div>
+
+  <div class="arch-arrow">↓ SDK 統合コード生成</div>
+
+  <div class="card" style="border-left:3px solid #7F52FF;">
+    <h3><span class="badge badge-purple">Phase 3</span> アプリ実装（ai-toolkit Skills）</h3>
+    <ul>
+      <li><code>integrate-revenuecat</code> スキルで SDK 統合コードを生成</li>
+      <li><code>purchase-flow</code> スキルで課金フロー実装</li>
+      <li><code>entitlements-gate</code> スキルで機能ゲーティング</li>
+    </ul>
+  </div>
+
+  <div class="arch-arrow">↓ ビルド & テスト</div>
+
+  <div class="card" style="border-left:3px solid #0891b2;">
+    <h3><span class="badge badge-cyan">Phase 4</span> ビルド・テスト・リリース（asc CLI）</h3>
+    <ul>
+      <li><code>asc xcode archive</code> → <code>asc builds upload</code> でビルド</li>
+      <li><code>asc builds add-groups</code> で TestFlight 配布</li>
+      <li><code>asc metadata apply</code> でメタデータ設定</li>
+      <li><code>asc validate</code> → <code>asc publish appstore</code> で審査提出</li>
+    </ul>
+<pre>
+<span class="cm"># ビルド → TestFlight → 審査の一括フロー</span>
+asc xcode archive --scheme <span class="str">"MyApp"</span>
+asc builds upload --app <span class="str">"123456789"</span> --ipa <span class="str">"./build/MyApp.ipa"</span>
+asc builds add-groups --app <span class="str">"123456789"</span> --groups <span class="str">"Internal Testers"</span>
+asc publish appstore --app <span class="str">"123456789"</span> --submit --confirm
+</pre>
+  </div>
+
+  <div class="arch-arrow">↓ リリース後</div>
+
+  <div class="card" style="border-left:3px solid #4caf50;">
+    <h3><span class="badge badge-green">Phase 5</span> 運用・分析（両ツール連携）</h3>
+    <ul>
+      <li><code>revenuecat-charts</code> スキルで KPI 分析（MRR、解約率、コンバージョン）</li>
+      <li><code>revenuecat-experiment-analysis</code> スキルで A/B テスト結果分析</li>
+      <li><code>asc testflight crashes list</code> でクラッシュ分析</li>
+      <li><code>asc-revenuecat-catalog-sync</code> で商品カタログの整合性チェック</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== SCENARIOS ===== -->
+<div class="panel" id="panel-syn-scenarios">
+  <h3 class="section-header">実践シナリオ</h3>
+
+  <div class="card" style="border-left:3px solid #e67e22;">
+    <h3>Scenario 1: 新規サブスクアプリのゼロからリリース</h3>
+    <p style="margin-bottom:8px;">AI エージェントへの指示例:</p>
+<pre>
+<span class="str">"月額980円・年額7,800円のプレミアムサブスクを持つ
+アプリをセットアップして、TestFlight で配布して"</span>
+</pre>
+    <p style="margin-top:8px;">AI エージェントが実行すること:</p>
+    <ul>
+      <li><strong>asc:</strong> ASC でサブスク商品グループ・月額/年額プランを作成、地域別価格を設定</li>
+      <li><strong>ai-toolkit:</strong> RevenueCat で Product × 2・Entitlement・Offering・Package を作成し商品を紐付け</li>
+      <li><strong>ai-toolkit:</strong> Swift コードを生成（SDK 統合・ペイウォール・購入フロー・機能ゲート）</li>
+      <li><strong>asc:</strong> ビルド → TestFlight 配布</li>
+    </ul>
+    <div class="insight" style="margin-top:8px;">
+      <strong>従来:</strong> ASC ダッシュボードで商品作成 → RevenueCat ダッシュボードで設定 → コード実装 → Xcode でビルド → ASC でアップロード。<strong>半日〜1日。</strong><br/>
+      <strong>連携後:</strong> 自然言語で指示 → AI が全ステップを自動実行。<strong>数十分。</strong>
+    </div>
+  </div>
+
+  <div class="card" style="border-left:3px solid #3498db;">
+    <h3>Scenario 2: 既存アプリに新しい課金プランを追加</h3>
+    <p style="margin-bottom:8px;">AI エージェントへの指示例:</p>
+<pre>
+<span class="str">"ライフタイム購入オプション（4,800円）を追加して、
+既存の premium entitlement に紐付けて"</span>
+</pre>
+    <ul>
+      <li><strong>asc:</strong> ASC で非消耗型 IAP を作成、価格設定</li>
+      <li><strong>ai-toolkit:</strong> RevenueCat で Product を作成 → 既存の premium Entitlement に紐付け → Offering にパッケージ追加</li>
+      <li><strong>ai-toolkit:</strong> ペイウォール UI にライフタイムオプションを追加するコードを生成</li>
+      <li><strong>asc-revenuecat-catalog-sync:</strong> 両側の商品カタログが一致していることを検証</li>
+    </ul>
+  </div>
+
+  <div class="card" style="border-left:3px solid #9b59b6;">
+    <h3>Scenario 3: 多言語対応 + 地域別価格の一括設定</h3>
+    <p style="margin-bottom:8px;">AI エージェントへの指示例:</p>
+<pre>
+<span class="str">"日本語・英語・中国語のメタデータを設定して、
+各地域の購買力に合わせたサブスク価格にして"</span>
+</pre>
+    <ul>
+      <li><strong>asc:</strong> <code>asc-localize-metadata</code> スキルで App Store メタデータを3言語に翻訳</li>
+      <li><strong>asc:</strong> <code>asc-ppp-pricing</code> スキルで購買力平価に基づく地域別価格を設定</li>
+      <li><strong>asc:</strong> <code>asc-subscription-localization</code> でサブスク表示名を各ロケールに翻訳</li>
+      <li><strong>ai-toolkit:</strong> RevenueCat の Offering がストア側の価格設定と整合しているか確認</li>
+    </ul>
+  </div>
+
+  <div class="card" style="border-left:3px solid #27ae60;">
+    <h3>Scenario 4: A/B テスト → 結果分析 → 次バージョンリリース</h3>
+    <p style="margin-bottom:8px;">AI エージェントへの指示例:</p>
+<pre>
+<span class="str">"ペイウォールの A/B テスト結果を分析して、
+勝者バリアントで次のバージョンをリリースして"</span>
+</pre>
+    <ul>
+      <li><strong>ai-toolkit:</strong> <code>revenuecat-experiment-analysis</code> スキルで実験結果を取得・解釈</li>
+      <li><strong>ai-toolkit:</strong> <code>revenuecat-charts</code> で勝者バリアントの KPI トレンドを確認</li>
+      <li><strong>asc:</strong> <code>asc-whats-new-writer</code> でリリースノートを自動生成</li>
+      <li><strong>asc:</strong> ビルド → メタデータ更新 → 審査提出</li>
+    </ul>
+  </div>
+
+  <h3 class="section-header">橋渡しスキル: asc-revenuecat-catalog-sync</h3>
+  <div class="card" style="border-color:#e67e22;">
+    <p>2つのツールを繋ぐ要となるスキル。ASC 側のサブスク/IAP と RevenueCat 側の Products・Offerings を照合し、差分を自動検出・解消する。</p>
+    <ul>
+      <li><strong>不足検出:</strong> ASC にあるが RevenueCat にない商品を検出 → 自動作成を提案</li>
+      <li><strong>ID 照合:</strong> 商品 ID（<code>com.example.premium_monthly</code>）が両側で一致しているか検証</li>
+      <li><strong>Entitlement 漏れ:</strong> 商品が作成済みだが Entitlement に紐付けられていないケースを検出</li>
+      <li><strong>Offering 構成:</strong> パッケージに商品が正しく割り当てられているか確認</li>
+    </ul>
+    <div class="insight" style="margin-top:8px;">
+      <strong>なぜ重要か:</strong> ASC と RevenueCat で商品設定が食い違うと、「購入はできるがコンテンツが解放されない」「ペイウォールに商品が表示されない」等の深刻なバグになる。このスキルが整合性のゲートキーパーとなる。
+    </div>
+  </div>
+</div>
+
+</div><!-- /main-synergy -->
 
 <script>
 // Main tab switching (top-level)
@@ -733,9 +1471,35 @@ function renderSkillGrid(containerId, skills, expandable) {
   });
 }
 
+const ascSkills = [
+  { id: 'asc-cli-usage', name: 'cli-usage', desc: 'コマンド実行ガイド', detail: 'asc コマンドの正しい動詞・フラグ・ページネーション・認証パターンを AI エージェントに提供。JSON 出力の取り扱い方も含む。' },
+  { id: 'asc-testflight-orchestration', name: 'testflight-orchestration', desc: 'TestFlight 配布管理', detail: 'ベータグループ管理・テスター追加・ビルド配布・テストノート設定を自動化。' },
+  { id: 'asc-release-flow', name: 'release-flow', desc: 'App Store 提出フロー', detail: 'asc validate と asc release stage を使い、API で修正可能なブロッカーと手動対応が必要なブロッカーを分離。提出レディネス評価。' },
+  { id: 'asc-xcode-build', name: 'xcode-build', desc: 'Xcode ビルド管理', detail: 'Xcode アーカイブ・ExportOptions.plist 設定・IPA/PKG エクスポート・ビルド番号管理を自動化。' },
+  { id: 'asc-signing-setup', name: 'signing-setup', desc: '署名・プロビジョニング', detail: 'Bundle ID・Capability・証明書・プロビジョニングプロファイルの管理。暗号化署名の同期。' },
+  { id: 'asc-metadata-sync', name: 'metadata-sync', desc: 'メタデータ同期', detail: 'App Store メタデータとローカライゼーションの双方向同期。文字数制限バリデーション付き。' },
+  { id: 'asc-localize-metadata', name: 'localize-metadata', desc: 'メタデータ翻訳', detail: 'LLM 駆動のプロンプトで App Store メタデータを複数ロケールに翻訳。文字数制限を自動適用。' },
+  { id: 'asc-aso-audit', name: 'aso-audit', desc: 'ASO キーワード監査', detail: 'メタデータのオフライン ASO 監査。キーワードギャップ分析で改善点を検出。' },
+  { id: 'asc-whats-new-writer', name: 'whats-new-writer', desc: 'リリースノート生成', detail: 'git ログや箇条書きから、ローカライズ済みの App Store リリースノート（「最新情報」）を自動生成。' },
+  { id: 'asc-shots-pipeline', name: 'shots-pipeline', desc: 'スクリーンショット自動化', detail: 'エージェント駆動のシミュレーター操作 → AXe ベースの UI 操作 → フレーミング → アップロード準備のパイプライン。' },
+  { id: 'asc-submission-health', name: 'submission-health', desc: '提出前ヘルスチェック', detail: 'プリフライトチェック・デジタル商品バリデーション・審査提出のモニタリング。' },
+  { id: 'asc-build-lifecycle', name: 'build-lifecycle', desc: 'ビルドライフサイクル', detail: 'ビルド処理状態の追跡・最新ビルド解決・保持ポリシーに基づくクリーンアップ。' },
+  { id: 'asc-id-resolver', name: 'id-resolver', desc: 'ID 解決', detail: 'App ID・Build ID・Version ID・Group ID・Tester ID を自動化コンテキストで解決。' },
+  { id: 'asc-crash-triage', name: 'crash-triage', desc: 'クラッシュトリアージ', detail: 'TestFlight クラッシュとベータフィードバックの分析。シグネチャとビルド別にグルーピング。' },
+  { id: 'asc-apple-ads', name: 'apple-ads', desc: 'Apple Ads 管理', detail: 'Apple Ads の認証・組織探索・キャンペーン管理・レポート取得。ライブアカウント変更前のセーフテストワークフロー。' },
+  { id: 'asc-workflow', name: 'workflow', desc: 'ワークフロー自動化', detail: '.asc/workflow.json によるリポジトリローカルの自動化グラフ。マルチステップ・条件分岐・フック・バリデーション対応。' },
+  { id: 'asc-app-create-ui', name: 'app-create-ui', desc: 'アプリ作成（ブラウザ自動化）', detail: 'API では不可能な App Store Connect のアプリレコード作成をブラウザ自動化で実行。' },
+  { id: 'asc-ppp-pricing', name: 'ppp-pricing', desc: '地域別価格設定（PPP）', detail: '購買力平価（PPP）に基づく地域別価格戦略の実装。テリトリ固有の価格設定。' },
+  { id: 'asc-subscription-localization', name: 'subscription-localization', desc: 'サブスク表示名翻訳', detail: 'サブスクリプション/IAP の表示名を複数ロケールに一括翻訳。' },
+  { id: 'asc-revenuecat-catalog-sync', name: 'revenuecat-catalog-sync', desc: 'RevenueCat カタログ同期', detail: 'ASC のサブスク/IAP と RevenueCat の Products・Offerings を照合し、差分を解消する橋渡しスキル。' },
+  { id: 'asc-notarization', name: 'notarization', desc: 'macOS 公証', detail: 'Developer ID 署名による macOS アプリの公証。App Store 外配布向け。' },
+  { id: 'asc-wall-submit', name: 'wall-submit', desc: 'Wall of Apps 登録', detail: 'asc CLI の Wall of Apps レジストリにアプリを登録。' },
+];
+
 renderSkillGrid('skill-grid-main', mainSkills, true);
 renderSkillGrid('skill-grid-play', playSkills, false);
 renderSkillGrid('skill-grid-play-detail', playSkills, false);
+renderSkillGrid('skill-grid-asc', ascSkills, true);
 </script>
 </body>
 </html>
