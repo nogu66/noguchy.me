@@ -222,6 +222,7 @@ pre .tp { color: #f9e2af; }
   <div class="tab" data-tab="skills">スキル一覧</div>
   <div class="tab" data-tab="swift">Swift実装</div>
   <div class="tab" data-tab="playbilling">Play Billing</div>
+  <div class="tab" data-tab="asccli">asc CLI 連携</div>
 </div>
 
 <!-- ===== OVERVIEW ===== -->
@@ -260,6 +261,19 @@ pre .tp { color: #f9e2af; }
   <div class="card">
     <h3>認証</h3>
     <p>ブラウザベースOAuth。RevenueCatアカウントの権限に基づくアクセス制御。APIキーの手動設定は不要。</p>
+  </div>
+
+  <div class="card" style="border-color:#7F52FF;">
+    <h3>📖 もっと簡単に理解するには（DeepWiki）</h3>
+    <p>ai-toolkit のリポジトリ構造・スキル・MCP の関係をより手軽に把握したい場合は、AI生成のドキュメントサイト <strong>DeepWiki</strong> を使うと理解が早い。リポジトリ全体を自然言語で要約・図解し、コードを直接読まなくても全体像をつかめる。</p>
+    <ul>
+      <li>リポジトリの構造図とコンポーネント間の関係を自動生成</li>
+      <li>「このスキルは何をするか」をチャット形式で質問できる</li>
+      <li>本ページの内容と併読すると、概要 → 詳細の流れで把握しやすい</li>
+    </ul>
+    <p style="margin-top:8px;">
+      🔗 <a href="https://deepwiki.com/RevenueCat/ai-toolkit" target="_blank" rel="noopener" style="color:#7F52FF; font-weight:600;">deepwiki.com/RevenueCat/ai-toolkit</a>
+    </p>
   </div>
 </div>
 
@@ -495,6 +509,73 @@ pre .tp { color: #f9e2af; }
   </div>
 
   <div class="skill-grid" id="skill-grid-play-detail"></div>
+</div>
+
+<!-- ===== ASC CLI ===== -->
+<div class="panel" id="panel-asccli">
+  <div class="card" style="border-color:#0891b2;">
+    <h3><span class="badge badge-cyan">asc CLI</span> App Store Connect をターミナルから操作</h3>
+    <p><strong>asc-cli</strong> は App Store Connect の管理をコマンドラインから自動化する Swift 製の CLI ツール。Xcode を開かずに、ビルドのアップロード・TestFlight 配布・審査提出・メタデータ更新・<strong>App内課金（IAP）/サブスクの作成</strong>まで完結できる。</p>
+    <p style="margin-top:8px;">
+      🔗 <a href="https://asccli.sh/" target="_blank" rel="noopener" style="color:#0891b2; font-weight:600;">asccli.sh</a>
+      ／ <a href="https://github.com/tddworks/asc-cli" target="_blank" rel="noopener" style="color:#0891b2; font-weight:600;">github.com/tddworks/asc-cli</a>
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>主な機能</h3>
+    <ul>
+      <li><strong>ビルド/リリース:</strong> Xcodeプロジェクトのアーカイブ・IPA/PKGエクスポート・アップロード・審査提出</li>
+      <li><strong>TestFlight:</strong> ベータ配布、テスター/グループ管理</li>
+      <li><strong>App内課金・サブスク:</strong> IAP（消耗型/非消耗型）の作成、サブスクのイントロ/プロモオファー設定、地域別価格、オファーコード/ウィンバック</li>
+      <li><strong>メタデータ:</strong> スクリーンショット・プレビュー動画・「最新情報」のロケール別更新、年齢制限・カテゴリ</li>
+      <li><strong>チーム/権限:</strong> 複数アカウントのクレデンシャル管理、ユーザー招待・ロール割り当て</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>インストールと認証</h3>
+<pre>
+<span class="cm"># Homebrew でインストール</span>
+brew install asccli
+
+<span class="cm"># API キーで認証（複数アカウント対応）</span>
+asc auth login \
+  --key-id <span class="str">&lt;ID&gt;</span> \
+  --issuer-id <span class="str">&lt;ID&gt;</span> \
+  --private-key-path <span class="str">&lt;path/to/AuthKey.p8&gt;</span>
+</pre>
+    <p style="font-size:12px; color:#888; margin-top:4px;">App Store Connect API キー（.p8）を発行して登録すれば、以降はターミナルから直接 ASC を操作できる。</p>
+  </div>
+
+  <h3 class="section-header">ai-toolkit との組み合わせ</h3>
+  <div class="card">
+    <p>RevenueCat AI Toolkit（MCP）は <strong>RevenueCat 側</strong>の設定を担うが、その手前にある <strong>App Store Connect 側</strong>のアプリ登録・IAP/サブスク作成は本来手作業が必要。ここを <strong>asc-cli</strong> が埋めることで、AIエージェントが両側をまたいで一気通貫にセットアップでき、導入のハードルが大きく下がる。</p>
+  </div>
+
+  <div class="arch-row">
+    <div class="arch-box highlight"><h4>AI エージェント</h4><p>Claude Code 等</p></div>
+  </div>
+  <div class="arch-arrow">↓ 2系統を駆動</div>
+  <div class="arch-row">
+    <div class="arch-box" style="background:#e0f7fa; border-color:#0891b2;">
+      <h4>asc-cli</h4>
+      <p>App Store Connect<br/>アプリ登録・IAP/サブスク作成</p>
+    </div>
+    <div class="arch-box" style="background:#fff3e6; border-color:#d35400;">
+      <h4>ai-toolkit (MCP)</h4>
+      <p>RevenueCat<br/>商品・エンタイトルメント設定</p>
+    </div>
+  </div>
+  <div class="arch-arrow">↓ 連携</div>
+  <div class="arch-row">
+    <div class="arch-box"><h4>App Store Connect</h4><p>ストア側の商品</p></div>
+    <div class="arch-box"><h4>RevenueCat Backend</h4><p>課金バックエンド</p></div>
+  </div>
+
+  <div class="insight">
+    <strong>なぜ相性が良いか:</strong> どちらも CLI/MCP として「AIエージェントから呼び出せる」設計（asc-cli はレスポンスに次の実行コマンドを埋め込む CAEOAS 設計）。ストア側（asc-cli）→ 課金バックエンド側（ai-toolkit）の作業をAIに任せられるため、ダッシュボードと ASC を行き来する初期設定の手間を大幅に削減できる。
+  </div>
 </div>
 
 <script>
