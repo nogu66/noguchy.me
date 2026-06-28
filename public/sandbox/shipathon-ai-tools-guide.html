@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shipathon 2026 AI開発ツールガイド</title>
+<style>
+:root {
+  color-scheme: light;
+  --service-bg: #F9F9F9;
+  --service-divider: #D5D5D8;
+  --char-main: #2C2E31;
+  --char-sub: #787C87;
+  --char-placeholder: #BBC5D1;
+  --brand-primary: #1A6AFF;
+  --brand-primary-sub: #D9E6FF;
+  --brand-secondary: #FF557D;
+  --brand-secondary-sub: #FFD9E2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--service-bg);
+  color: var(--char-main);
+  line-height: 1.7;
+  padding: 20px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: var(--char-sub); margin-bottom: 20px; }
+
+.maintabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.maintab {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--char-sub);
+  background: #F0F2F5;
+  border: 1px solid var(--service-divider);
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.maintab:hover { color: var(--char-main); }
+.maintab.active {
+  color: #fff;
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+.maintab .mt-sub { display: block; font-size: 11px; font-weight: 500; opacity: 0.85; margin-top: 2px; }
+
+.maingroup { display: none; }
+.maingroup.active { display: block; }
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--service-divider);
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.tab {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--char-sub);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.tab:hover { color: var(--char-main); }
+.tab.active { color: var(--brand-primary); border-bottom-color: var(--brand-primary); }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.card {
+  background: #fff;
+  border: 1px solid var(--service-divider);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card p, .card li { font-size: 13px; color: var(--char-main); }
+.card ul { padding-left: 18px; margin-top: 6px; }
+.card li { margin-bottom: 4px; }
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.badge-mcp { background: var(--brand-primary-sub); color: var(--brand-primary); }
+.badge-skill { background: var(--brand-secondary-sub); color: var(--brand-secondary); }
+.badge-plugin { background: #E8F5E9; color: #2E7D32; }
+.badge-must { background: var(--brand-secondary); color: #fff; }
+
+.code-block {
+  background: #1E1E2E;
+  color: #CDD6F4;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  margin: 10px 0;
+  white-space: pre;
+}
+.code-block .comment { color: #6C7086; }
+.code-block .string { color: #A6E3A1; }
+.code-block .key { color: #89B4FA; }
+
+.tip {
+  background: var(--brand-primary-sub);
+  border-left: 3px solid var(--brand-primary);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.tip strong { color: var(--brand-primary); }
+
+.warn {
+  background: var(--brand-secondary-sub);
+  border-left: 3px solid var(--brand-secondary);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.warn strong { color: var(--brand-secondary); }
+
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.flow-step {
+  background: var(--brand-primary-sub);
+  color: var(--brand-primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+.flow-arrow { color: var(--char-placeholder); font-size: 16px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 10px 0;
+}
+th {
+  text-align: left;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--service-divider);
+  color: var(--char-sub);
+  font-size: 12px;
+}
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--service-divider);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 20px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--brand-primary);
+  display: inline-block;
+}
+
+a { color: var(--brand-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.hero-banner {
+  background: linear-gradient(135deg, var(--brand-primary), #0D47A1);
+  color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.hero-banner h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.hero-banner p { font-size: 13px; opacity: 0.9; }
+
+@media (max-width: 600px) {
+  .maintabs { flex-direction: column; gap: 6px; }
+  .maintab { padding: 10px 12px; font-size: 13px; }
+  .flow { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<h1>Shipathon 2026 AI開発ツールガイド</h1>
+<p class="subtitle">Claude Code / Codex でモバイルアプリを爆速開発するためのスキル・MCP・プラグイン集</p>
+
+<div class="hero-banner">
+  <h2>Shipathon = RevenueCat 主催の世界最大級モバイルアプリハッカソン</h2>
+  <p>2ヶ月でアプリを開発 → ストア公開 → RevenueCat SDK でマネタイズ。賞金1,000万円超</p>
+</div>
+
+<!-- ===== Main Tabs ===== -->
+<div class="maintabs">
+  <div class="maintab active" onclick="switchMain(0)">MCP サーバー<span class="mt-sub">バックエンド・ドキュメント</span></div>
+  <div class="maintab" onclick="switchMain(1)">スキル<span class="mt-sub">開発ワークフロー</span></div>
+  <div class="maintab" onclick="switchMain(2)">実戦レシピ<span class="mt-sub">組み合わせパターン</span></div>
+</div>
+
+<!-- ===== MAIN GROUP 0: MCP ===== -->
+<div class="maingroup active" id="mg0">
+
+<div class="tabs" id="tabs-mcp">
+  <div class="tab active" onclick="switchTab('mcp',0)">Context7</div>
+  <div class="tab" onclick="switchTab('mcp',1)">Firebase MCP</div>
+  <div class="tab" onclick="switchTab('mcp',2)">Supabase MCP</div>
+  <div class="tab" onclick="switchTab('mcp',3)">RevenueCat MCP</div>
+</div>
+
+<!-- Context7 -->
+<div class="panel active" id="mcp-0">
+<div class="card">
+  <h3><span class="badge badge-mcp">MCP</span> Context7 — 最新ドキュメントをAIに直接注入</h3>
+  <p>LLMの学習データは古くなりがち。Context7 は最新のライブラリドキュメントとコード例をプロンプトに直接注入し、幻覚（存在しないAPIの生成）を防ぎます。</p>
+
+  <div class="tip"><strong>Shipathon での使いどころ:</strong> React Native / Flutter / SwiftUI / RevenueCat SDK など、バージョン更新が頻繁なライブラリを使うとき、古いAPI呼び出しによるエラーを未然に防げます。</div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">セットアップ</h4>
+  <div class="code-block"><span class="comment"># ワンコマンドでセットアップ</span>
+npx ctx7 setup
+
+<span class="comment"># または MCP 設定に手動追加</span>
+{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"context7"</span>: {
+      <span class="key">"type"</span>: <span class="string">"http"</span>,
+      <span class="key">"url"</span>: <span class="string">"https://mcp.context7.com/mcp"</span>
+    }
+  }
+}</div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">提供ツール</h4>
+  <table>
+    <tr><th>ツール名</th><th>機能</th></tr>
+    <tr><td><code>resolve-library-id</code></td><td>ライブラリ名をContext7互換IDに変換</td></tr>
+    <tr><td><code>query-docs</code></td><td>ライブラリのドキュメントを検索・取得</td></tr>
+  </table>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">活用例</h4>
+  <div class="code-block"><span class="comment"># Claude Code での使い方（自然言語でOK）</span>
+"RevenueCat の Offerings API の最新の使い方を教えて"
+→ Context7 が最新ドキュメントを取得してコード生成に反映
+
+"React Native Navigation v7 の設定方法を教えて"
+→ v7 固有の breaking changes も反映された回答</div>
+</div>
+</div>
+
+<!-- Firebase MCP -->
+<div class="panel" id="mcp-1">
+<div class="card">
+  <h3><span class="badge badge-mcp">MCP</span> Firebase MCP — バックエンドを自然言語で構築</h3>
+  <p>Firestore・Storage・Authentication の操作をAIエージェントから直接実行。バックエンド構築の手間を大幅に削減します。</p>
+
+  <div class="tip"><strong>Shipathon での使いどころ:</strong> ユーザー認証・データ保存・画像アップロードなど、モバイルアプリに必須のバックエンド機能をコマンド一つで構築。</div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">対応サービス</h4>
+  <table>
+    <tr><th>サービス</th><th>できること</th></tr>
+    <tr><td><strong>Firestore</strong></td><td>ドキュメントCRUD、コレクション一覧、クエリ実行</td></tr>
+    <tr><td><strong>Storage</strong></td><td>ファイルアップロード（コンテンツ/URL）、メタデータ取得、一覧</td></tr>
+    <tr><td><strong>Authentication</strong></td><td>ユーザー検索（ID/メール）、ユーザー情報取得</td></tr>
+  </table>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">セットアップ</h4>
+  <div class="code-block"><span class="comment"># 1. Firebase Console でサービスアカウントキーを生成</span>
+<span class="comment"># 2. MCP 設定に追加</span>
+{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"firebase"</span>: {
+      <span class="key">"command"</span>: <span class="string">"npx"</span>,
+      <span class="key">"args"</span>: [<span class="string">"@gannonh/firebase-mcp"</span>],
+      <span class="key">"env"</span>: {
+        <span class="key">"SERVICE_ACCOUNT_KEY_PATH"</span>: <span class="string">"./service-account.json"</span>,
+        <span class="key">"FIREBASE_STORAGE_BUCKET"</span>: <span class="string">"your-bucket.appspot.com"</span>
+      }
+    }
+  }
+}</div>
+  <p style="font-size:12px; color:var(--char-sub); margin-top:6px;">リポジトリ: <a href="https://github.com/gannonh/firebase-mcp">gannonh/firebase-mcp</a></p>
+</div>
+</div>
+
+<!-- Supabase MCP -->
+<div class="panel" id="mcp-2">
+<div class="card">
+  <h3><span class="badge badge-mcp">MCP</span> Supabase MCP — オープンソースBaaSをAIで操作</h3>
+  <p>PostgreSQLベースのBaaSであるSupabaseのDB・認証・Edge Functionsを、AIエージェントから直接操作できます。</p>
+
+  <div class="tip"><strong>Shipathon での使いどころ:</strong> Firebaseの代替としてオープンソース志向のチームに最適。SQL直接実行やTypeScript型自動生成でDX向上。</div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">主要機能</h4>
+  <table>
+    <tr><th>カテゴリ</th><th>機能</th></tr>
+    <tr><td><strong>データベース</strong></td><td>テーブル一覧、SQL実行、マイグレーション管理</td></tr>
+    <tr><td><strong>開発ツール</strong></td><td>TypeScript型生成、Edge Functions デプロイ</td></tr>
+    <tr><td><strong>運用</strong></td><td>ログ取得、ブランチング（有料プラン）</td></tr>
+  </table>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">セットアップ</h4>
+  <div class="code-block">{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"supabase"</span>: {
+      <span class="key">"type"</span>: <span class="string">"http"</span>,
+      <span class="key">"url"</span>: <span class="string">"https://mcp.supabase.com/mcp"</span>
+    }
+  }
+}</div>
+
+  <div class="warn"><strong>セキュリティ Tips:</strong> 開発用プロジェクトで使用し、<code>read_only=true</code> を有効化することを推奨します。</div>
+</div>
+</div>
+
+<!-- RevenueCat MCP -->
+<div class="panel" id="mcp-3">
+<div class="card">
+  <h3><span class="badge badge-must">必須</span><span class="badge badge-mcp">MCP</span> RevenueCat MCP — 課金実装の強力な味方</h3>
+  <p>RevenueCat の REST API v2 をAIエージェントから直接操作。サブスクリプション管理、Entitlement確認、顧客情報取得などをコードを書かずに実行・検証できます。</p>
+
+  <div class="warn"><strong>Shipathon 必須:</strong> RevenueCat SDK の導入とマネタイズ実装はShipathonの参加要件です。このMCPで課金フローの構築・デバッグを加速しましょう。</div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">主なユースケース</h4>
+  <ul style="padding-left:18px; margin:6px 0;">
+    <li>Offerings / Entitlements の設定確認</li>
+    <li>テストユーザーのサブスクリプション状態チェック</li>
+    <li>課金フローの動作検証</li>
+    <li>MRR・チャーンなどの収益メトリクス確認</li>
+  </ul>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">選択肢</h4>
+  <table>
+    <tr><th>リポジトリ</th><th>特徴</th></tr>
+    <tr><td><a href="https://github.com/iamhenry/revenuecat-mcp">iamhenry/revenuecat-mcp</a></td><td>REST API v2 全対応、IDE統合向け</td></tr>
+    <tr><td><a href="https://github.com/TrialAndErrorAI/revenuecat-mcp">TrialAndErrorAI/revenuecat-mcp</a></td><td>68エンドポイント、Code-mode対応</td></tr>
+  </table>
+
+  <p style="font-size:12px; margin-top:10px; color:var(--char-sub);">Claude Code のプラグインとして <code>RevenueCat</code> プラグインも利用可能（<code>/plugin</code> からインストール）</p>
+</div>
+</div>
+
+</div><!-- /mg0 -->
+
+<!-- ===== MAIN GROUP 1: Skills ===== -->
+<div class="maingroup" id="mg1">
+
+<div class="tabs" id="tabs-skill">
+  <div class="tab active" onclick="switchTab('skill',0)">Mobile Dev</div>
+  <div class="tab" onclick="switchTab('skill',1)">Superpowers</div>
+  <div class="tab" onclick="switchTab('skill',2)">公式プラグイン</div>
+  <div class="tab" onclick="switchTab('skill',3)">導入方法</div>
+</div>
+
+<!-- Mobile Dev Skills -->
+<div class="panel active" id="skill-0">
+<div class="card">
+  <h3><span class="badge badge-skill">Skill</span> Mobile Development スキル群</h3>
+  <p>Claude Code の公式プラグイン <code>minimax-skills</code> に含まれるモバイル開発特化スキル。各フレームワーク固有のベストプラクティス・アーキテクチャパターンを自動適用します。</p>
+
+  <table>
+    <tr><th>スキル名</th><th>対象</th><th>主な効果</th></tr>
+    <tr><td><code>ios-application-dev</code></td><td>SwiftUI / UIKit</td><td>iOS アプリ設計・実装ガイダンス</td></tr>
+    <tr><td><code>android-native-dev</code></td><td>Kotlin / Jetpack Compose</td><td>Android ネイティブ開発のベストプラクティス</td></tr>
+    <tr><td><code>frontend-dev</code></td><td>React Native / Web</td><td>クロスプラットフォームUI開発</td></tr>
+    <tr><td><code>fullstack-dev</code></td><td>フルスタック</td><td>フロント + バックエンド統合開発</td></tr>
+  </table>
+
+  <div class="tip"><strong>Shipathon での使いどころ:</strong> ネイティブ開発（Swift/Kotlin）でもクロスプラットフォーム（React Native/Flutter）でも、フレームワーク固有の「正しい書き方」を AIが自動で適用してくれます。</div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">インストール</h4>
+  <div class="code-block"><span class="comment"># Claude Code のプラグインマーケットプレイスからインストール</span>
+claude
+/plugin install minimax-skills
+
+<span class="comment"># 使い方: 通常通り開発するだけで自動適用される</span>
+<span class="comment"># 例: "SwiftUI でサブスクリプション画面を作って" と言えば</span>
+<span class="comment"># ios-application-dev スキルが自動で適用される</span></div>
+</div>
+</div>
+
+<!-- Superpowers -->
+<div class="panel" id="skill-1">
+<div class="card">
+  <h3><span class="badge badge-skill">Skill</span> Superpowers — AIエージェントの開発方法論</h3>
+  <p>コーディングエージェント向けの統合的なソフトウェア開発方法論。<a href="https://github.com/obra/superpowers">github.com/obra/superpowers</a></p>
+
+  <div class="tip"><strong>Shipathon での使いどころ:</strong> ハッカソンは時間との戦い。Superpowersの体系的なワークフローで「雑に作って壊れる」を防ぎ、限られた時間で高品質なアプリを仕上げられます。</div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">特に有用なスキル</h4>
+  <table>
+    <tr><th>スキル</th><th>内容</th><th>ハッカソンでの価値</th></tr>
+    <tr><td><strong>brainstorming</strong></td><td>ソクラテス式の設計精密化</td><td>アイデア → 実装計画を高速で固める</td></tr>
+    <tr><td><strong>writing-plans</strong></td><td>詳細な実装計画作成</td><td>コード書く前に全体設計を決める</td></tr>
+    <tr><td><strong>test-driven-development</strong></td><td>RED-GREEN-REFACTOR</td><td>課金フローのようなクリティカルな機能の品質担保</td></tr>
+    <tr><td><strong>systematic-debugging</strong></td><td>4段階の根本原因分析</td><td>「動かない」→「なぜ動かないか」を体系的に解決</td></tr>
+    <tr><td><strong>subagent-driven-development</strong></td><td>並列エージェント処理</td><td>複数画面を同時に開発</td></tr>
+    <tr><td><strong>verification-before-completion</strong></td><td>完了前検証</td><td>ストア申請前の最終チェック</td></tr>
+  </table>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">導入方法</h4>
+  <div class="code-block"><span class="comment"># Claude Code にスキルとしてインストール</span>
+claude /plugin install superpowers
+
+<span class="comment"># または CLAUDE.md にスキルパスを記載して手動読み込み</span>
+<span class="comment"># 詳細: https://github.com/obra/superpowers</span></div>
+</div>
+</div>
+
+<!-- Official Plugins -->
+<div class="panel" id="skill-2">
+<div class="card">
+  <h3><span class="badge badge-plugin">Plugin</span> Claude Code 公式プラグイン — Shipathon向けピックアップ</h3>
+
+  <table>
+    <tr><th>プラグイン</th><th>機能</th><th>ハッカソンでの活用</th></tr>
+    <tr><td><strong>feature-dev</strong></td><td>7フェーズの構造化開発フロー</td><td>機能単位で計画→実装→テストを回す</td></tr>
+    <tr><td><strong>code-review</strong></td><td>5つのSonnetエージェントによるPRレビュー</td><td>チーム開発時のコード品質維持</td></tr>
+    <tr><td><strong>security-guidance</strong></td><td>XSS・インジェクション等の自動検出</td><td>課金周りのセキュリティ担保</td></tr>
+    <tr><td><strong>frontend-design</strong></td><td>UI設計ガイダンス</td><td>ストアで映えるUI/UXの構築</td></tr>
+    <tr><td><strong>commit-commands</strong></td><td>Git操作の自動化</td><td><code>/commit-push-pr</code> でワンコマンドでPR作成</td></tr>
+    <tr><td><strong>agent-sdk-dev</strong></td><td>Agent SDK開発キット</td><td>カスタムAIエージェント構築</td></tr>
+  </table>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">インストール</h4>
+  <div class="code-block"><span class="comment"># プラグインマーケットプレイスから一括インストール</span>
+claude
+/plugin install feature-dev
+/plugin install code-review
+/plugin install security-guidance</div>
+</div>
+</div>
+
+<!-- Setup Guide -->
+<div class="panel" id="skill-3">
+<div class="card">
+  <h3>スキル・プラグインの導入方法</h3>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">Claude Code プラグインの場合</h4>
+  <div class="code-block"><span class="comment"># 1. Claude Code を起動</span>
+claude
+
+<span class="comment"># 2. プラグインマーケットプレイスからインストール</span>
+/plugin install &lt;plugin-name&gt;
+
+<span class="comment"># 3. インストール済みプラグインの確認</span>
+/plugin list</div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">Superpowers（手動インストール）の場合</h4>
+  <div class="code-block"><span class="comment"># 1. リポジトリをクローン</span>
+git clone https://github.com/obra/superpowers.git ~/.claude/superpowers
+
+<span class="comment"># 2. CLAUDE.md にスキルパスを設定（プロジェクトルート）</span>
+<span class="comment"># 詳細はリポジトリのREADMEを参照</span></div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">MCP サーバーの設定場所</h4>
+  <div class="code-block"><span class="comment"># グローバル設定（全プロジェクト共通）</span>
+~/.claude/settings.json
+
+<span class="comment"># プロジェクト設定（プロジェクト固有）</span>
+.claude/settings.json
+
+<span class="comment"># 設定例</span>
+{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"context7"</span>: { <span class="key">"type"</span>: <span class="string">"http"</span>, <span class="key">"url"</span>: <span class="string">"https://mcp.context7.com/mcp"</span> },
+    <span class="key">"supabase"</span>: { <span class="key">"type"</span>: <span class="string">"http"</span>, <span class="key">"url"</span>: <span class="string">"https://mcp.supabase.com/mcp"</span> }
+  }
+}</div>
+</div>
+</div>
+
+</div><!-- /mg1 -->
+
+<!-- ===== MAIN GROUP 2: Recipes ===== -->
+<div class="maingroup" id="mg2">
+
+<div class="tabs" id="tabs-recipe">
+  <div class="tab active" onclick="switchTab('recipe',0)">iOS ネイティブ</div>
+  <div class="tab" onclick="switchTab('recipe',1)">React Native</div>
+  <div class="tab" onclick="switchTab('recipe',2)">Flutter</div>
+  <div class="tab" onclick="switchTab('recipe',3)">逆引き表</div>
+</div>
+
+<!-- iOS Recipe -->
+<div class="panel active" id="recipe-0">
+<div class="card">
+  <h3>iOS ネイティブ（SwiftUI）のおすすめ構成</h3>
+
+  <div class="flow">
+    <span class="flow-step">Context7</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">ios-application-dev</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">Firebase MCP</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">RevenueCat Plugin</span>
+  </div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">開発フロー</h4>
+  <div class="flow">
+    <span class="flow-step">1. brainstorming</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">2. writing-plans</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">3. feature-dev</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">4. TDD で課金実装</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">5. verification</span>
+  </div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">実践例</h4>
+  <div class="code-block"><span class="comment"># Step 1: アイデアを固める</span>
+"ペット管理アプリを作りたい。Superpowers の brainstorming で設計を詰めて"
+
+<span class="comment"># Step 2: 実装計画</span>
+"SwiftUI で実装計画を作って。Context7 で SwiftUI の最新APIを確認して"
+
+<span class="comment"># Step 3: バックエンド構築</span>
+"Firebase MCP でユーザー認証とペットデータのFirestoreコレクションを作って"
+
+<span class="comment"># Step 4: 課金実装</span>
+"RevenueCat SDK でプレミアムプラン（月額/年額）のPaywallを実装して"
+
+<span class="comment"># Step 5: 最終検証</span>
+"verification-before-completion でストア申請前チェックして"</div>
+</div>
+</div>
+
+<!-- React Native Recipe -->
+<div class="panel" id="recipe-1">
+<div class="card">
+  <h3>React Native のおすすめ構成</h3>
+
+  <div class="flow">
+    <span class="flow-step">Context7</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">frontend-dev</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">Supabase MCP</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">RevenueCat Plugin</span>
+  </div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">なぜこの組み合わせ？</h4>
+  <ul style="padding-left:18px; margin:6px 0;">
+    <li><strong>Context7:</strong> React Native のバージョンアップが激しく、古いAPIでコード生成されるリスクが高い → 最新ドキュメントを常に参照</li>
+    <li><strong>frontend-dev スキル:</strong> React 系のコンポーネント設計・状態管理のベストプラクティスを自動適用</li>
+    <li><strong>Supabase MCP:</strong> PostgreSQL + Edge Functions で柔軟なバックエンド。TypeScript型自動生成が React Native と相性抜群</li>
+    <li><strong>RevenueCat:</strong> iOS/Android 両方の課金をワンコードで管理</li>
+  </ul>
+
+  <div class="code-block"><span class="comment"># Supabase でバックエンド一発構築</span>
+"Supabase MCP でユーザーテーブルとサブスクリプションテーブルを作って。
+ TypeScript の型も自動生成して"
+
+<span class="comment"># React Native + RevenueCat</span>
+"Context7 で RevenueCat React Native SDK の最新ドキュメントを確認して、
+ Paywall コンポーネントを実装して"</div>
+</div>
+</div>
+
+<!-- Flutter Recipe -->
+<div class="panel" id="recipe-2">
+<div class="card">
+  <h3>Flutter のおすすめ構成</h3>
+
+  <div class="flow">
+    <span class="flow-step">Context7</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">fullstack-dev</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">Firebase MCP</span>
+    <span class="flow-arrow">+</span>
+    <span class="flow-step">RevenueCat Plugin</span>
+  </div>
+
+  <h4 style="font-size:13px; font-weight:700; margin:14px 0 6px;">なぜこの組み合わせ？</h4>
+  <ul style="padding-left:18px; margin:6px 0;">
+    <li><strong>Context7:</strong> Flutter/Dart のAPIは頻繁に変更される → 最新のWidget・パッケージAPIを確実に参照</li>
+    <li><strong>fullstack-dev スキル:</strong> フロント（Flutter）+ バックエンド統合の設計パターンを適用</li>
+    <li><strong>Firebase MCP:</strong> Flutter × Firebase は公式で強力にサポートされている組み合わせ。FlutterFire で統合も簡単</li>
+    <li><strong>RevenueCat:</strong> Flutter SDK で iOS/Android 課金を統一管理</li>
+  </ul>
+
+  <div class="code-block"><span class="comment"># Context7 で最新の Flutter Widget カタログを確認</span>
+"Context7 で Flutter 3.x の Material 3 Widget の使い方を教えて"
+
+<span class="comment"># Firebase + RevenueCat の統合</span>
+"Firebase MCP で認証を設定して、RevenueCat と Firebase Auth を連携して"</div>
+</div>
+</div>
+
+<!-- Quick Reference -->
+<div class="panel" id="recipe-3">
+<div class="card">
+  <h3>逆引き — 「やりたいこと」から探すツール</h3>
+
+  <table>
+    <tr><th>やりたいこと</th><th>使うツール</th><th>種別</th></tr>
+    <tr><td>最新のライブラリAPIを参照したい</td><td>Context7</td><td><span class="badge badge-mcp">MCP</span></td></tr>
+    <tr><td>ユーザー認証を実装したい</td><td>Firebase MCP / Supabase MCP</td><td><span class="badge badge-mcp">MCP</span></td></tr>
+    <tr><td>データベースを構築したい</td><td>Firebase MCP（NoSQL） / Supabase MCP（SQL）</td><td><span class="badge badge-mcp">MCP</span></td></tr>
+    <tr><td>画像・ファイルを保存したい</td><td>Firebase MCP（Storage）</td><td><span class="badge badge-mcp">MCP</span></td></tr>
+    <tr><td>課金・サブスクを実装したい</td><td>RevenueCat MCP / Plugin</td><td><span class="badge badge-must">必須</span></td></tr>
+    <tr><td>iOS の正しい書き方を知りたい</td><td>ios-application-dev</td><td><span class="badge badge-skill">Skill</span></td></tr>
+    <tr><td>Android の正しい書き方を知りたい</td><td>android-native-dev</td><td><span class="badge badge-skill">Skill</span></td></tr>
+    <tr><td>アイデアを構造化したい</td><td>Superpowers: brainstorming</td><td><span class="badge badge-skill">Skill</span></td></tr>
+    <tr><td>実装計画を作りたい</td><td>Superpowers: writing-plans</td><td><span class="badge badge-skill">Skill</span></td></tr>
+    <tr><td>バグの根本原因を特定したい</td><td>Superpowers: systematic-debugging</td><td><span class="badge badge-skill">Skill</span></td></tr>
+    <tr><td>コードレビューしたい</td><td>code-review プラグイン</td><td><span class="badge badge-plugin">Plugin</span></td></tr>
+    <tr><td>セキュリティチェックしたい</td><td>security-guidance プラグイン</td><td><span class="badge badge-plugin">Plugin</span></td></tr>
+    <tr><td>ワンコマンドでPR作成したい</td><td>commit-commands プラグイン</td><td><span class="badge badge-plugin">Plugin</span></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Shipathon タイムライン別ツール活用</h3>
+  <table>
+    <tr><th>フェーズ</th><th>期間</th><th>活用ツール</th></tr>
+    <tr><td><strong>企画</strong></td><td>Week 1</td><td>brainstorming → writing-plans</td></tr>
+    <tr><td><strong>基盤構築</strong></td><td>Week 1-2</td><td>Firebase/Supabase MCP + Context7 + Mobile Dev Skills</td></tr>
+    <tr><td><strong>機能実装</strong></td><td>Week 2-6</td><td>feature-dev + subagent-driven-development + Context7</td></tr>
+    <tr><td><strong>課金実装</strong></td><td>Week 5-6</td><td>RevenueCat MCP/Plugin + TDD</td></tr>
+    <tr><td><strong>品質管理</strong></td><td>Week 7</td><td>code-review + security-guidance + systematic-debugging</td></tr>
+    <tr><td><strong>申請準備</strong></td><td>Week 8</td><td>verification-before-completion</td></tr>
+  </table>
+</div>
+</div>
+
+</div><!-- /mg2 -->
+
+<div style="text-align:center; margin:24px 0 8px; font-size:11px; color:var(--char-placeholder);">
+  Shipathon 2026 AI開発ツールガイド — <a href="https://jp.shipaton.com/">jp.shipaton.com</a>
+</div>
+
+<script>
+function switchMain(idx) {
+  document.querySelectorAll('.maintab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  document.querySelectorAll('.maingroup').forEach((g,i)=>g.classList.toggle('active',i===idx));
+}
+function switchTab(group,idx) {
+  const tabs = document.querySelectorAll('#tabs-'+group+' .tab');
+  tabs.forEach((t,i)=>t.classList.toggle('active',i===idx));
+  document.querySelectorAll('[id^="'+group+'-"]').forEach((p,i)=>p.classList.toggle('active',i===idx));
+}
+</script>
+</body>
+</html>
