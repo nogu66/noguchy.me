@@ -5,8 +5,8 @@ import {
   PUBLIC_GOOGLE_ANALYTICS_ID,
 } from "astro:env/client";
 import { SITE } from "@/config";
+import ThemeScript from "@/components/ThemeScript.astro";
 import "@/styles/global.css";
-import toggleThemeScript from "@/scripts/toggle-theme.js?raw";
 
 export interface Props {
   title?: string;
@@ -183,8 +183,7 @@ const structuredData = pubDatetime
 
     <ClientRouter />
 
-    <!-- Inlined to avoid a render-blocking request; must run synchronously to prevent FOUC -->
-    <Fragment set:html={`<script>${toggleThemeScript}</script>`} />
+    <ThemeScript />
 
     {
       // Google Analytics - View Transitions support
