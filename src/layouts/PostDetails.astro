@@ -14,6 +14,7 @@ import { slugifyStr } from "@/utils/slugify";
 import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
 import IconChevronRight from "@/assets/icons/IconChevronRight.svg";
 import { SITE } from "@/config";
+import katexCssHref from "katex/dist/katex.min.css?url";
 
 export interface Props {
   post: CollectionEntry<"blog">;
@@ -36,6 +37,10 @@ const {
 } = post.data;
 
 const { Content } = await render(post);
+
+// KaTeX CSS は数式を含む記事だけで読み込む（"$" を含まない記事では数式は
+// 生成されない。誤検出しても余分に CSS が載るだけで表示は壊れない）
+const needsKatex = post.body?.includes("$") ?? false;
 
 let ogImageUrl: string | undefined;
 
@@ -83,6 +88,7 @@ const nextPost =
 ---
 
 <Layout {...layoutProps}>
+  {needsKatex && <link slot="head" rel="stylesheet" href={katexCssHref} />}
   <Header />
   <BackButton />
   <main

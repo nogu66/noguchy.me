@@ -81,7 +81,7 @@
     const loadPagefind = async () => {
       if (!pagefind) {
         try {
-          const pagefindPath = "/_pagefind/pagefind.js";
+          const pagefindPath = "/pagefind/pagefind.js";
           pagefind = await import(/* @vite-ignore */ pagefindPath);
           await pagefind.init();
         } catch {

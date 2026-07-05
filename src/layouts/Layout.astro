@@ -5,8 +5,8 @@ import {
   PUBLIC_GOOGLE_ANALYTICS_ID,
 } from "astro:env/client";
 import { SITE } from "@/config";
+import ThemeScript from "@/components/ThemeScript.astro";
 import "@/styles/global.css";
-import "katex/dist/katex.min.css";
 
 export interface Props {
   title?: string;
@@ -167,6 +167,7 @@ const structuredData = pubDatetime
       // Google Analytics 4
       PUBLIC_GOOGLE_ANALYTICS_ID && (
         <>
+          <link rel="preconnect" href="https://www.googletagmanager.com" />
           <script
             is:inline
             async
@@ -182,7 +183,7 @@ const structuredData = pubDatetime
 
     <ClientRouter />
 
-    <script is:inline src="/toggle-theme.js"></script>
+    <ThemeScript />
 
     {
       // Google Analytics - View Transitions support

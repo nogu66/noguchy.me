@@ -1,6 +1,7 @@
 ---
 import { PUBLIC_GOOGLE_ANALYTICS_ID } from "astro:env/client";
 import { SITE } from "@/config";
+import ThemeScript from "@/components/ThemeScript.astro";
 import "@/styles/global.css";
 
 // プロフィール情報
@@ -91,7 +92,7 @@ const pageDesc = profile.bio;
     <meta property="og:type" content="website" />
     <meta property="og:url" content={`${SITE.website}links`} />
     <meta name="twitter:card" content="summary" />
-    <script is:inline src="/toggle-theme.js"></script>
+    <ThemeScript />
 
     {
       // Google Analytics 4
@@ -249,22 +250,5 @@ const pageDesc = profile.bio;
         </button>
       </div>
     </div>
-
-    <script>
-      function setupThemeToggle() {
-        const themeBtn = document.getElementById("theme-btn");
-        if (!themeBtn) return;
-
-        themeBtn.addEventListener("click", () => {
-          const html = document.documentElement;
-          const currentTheme = html.getAttribute("data-theme");
-          const newTheme = currentTheme === "dark" ? "light" : "dark";
-          html.setAttribute("data-theme", newTheme);
-          localStorage.setItem("theme", newTheme);
-        });
-      }
-
-      setupThemeToggle();
-    </script>
   </body>
 </html>
