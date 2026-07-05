@@ -2,6 +2,7 @@
 import { PUBLIC_GOOGLE_ANALYTICS_ID } from "astro:env/client";
 import { SITE } from "@/config";
 import "@/styles/global.css";
+import toggleThemeScript from "@/scripts/toggle-theme.js?raw";
 
 // プロフィール情報
 const profile = {
@@ -91,7 +92,7 @@ const pageDesc = profile.bio;
     <meta property="og:type" content="website" />
     <meta property="og:url" content={`${SITE.website}links`} />
     <meta name="twitter:card" content="summary" />
-    <script is:inline src="/toggle-theme.js"></script>
+    <Fragment set:html={`<script>${toggleThemeScript}</script>`} />
 
     {
       // Google Analytics 4

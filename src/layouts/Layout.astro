@@ -6,7 +6,7 @@ import {
 } from "astro:env/client";
 import { SITE } from "@/config";
 import "@/styles/global.css";
-import "katex/dist/katex.min.css";
+import toggleThemeScript from "@/scripts/toggle-theme.js?raw";
 
 export interface Props {
   title?: string;
@@ -167,6 +167,7 @@ const structuredData = pubDatetime
       // Google Analytics 4
       PUBLIC_GOOGLE_ANALYTICS_ID && (
         <>
+          <link rel="preconnect" href="https://www.googletagmanager.com" />
           <script
             is:inline
             async
@@ -182,7 +183,8 @@ const structuredData = pubDatetime
 
     <ClientRouter />
 
-    <script is:inline src="/toggle-theme.js"></script>
+    <!-- Inlined to avoid a render-blocking request; must run synchronously to prevent FOUC -->
+    <Fragment set:html={`<script>${toggleThemeScript}</script>`} />
 
     {
       // Google Analytics - View Transitions support
