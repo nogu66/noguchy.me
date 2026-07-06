@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/sandbox", "destination": "https://noguchy-sandbox.vercel.app/" },
+    { "source": "/sandbox/:path*", "destination": "https://noguchy-sandbox.vercel.app/:path*" }
+  ]
+}
