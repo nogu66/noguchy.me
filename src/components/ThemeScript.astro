@@ -3,4 +3,4 @@ import toggleThemeScript from "@/scripts/toggle-theme.js?raw";
 ---
 
 <!-- Inlined to avoid a render-blocking request; must run synchronously to prevent FOUC -->
-<Fragment set:html={`<script>${toggleThemeScript}</script>`} />
+<script is:inline set:html={toggleThemeScript}></script>
