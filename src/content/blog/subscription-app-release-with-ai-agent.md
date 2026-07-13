@@ -3,7 +3,16 @@ title: "世界一簡単なサブスクアプリのリリース方法"
 pubDatetime: 2026-07-13T12:00:00
 featured: true
 published: true
-tags: ["revenuecat", "ai", "ios", "claudecode", "appstoreconnect","codex","asccli"]
+tags:
+  [
+    "revenuecat",
+    "ai",
+    "ios",
+    "claudecode",
+    "appstoreconnect",
+    "codex",
+    "asccli",
+  ]
 description: "RevenueCat AI ToolkitとOSSのasc CLIを組み合わせることで、サブスクアプリの課金設定からストア審査提出までをAIエージェントに任せる方法を紹介します。"
 timezone: "Asia/Tokyo"
 ---
