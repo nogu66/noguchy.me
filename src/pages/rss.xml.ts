@@ -5,6 +5,7 @@ import getSortedPosts from "@/utils/getSortedPosts";
 import getSortedNews from "@/utils/getSortedNews";
 import { getNewsPath } from "@/utils/getNewsPath";
 import { SITE } from "@/config";
+import { NEWS } from "@/news.config";
 
 export async function GET() {
   const posts = await getCollection("blog");
@@ -19,7 +20,7 @@ export async function GET() {
       pubDate: new Date(data.modDatetime ?? data.pubDatetime),
     })),
     ...sortedNews.map(({ data, id, filePath }) => ({
-      link: getNewsPath(id, filePath),
+      link: new URL(getNewsPath(id, filePath), NEWS.website).href,
       title: data.title,
       description: data.description,
       pubDate: new Date(data.modDatetime ?? data.pubDatetime),

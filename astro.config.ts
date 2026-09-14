@@ -39,7 +39,8 @@ export default defineConfig({
     sitemap({
       filter: page =>
         (SITE.showArchives || !page.endsWith("/archives")) &&
-        !page.includes("/welcome"),
+        !page.includes("/welcome") &&
+        !new URL(page).pathname.startsWith("/news"),
     }),
   ],
   build: {

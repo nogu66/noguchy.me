@@ -1,0 +1,22 @@
+---
+import Layout, { type Props } from "./Layout.astro";
+import { NEWS } from "@/news.config";
+import "@/styles/news.css";
+
+export type { Props };
+const canonicalURL = new URL(Astro.url.pathname, NEWS.website).href;
+---
+
+<Layout
+  {...Astro.props}
+  title={Astro.props.title ?? NEWS.title}
+  description={Astro.props.description ?? NEWS.description}
+  ogImage={Astro.props.ogImage ?? NEWS.ogImage}
+  {canonicalURL}
+  siteName={NEWS.title}
+  siteImage={NEWS.ogImage}
+  rssURL={new URL("rss.xml", NEWS.website).href}
+  articleType="NewsArticle"
+>
+  <div class="news-shell"><slot /></div>
+</Layout>

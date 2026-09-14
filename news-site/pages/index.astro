@@ -1,0 +1,27 @@
+---
+import { getCollection } from "astro:content";
+import NewsIndex from "@/components/NewsIndex.astro";
+import getSortedNews from "@/utils/getSortedNews";
+import { SITE } from "@/config";
+
+const news = getSortedNews(await getCollection("news"));
+const lastPage = Math.max(1, Math.ceil(news.length / SITE.postPerPage));
+const page = {
+  data: news.slice(0, SITE.postPerPage),
+  start: 0,
+  end: Math.min(news.length, SITE.postPerPage) - 1,
+  size: SITE.postPerPage,
+  total: news.length,
+  currentPage: 1,
+  lastPage,
+  url: {
+    current: "/",
+    prev: undefined,
+    next: lastPage > 1 ? "/page/2/" : undefined,
+    first: undefined,
+    last: lastPage > 1 ? `/page/${lastPage}/` : undefined,
+  },
+};
+---
+
+<NewsIndex {page} />

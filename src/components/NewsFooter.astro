@@ -1,0 +1,17 @@
+---
+import { SITE } from "@/config";
+---
+
+<footer class="news-footer">
+  <div class="news-container news-footer-inner">
+    <div>
+      <a href="/" class="news-footer-brand">noguchy.me <span>NEWS</span></a>
+      <p>AIとテクノロジーの動きを、コンパクトに。</p>
+    </div>
+    <nav aria-label="フッターメニュー">
+      <a href={SITE.website}>運営者について ↗</a>
+      <a href="/rss.xml">RSSで購読 ↗</a>
+    </nav>
+    <small>© {new Date().getFullYear()} nogu</small>
+  </div>
+</footer>

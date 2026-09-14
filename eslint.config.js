@@ -14,5 +14,13 @@ export default [
     },
   },
   { rules: { "no-console": "error" } },
-  { ignores: ["dist/**", ".astro", "public/pagefind/**"] },
+  {
+    ignores: [
+      "dist/**",
+      "dist-news/**",
+      ".wrangler/**",
+      ".astro",
+      "public/pagefind/**",
+    ],
+  },
 ];

@@ -1,0 +1,31 @@
+---
+import IconMoon from "@/assets/icons/IconMoon.svg";
+import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
+import { SITE } from "@/config";
+---
+
+<header class="news-masthead">
+  <a href="#main-content" class="sr-only focus:not-sr-only">本文へスキップ</a>
+  <div class="news-container news-masthead-inner">
+    <a href="/" aria-label="noguchy.me NEWS トップ" class="news-wordmark">
+      noguchy.me <span>NEWS</span>
+    </a>
+    <nav aria-label="メインメニュー" class="news-nav">
+      <a href="/" aria-current={Astro.url.pathname === "/" ? "page" : undefined}
+        >ニュース</a
+      >
+      <a href={SITE.website} class="news-nav-profile">noguchy.me ↗</a>
+      <a href="/rss.xml" class="news-nav-rss">RSS ↗</a>
+      <button
+        id="theme-btn"
+        class="news-theme-button relative text-muted hover:text-accent"
+        title="表示テーマの切り替え"
+        aria-label="auto"
+        aria-live="polite"
+      >
+        <IconMoon class="size-5 dark:hidden" />
+        <IconSunHigh class="hidden size-5 dark:block" />
+      </button>
+    </nav>
+  </div>
+</header>

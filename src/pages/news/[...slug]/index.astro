@@ -1,6 +1,6 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
-import NewsDetails from "@/layouts/NewsDetails.astro";
+import { NEWS } from "@/news.config";
 import { getNewsPath } from "@/utils/getNewsPath";
 import getSortedNews from "@/utils/getSortedNews";
 
@@ -17,7 +17,8 @@ export async function getStaticPaths() {
 }
 
 const { newsItem } = Astro.props;
-const news = getSortedNews(await getCollection("news"));
+return Astro.redirect(
+  new URL(getNewsPath(newsItem.id, newsItem.filePath), NEWS.website).href,
+  301
+);
 ---
-
-<NewsDetails {newsItem} {news} />
