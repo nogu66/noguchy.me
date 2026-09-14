@@ -2,7 +2,34 @@
 import { SHARE_LINKS } from "@/constants";
 import LinkButton from "./LinkButton.astro";
 
-const URL = Astro.url;
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const url = Astro.url.href;
+const encodedUrl = encodeURIComponent(url);
+const encodedTitle = encodeURIComponent(title);
+const encodedShareText = encodeURIComponent(`${title}\n${url}`);
+
+const getShareUrl = (name: string, fallback: string) => {
+  switch (name) {
+    case "WhatsApp":
+      return `https://wa.me/?text=${encodedShareText}`;
+    case "Facebook":
+      return `https://www.facebook.com/sharer.php?u=${encodedUrl}&quote=${encodedTitle}`;
+    case "X":
+      return `https://x.com/intent/post?text=${encodedTitle}&url=${encodedUrl}`;
+    case "Telegram":
+      return `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
+    case "Pinterest":
+      return `https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}`;
+    case "Mail":
+      return `mailto:?subject=${encodedTitle}&body=${encodedShareText}`;
+    default:
+      return `${fallback}${encodedUrl}`;
+  }
+};
 ---
 
 {
@@ -12,7 +39,7 @@ const URL = Astro.url;
       <div class="text-center">
         {SHARE_LINKS.map(social => (
           <LinkButton
-            href={`${social.href + URL}`}
+            href={getShareUrl(social.name, social.href)}
             class="scale-90 p-2 hover:rotate-6 sm:p-1"
             title={social.linkTitle}
           >

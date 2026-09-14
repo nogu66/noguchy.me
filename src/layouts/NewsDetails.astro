@@ -45,7 +45,7 @@ const nextNews =
 ---
 
 <Layout
-  title={`${title} | News | ${SITE.title}`}
+  title={`${title} | ${SITE.title}`}
   {author}
   {description}
   {pubDatetime}
@@ -143,7 +143,7 @@ const nextNews =
       {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} />)}
     </ul>
     <BackToTopButton />
-    <ShareLinks />
+    <ShareLinks {title} />
     <hr class="my-6 border-dashed" />
     <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {
