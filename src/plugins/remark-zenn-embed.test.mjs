@@ -99,6 +99,7 @@ describe("remark-zenn-embed", () => {
       remarkZennEmbed,
     ]);
     expect(html).toContain("twitter-tweet");
+    expect(html).not.toContain("platform.twitter.com/widgets.js");
     expect(html).not.toContain("zenn-link-card-x");
   });
 

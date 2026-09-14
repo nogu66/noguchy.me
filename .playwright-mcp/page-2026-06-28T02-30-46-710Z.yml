@@ -1,0 +1,65 @@
+- generic [active] [ref=e1]:
+  - heading "Shipathon 2026 AI開発ツールガイド" [level=1] [ref=e2]
+  - paragraph [ref=e3]: Claude Code / Codex でモバイルアプリを爆速開発するためのスキル・MCP・プラグイン集
+  - generic [ref=e4]:
+    - heading "Shipathon = RevenueCat 主催の世界最大級モバイルアプリハッカソン" [level=2] [ref=e5]
+    - paragraph [ref=e6]: 2ヶ月でアプリを開発 → ストア公開 → RevenueCat SDK でマネタイズ。賞金1,000万円超
+  - generic [ref=e7]:
+    - generic [ref=e8] [cursor=pointer]:
+      - text: MCP サーバー
+      - generic [ref=e9]: バックエンド・ドキュメント
+    - generic [ref=e10] [cursor=pointer]:
+      - text: スキル
+      - generic [ref=e11]: 開発ワークフロー
+    - generic [ref=e12] [cursor=pointer]:
+      - text: 実戦レシピ
+      - generic [ref=e13]: 組み合わせパターン
+  - generic [ref=e47]:
+    - generic [ref=e48]:
+      - generic [ref=e49] [cursor=pointer]: Mobile Dev
+      - generic [ref=e50] [cursor=pointer]: Superpowers
+      - generic [ref=e51] [cursor=pointer]: 公式プラグイン
+      - generic [ref=e52] [cursor=pointer]: 導入方法
+    - generic [ref=e54]:
+      - heading "Skill Mobile Development スキル群" [level=3] [ref=e55]:
+        - generic [ref=e56]: Skill
+        - text: Mobile Development スキル群
+      - paragraph [ref=e57]:
+        - text: Claude Code の公式プラグイン
+        - code [ref=e58]: minimax-skills
+        - text: に含まれるモバイル開発特化スキル。各フレームワーク固有のベストプラクティス・アーキテクチャパターンを自動適用します。
+      - table [ref=e59]:
+        - rowgroup [ref=e60]:
+          - row "スキル名 対象 主な効果" [ref=e61]:
+            - columnheader "スキル名" [ref=e62]
+            - columnheader "対象" [ref=e63]
+            - columnheader "主な効果" [ref=e64]
+          - row "ios-application-dev SwiftUI / UIKit iOS アプリ設計・実装ガイダンス" [ref=e65]:
+            - cell "ios-application-dev" [ref=e66]:
+              - code [ref=e67]: ios-application-dev
+            - cell "SwiftUI / UIKit" [ref=e68]
+            - cell "iOS アプリ設計・実装ガイダンス" [ref=e69]
+          - row "android-native-dev Kotlin / Jetpack Compose Android ネイティブ開発のベストプラクティス" [ref=e70]:
+            - cell "android-native-dev" [ref=e71]:
+              - code [ref=e72]: android-native-dev
+            - cell "Kotlin / Jetpack Compose" [ref=e73]
+            - cell "Android ネイティブ開発のベストプラクティス" [ref=e74]
+          - row "frontend-dev React Native / Web クロスプラットフォームUI開発" [ref=e75]:
+            - cell "frontend-dev" [ref=e76]:
+              - code [ref=e77]: frontend-dev
+            - cell "React Native / Web" [ref=e78]
+            - cell "クロスプラットフォームUI開発" [ref=e79]
+          - row "fullstack-dev フルスタック フロント + バックエンド統合開発" [ref=e80]:
+            - cell "fullstack-dev" [ref=e81]:
+              - code [ref=e82]: fullstack-dev
+            - cell "フルスタック" [ref=e83]
+            - cell "フロント + バックエンド統合開発" [ref=e84]
+      - generic [ref=e85]:
+        - strong [ref=e86]: "Shipathon での使いどころ:"
+        - text: ネイティブ開発（Swift/Kotlin）でもクロスプラットフォーム（React Native/Flutter）でも、フレームワーク固有の「正しい書き方」を AIが自動で適用してくれます。
+      - heading "インストール" [level=4] [ref=e87]
+      - generic [ref=e88]: "# Claude Code のプラグインマーケットプレイスからインストール claude /plugin install minimax-skills # 使い方: 通常通り開発するだけで自動適用される # 例: \"SwiftUI でサブスクリプション画面を作って\" と言えば # ios-application-dev スキルが自動で適用される"
+  - generic [ref=e45]:
+    - text: Shipathon 2026 AI開発ツールガイド —
+    - link "jp.shipaton.com" [ref=e46] [cursor=pointer]:
+      - /url: https://jp.shipaton.com/

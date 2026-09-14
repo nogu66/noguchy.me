@@ -27,3 +27,6 @@ pnpm-debug.log*
 
 public/pagefind
 tags-blue.png
+.vercel
+.env*.local
+.gstack/

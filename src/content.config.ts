@@ -3,6 +3,7 @@ import { glob } from "astro/loaders";
 import { SITE } from "@/config";
 
 export const BLOG_PATH = "src/content/blog";
+export const NEWS_PATH = "src/content/news";
 export const TALKS_PATH = "src/content/talks";
 export const AWARDS_PATH = "src/content/awards";
 
@@ -21,6 +22,25 @@ const blog = defineCollection({
       description: z.string(),
       canonicalURL: z.string().optional(),
       hideEditPost: z.boolean().optional(),
+      timezone: z.string().optional(),
+    }),
+});
+
+// 短いニュース・気になった情報
+const news = defineCollection({
+  loader: glob({ pattern: "**/[^_]*.md", base: `./${NEWS_PATH}` }),
+  schema: ({ image }) =>
+    z.object({
+      author: z.string().default(SITE.author),
+      pubDatetime: z.date(),
+      modDatetime: z.date().optional().nullable(),
+      title: z.string(),
+      published: z.boolean().default(false),
+      tags: z.array(z.string()).default([]),
+      contents: z.array(z.string()).default([]),
+      description: z.string(),
+      thumbnail: z.string().optional(),
+      ogImage: image().or(z.string()).optional(),
       timezone: z.string().optional(),
     }),
 });
@@ -56,4 +76,4 @@ const awards = defineCollection({
     }),
 });
 
-export const collections = { blog, talks, awards };
+export const collections = { blog, news, talks, awards };

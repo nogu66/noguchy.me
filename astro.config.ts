@@ -37,9 +37,15 @@ export default defineConfig({
     }),
     mdx(),
     sitemap({
-      filter: page => SITE.showArchives || !page.endsWith("/archives"),
+      filter: page =>
+        (SITE.showArchives || !page.endsWith("/archives")) &&
+        !page.includes("/welcome"),
     }),
   ],
+  build: {
+    // CSS を HTML にインライン化し、レンダーブロッキングの外部リクエストをゼロにする
+    inlineStylesheets: "always",
+  },
   markdown: {
     remarkPlugins: [
       // remarkZennSource はソースを再パースしてツリーを置き換えるため必ず先頭に置くこと

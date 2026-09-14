@@ -1,0 +1,23 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import NewsDetails from "@/layouts/NewsDetails.astro";
+import { getNewsPath } from "@/utils/getNewsPath";
+import getSortedNews from "@/utils/getSortedNews";
+
+export interface Props {
+  newsItem: CollectionEntry<"news">;
+}
+
+export async function getStaticPaths() {
+  const news = getSortedNews(await getCollection("news"));
+  return news.map(newsItem => ({
+    params: { slug: getNewsPath(newsItem.id, newsItem.filePath, false) },
+    props: { newsItem },
+  }));
+}
+
+const { newsItem } = Astro.props;
+const news = getSortedNews(await getCollection("news"));
+---
+
+<NewsDetails {newsItem} {news} />

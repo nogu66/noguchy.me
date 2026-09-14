@@ -1,0 +1,192 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Tag from "@/components/Tag.astro";
+import Datetime from "@/components/Datetime.astro";
+import ShareLinks from "@/components/ShareLinks.astro";
+import BackButton from "@/components/BackButton.astro";
+import BackToTopButton from "@/components/BackToTopButton.astro";
+import { getNewsPath } from "@/utils/getNewsPath";
+import { slugifyStr } from "@/utils/slugify";
+import { SITE } from "@/config";
+
+export interface Props {
+  newsItem: CollectionEntry<"news">;
+  news: CollectionEntry<"news">[];
+}
+
+const { newsItem, news } = Astro.props;
+const {
+  title,
+  author,
+  description,
+  pubDatetime,
+  modDatetime,
+  timezone,
+  tags,
+  contents,
+  thumbnail,
+} = newsItem.data;
+const { Content } = await render(newsItem);
+
+const allNews = news.map(({ data: { title }, id, filePath }) => ({
+  id,
+  title,
+  filePath,
+}));
+const currentNewsIndex = allNews.findIndex(item => item.id === newsItem.id);
+const prevNews = currentNewsIndex > 0 ? allNews[currentNewsIndex - 1] : null;
+const nextNews =
+  currentNewsIndex >= 0 && currentNewsIndex < allNews.length - 1
+    ? allNews[currentNewsIndex + 1]
+    : null;
+---
+
+<Layout
+  title={`${title} | News | ${SITE.title}`}
+  {author}
+  {description}
+  {pubDatetime}
+  {modDatetime}
+  ogImage={thumbnail}
+  scrollSmooth
+>
+  <Header />
+  <BackButton />
+  <main
+    id="main-content"
+    class:list={[
+      "mx-auto w-full max-w-5xl px-4 pb-12",
+      { "mt-8": !SITE.showBackButton },
+    ]}
+    data-pagefind-body
+  >
+    {
+      thumbnail && (
+        <figure class="mb-8 overflow-hidden rounded-lg border border-border bg-light">
+          <img
+            src={thumbnail}
+            alt={title}
+            class="aspect-video w-full object-cover"
+            loading="eager"
+          />
+        </figure>
+      )
+    }
+    <header class="border-b border-border pt-4 pb-7 sm:pt-8 sm:pb-9">
+      <p
+        class="mb-4 text-xs font-semibold tracking-[0.2em] text-accent uppercase"
+      >
+        News
+      </p>
+      <h1
+        transition:name={slugifyStr(title)}
+        class="max-w-4xl text-3xl leading-tight font-bold text-foreground-dark sm:text-5xl"
+      >
+        {title}
+      </h1>
+      <div
+        class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"
+      >
+        <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
+      </div>
+    </header>
+
+    {
+      contents.length > 0 && (
+        <details
+          open
+          class="news-contents mx-auto mt-8 max-w-3xl border-y border-border py-5 sm:mt-10 sm:py-6"
+        >
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-4">
+            <h2 class="text-lg font-bold text-foreground-dark">記事の内容</h2>
+            <span class="flex items-center gap-3 text-xs text-muted">
+              {contents.length}項目
+              <span
+                aria-hidden="true"
+                class="contents-toggle text-xl leading-none text-accent"
+              >
+                +
+              </span>
+            </span>
+          </summary>
+          <ol class="mt-4 space-y-2">
+            {contents.map((content, index) => (
+              <li class="flex gap-3 text-sm leading-relaxed">
+                <span class="font-mono text-accent/75">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span>{content}</span>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )
+    }
+
+    <div class="mx-auto mt-10 max-w-3xl sm:mt-12">
+      <p class="mb-8 text-lg leading-relaxed text-foreground-dark">
+        {description}
+      </p>
+      <article
+        id="article"
+        class="app-prose max-w-none prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"
+      >
+        <Content />
+      </article>
+    </div>
+
+    <hr class="my-8 border-dashed" />
+    <ul class="my-8">
+      {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} />)}
+    </ul>
+    <BackToTopButton />
+    <ShareLinks />
+    <hr class="my-6 border-dashed" />
+    <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      {
+        prevNews && (
+          <a
+            href={getNewsPath(prevNews.id, prevNews.filePath)}
+            class="flex w-full gap-1 hover:opacity-75"
+          >
+            <div>
+              <span>Previous News</span>
+              <div class="text-sm text-accent/85">{prevNews.title}</div>
+            </div>
+          </a>
+        )
+      }
+      {
+        nextNews && (
+          <a
+            href={getNewsPath(nextNews.id, nextNews.filePath)}
+            class="flex w-full justify-end text-end hover:opacity-75 sm:col-start-2"
+          >
+            <div>
+              <span>Next News</span>
+              <div class="text-sm text-accent/85">{nextNews.title}</div>
+            </div>
+          </a>
+        )
+      }
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .news-contents summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .contents-toggle {
+    transition: transform 180ms ease-out;
+  }
+
+  .news-contents[open] .contents-toggle {
+    transform: rotate(45deg);
+  }
+</style>

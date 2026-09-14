@@ -1,0 +1,92 @@
+- generic [active] [ref=e1]:
+  - heading "RevenueCat AI Toolkit" [level=1] [ref=e2]
+  - paragraph [ref=e3]: 技術者向け完全解説 — アーキテクチャ・MCP Tools・スキル・Swift実装パターン
+  - generic [ref=e4]:
+    - generic [ref=e5] [cursor=pointer]:
+      - text: RevenueCat AI Toolkit
+      - generic [ref=e6]: 課金バックエンド側を操作
+    - generic [ref=e7] [cursor=pointer]:
+      - text: asc CLI
+      - generic [ref=e8]: App Store Connect 側を操作
+    - generic [ref=e9] [cursor=pointer]:
+      - text: 連携シナジー
+      - generic [ref=e10]: 組み合わせで何が変わるか
+  - generic [ref=e56]:
+    - generic [ref=e57]:
+      - generic [ref=e58] [cursor=pointer]: なぜ組み合わせるのか
+      - generic [ref=e59] [cursor=pointer]: 一気通貫ワークフロー
+      - generic [ref=e60] [cursor=pointer]: 実践シナリオ
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - heading "2つのツールが埋める「溝」" [level=3] [ref=e63]
+        - paragraph [ref=e64]:
+          - text: iOS/macOS アプリの課金実装には
+          - strong [ref=e65]: 2つの管理画面
+          - text: が関わる。App Store Connect（ストア側）と RevenueCat（課金バックエンド側）。従来、開発者はこの2つのダッシュボードを行き来しながら手動で設定を揃える必要があった。
+      - heading "Before：従来のワークフロー" [level=3] [ref=e66]
+      - generic [ref=e68]:
+        - heading "開発者" [level=4] [ref=e69]
+        - paragraph [ref=e70]: 2つのダッシュボードを手動操作
+      - generic [ref=e71]: ↓ ブラウザで手動操作
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - heading "App Store Connect" [level=4] [ref=e74]
+          - paragraph [ref=e75]:
+            - text: IAP/サブスク作成
+            - text: メタデータ設定
+            - text: 審査提出
+        - generic [ref=e76]:
+          - heading "RevenueCat Dashboard" [level=4] [ref=e77]
+          - paragraph [ref=e78]:
+            - text: Product 作成
+            - text: Entitlement 設定
+            - text: Offering 構成
+      - generic [ref=e79]:
+        - strong [ref=e80]: "課題:"
+        - text: 商品IDの手動コピペ、設定の同期漏れ、ダッシュボード間の行き来による時間ロス。初期設定だけで半日〜1日かかることも。
+      - heading "After：AI エージェント統合ワークフロー" [level=3] [ref=e81]
+      - generic [ref=e83]:
+        - heading "AI エージェント" [level=4] [ref=e84]
+        - paragraph [ref=e85]: Claude Code / Codex / Cursor
+      - generic [ref=e86]: ↓ 自然言語で指示するだけ
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - heading "asc CLI + Agent Skills" [level=4] [ref=e89]
+          - paragraph [ref=e90]:
+            - text: JSON-first CLI
+            - text: 22 スキルで自動化
+        - generic [ref=e91]:
+          - heading "ai-toolkit (MCP + Skills)" [level=4] [ref=e92]
+          - paragraph [ref=e93]:
+            - text: リモート MCP サーバー
+            - text: 14 スキルで自動化
+      - generic [ref=e94]: ↓ 自動連携
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - heading "App Store Connect" [level=4] [ref=e97]
+          - paragraph [ref=e98]: 設定済み
+        - generic [ref=e99]:
+          - heading "RevenueCat" [level=4] [ref=e100]
+          - paragraph [ref=e101]: 設定済み
+      - generic [ref=e102]:
+        - strong [ref=e103]: "効果:"
+        - text: AI エージェントが両側を統一的に操作。商品IDの受け渡し、設定の整合性チェック、不足リソースの自動作成まで一気通貫で完結。初期設定が数分に短縮。
+      - heading "組み合わせのメリット" [level=3] [ref=e104]
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - heading "単体で使う場合" [level=3] [ref=e107]
+          - list [ref=e108]:
+            - listitem [ref=e109]: asc CLI だけ → ストア側の操作は自動化できるが、RevenueCat 側は手動設定が必要
+            - listitem [ref=e110]: ai-toolkit だけ → RevenueCat 側は自動化できるが、ASC での IAP 作成やビルド配布は手動
+            - listitem [ref=e111]: 商品IDの手動コピペが残る
+            - listitem [ref=e112]: 設定の整合性は開発者が目視確認
+        - generic [ref=e113]:
+          - heading "組み合わせた場合" [level=3] [ref=e114]
+          - list [ref=e115]:
+            - listitem [ref=e116]: ストア側 → 課金バックエンド側を AI が一気通貫で設定
+            - listitem [ref=e117]:
+              - text: 商品IDの受け渡しを自動化（
+              - code [ref=e118]: asc-revenuecat-catalog-sync
+              - text: スキル）
+            - listitem [ref=e119]: ビルド → TestFlight → 審査まで同じ AI セッションで完結
+            - listitem [ref=e120]: 設定の不整合を AI が検出・修正

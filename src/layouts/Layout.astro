@@ -170,12 +170,21 @@ const structuredData = pubDatetime
           <link rel="preconnect" href="https://www.googletagmanager.com" />
           <script
             is:inline
-            async
-            src={`https://www.googletagmanager.com/gtag/js?id=${PUBLIC_GOOGLE_ANALYTICS_ID}`}
-          />
-          <script
-            is:inline
-            set:html={`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${PUBLIC_GOOGLE_ANALYTICS_ID}');`}
+            set:html={`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '${PUBLIC_GOOGLE_ANALYTICS_ID}');
+(function () {
+  var loadGtag = function () {
+    var s = document.createElement("script");
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=${PUBLIC_GOOGLE_ANALYTICS_ID}";
+    document.head.appendChild(s);
+  };
+  // Defer gtag.js until after load so it doesn't compete for initial bandwidth
+  if (document.readyState === "complete") {
+    loadGtag();
+  } else {
+    window.addEventListener("load", loadGtag, { once: true });
+  }
+})();`}
           />
         </>
       )

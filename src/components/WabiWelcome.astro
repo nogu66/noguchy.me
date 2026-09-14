@@ -1,0 +1,583 @@
+---
+interface Props {
+  contentTarget: string;
+}
+
+const { contentTarget } = Astro.props;
+---
+
+<section id="welcome" class="wabi-welcome" aria-labelledby="welcome-title">
+  <svg class="wabi-filters" aria-hidden="true">
+    <defs>
+      <filter
+        id="wabi-liquid-displacement"
+        x="-30%"
+        y="-30%"
+        width="160%"
+        height="160%"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.012 0.028"
+          numOctaves="2"
+          seed="8"
+          result="noise"
+        >
+          <animate
+            attributeName="baseFrequency"
+            dur="14s"
+            values="0.012 0.028;0.018 0.022;0.012 0.028"
+            repeatCount="indefinite"></animate>
+        </feTurbulence>
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="noise"
+          scale="16"
+          xChannelSelector="R"
+          yChannelSelector="B"></feDisplacementMap>
+      </filter>
+      <filter id="wabi-paper-grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.72"
+          numOctaves="3"
+          seed="4"></feTurbulence>
+        <feColorMatrix type="saturate" values="0"></feColorMatrix>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="paper-grain" aria-hidden="true"></div>
+  <div class="ink-wash ink-wash-one" aria-hidden="true"></div>
+  <div class="ink-wash ink-wash-two" aria-hidden="true"></div>
+
+  <div class="welcome-shell">
+    <div class="welcome-copy">
+      <p class="eyebrow"><span></span> Welcome / 2026</p>
+      <h1 id="welcome-title">
+        <span>つくることと、</span>
+        <span>考えること。</span>
+      </h1>
+      <p class="welcome-lede">
+        AIとプロダクトのあいだに、<br />まだ名前のない体験をつくる。
+      </p>
+      <a class="welcome-action" href={contentTarget}>
+        <span>作品と記録を見る</span>
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5"></path>
+        </svg>
+      </a>
+    </div>
+
+    <div class="welcome-art" aria-hidden="true">
+      <p class="wabi-note">不完全の中に、余白を。</p>
+      <div class="enso"></div>
+      <div class="glass-shadow"></div>
+      <div class="liquid-lens">
+        <div class="lens-refraction"></div>
+        <div class="lens-content">
+          <span class="lens-mark">間</span>
+          <span class="lens-caption">MA / SPACE</span>
+        </div>
+      </div>
+      <div class="stone stone-one"></div>
+      <div class="stone stone-two"></div>
+    </div>
+
+    <p class="scroll-note"><span></span> Scroll to discover</p>
+  </div>
+</section>
+
+<style>
+  .wabi-welcome {
+    --paper: #eee9dd;
+    --paper-deep: #d9d1bf;
+    --ink: #1b1b18;
+    --ink-soft: #625f56;
+    --moss: #556047;
+    --moss-light: #879177;
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    max-width: none;
+    min-height: calc(100svh - 65px);
+    overflow: hidden;
+    padding: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(
+        circle at 72% 44%,
+        rgb(255 255 255 / 0.7),
+        transparent 28%
+      ),
+      linear-gradient(
+        128deg,
+        var(--paper) 0%,
+        #e8e1d3 52%,
+        var(--paper-deep) 100%
+      );
+  }
+
+  :global(html[data-theme="dark"]) .wabi-welcome {
+    --paper: #22231f;
+    --paper-deep: #151613;
+    --ink: #eee9dd;
+    --ink-soft: #aaa597;
+    --moss: #98a485;
+    --moss-light: #bdc6ae;
+    background:
+      radial-gradient(
+        circle at 72% 44%,
+        rgb(123 132 108 / 0.15),
+        transparent 30%
+      ),
+      linear-gradient(
+        128deg,
+        var(--paper) 0%,
+        #1c1d19 52%,
+        var(--paper-deep) 100%
+      );
+  }
+
+  .wabi-filters {
+    position: absolute;
+    width: 0;
+    height: 0;
+  }
+
+  .paper-grain {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    filter: url("#wabi-paper-grain");
+    opacity: 0.075;
+    mix-blend-mode: multiply;
+  }
+
+  .welcome-shell {
+    position: relative;
+    width: min(100% - 2rem, 72rem);
+    min-height: calc(100svh - 65px);
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(24rem, 0.9fr);
+    align-items: center;
+    gap: clamp(2rem, 6vw, 7rem);
+    padding-block: clamp(4rem, 9vw, 8rem);
+  }
+
+  .welcome-copy {
+    position: relative;
+    z-index: 3;
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 1.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--moss);
+  }
+
+  .eyebrow span {
+    width: 2rem;
+    height: 1px;
+    background: currentColor;
+  }
+
+  h1 {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+    font-size: clamp(3.4rem, 7.4vw, 7.2rem);
+    font-weight: 500;
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+  }
+
+  h1 span {
+    display: block;
+  }
+
+  h1 span:last-child {
+    margin-top: 0.12em;
+    margin-left: 0.42em;
+  }
+
+  .welcome-lede {
+    margin: clamp(2rem, 5vw, 3.5rem) 0 0;
+    color: var(--ink-soft);
+    font-size: clamp(0.95rem, 1.4vw, 1.08rem);
+    line-height: 2;
+    letter-spacing: 0.08em;
+  }
+
+  .welcome-action {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 2.25rem;
+    padding: 0.85rem 0.1rem;
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-decoration: none;
+  }
+
+  .welcome-action::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0.45rem;
+    left: 0;
+    height: 1px;
+    transform: scaleX(0.28);
+    transform-origin: left;
+    background: var(--moss);
+    transition: transform 280ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .welcome-action:hover::after,
+  .welcome-action:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  .welcome-action svg {
+    width: 1.25rem;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    fill: none;
+    transition: transform 180ms ease-out;
+  }
+
+  .welcome-action:hover svg {
+    transform: translateX(0.3rem);
+  }
+
+  .welcome-art {
+    --pointer-x: 0px;
+    --pointer-y: 0px;
+    position: relative;
+    min-height: clamp(25rem, 52vw, 38rem);
+    transform: translate3d(
+      calc(var(--pointer-x) * 0.18),
+      calc(var(--pointer-y) * 0.18),
+      0
+    );
+    transition: transform 500ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .enso {
+    position: absolute;
+    top: 8%;
+    left: 5%;
+    width: 82%;
+    aspect-ratio: 1;
+    border: clamp(10px, 1.6vw, 20px) solid rgb(27 27 24 / 0.78);
+    border-right-color: transparent;
+    border-bottom-color: rgb(27 27 24 / 0.22);
+    border-radius: 47% 53% 51% 49% / 52% 45% 55% 48%;
+    transform: rotate(-18deg);
+    mask-image: linear-gradient(
+      130deg,
+      #000 8%,
+      rgb(0 0 0 / 0.75) 58%,
+      transparent 88%
+    );
+    opacity: 0.88;
+  }
+
+  :global(html[data-theme="dark"]) .enso {
+    border-color: rgb(238 233 221 / 0.66);
+    border-right-color: transparent;
+    border-bottom-color: rgb(238 233 221 / 0.16);
+  }
+
+  .liquid-lens,
+  .glass-shadow {
+    position: absolute;
+    top: 22%;
+    left: 18%;
+    width: 64%;
+    aspect-ratio: 0.96;
+    border-radius: 52% 48% 60% 40% / 45% 57% 43% 55%;
+  }
+
+  .glass-shadow {
+    transform: translate(1.2rem, 1.8rem) scale(0.96);
+    background: rgb(57 61 47 / 0.22);
+    filter: blur(22px);
+  }
+
+  .liquid-lens {
+    overflow: hidden;
+    transform: translate3d(
+      calc(var(--pointer-x) * -0.45),
+      calc(var(--pointer-y) * -0.45),
+      0
+    );
+    border: 1px solid rgb(255 255 255 / 0.7);
+    background: linear-gradient(
+      145deg,
+      rgb(255 255 255 / 0.28),
+      rgb(255 255 255 / 0.05)
+    );
+    box-shadow:
+      inset 10px 12px 28px rgb(255 255 255 / 0.32),
+      inset -10px -12px 26px rgb(49 55 41 / 0.12),
+      0 28px 65px rgb(55 51 40 / 0.2);
+    backdrop-filter: blur(11px) saturate(1.15) contrast(1.04);
+    -webkit-backdrop-filter: blur(11px) saturate(1.15) contrast(1.04);
+    transition: transform 500ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .liquid-lens::before {
+    content: "";
+    position: absolute;
+    inset: 3%;
+    border: 1px solid rgb(255 255 255 / 0.46);
+    border-radius: inherit;
+    filter: blur(0.3px);
+  }
+
+  .lens-refraction {
+    position: absolute;
+    inset: -12%;
+    background:
+      radial-gradient(
+        circle at 68% 28%,
+        rgb(255 255 255 / 0.8),
+        transparent 13%
+      ),
+      linear-gradient(
+        115deg,
+        transparent 27%,
+        rgb(135 145 119 / 0.3) 48%,
+        transparent 68%
+      );
+    filter: url("#wabi-liquid-displacement");
+    animation: refract-drift 12s ease-in-out infinite alternate;
+  }
+
+  .lens-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+  }
+
+  .lens-mark {
+    font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+    font-size: clamp(5rem, 11vw, 8.5rem);
+    line-height: 1;
+    text-shadow: 0 1px 0 rgb(255 255 255 / 0.45);
+  }
+
+  .lens-caption {
+    margin-top: 0.75rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    color: var(--ink-soft);
+  }
+
+  .wabi-note {
+    position: absolute;
+    top: 10%;
+    right: -0.5rem;
+    margin: 0;
+    color: var(--ink-soft);
+    font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.26em;
+    writing-mode: vertical-rl;
+  }
+
+  .stone {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--moss);
+    opacity: 0.72;
+    box-shadow: inset -6px -7px 12px rgb(0 0 0 / 0.12);
+  }
+
+  .stone-one {
+    right: 4%;
+    bottom: 14%;
+    width: clamp(1.2rem, 2.2vw, 2rem);
+    aspect-ratio: 1.2;
+    transform: rotate(18deg);
+  }
+
+  .stone-two {
+    bottom: 7%;
+    left: 7%;
+    width: clamp(0.55rem, 1vw, 0.85rem);
+    aspect-ratio: 0.92;
+    background: var(--moss-light);
+  }
+
+  .scroll-note {
+    position: absolute;
+    bottom: 1.75rem;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .scroll-note span {
+    display: block;
+    width: 2.75rem;
+    height: 1px;
+    background: currentColor;
+  }
+
+  .ink-wash {
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 50%;
+    filter: blur(18px);
+    opacity: 0.12;
+  }
+
+  .ink-wash-one {
+    top: -10%;
+    left: -8%;
+    width: 28rem;
+    height: 28rem;
+    background: var(--moss);
+  }
+
+  .ink-wash-two {
+    right: -8%;
+    bottom: -18%;
+    width: 24rem;
+    height: 24rem;
+    background: var(--ink);
+    opacity: 0.06;
+  }
+
+  @keyframes refract-drift {
+    from {
+      transform: translate3d(-2%, -1%, 0) rotate(-2deg) scale(1.04);
+    }
+    to {
+      transform: translate3d(2%, 1%, 0) rotate(2deg) scale(1.08);
+    }
+  }
+
+  @media (max-width: 800px) {
+    .wabi-welcome,
+    .welcome-shell {
+      min-height: calc(100svh - 65px);
+    }
+
+    .welcome-shell {
+      grid-template-columns: 1fr;
+      align-content: center;
+      gap: 0;
+      padding-block: 3.5rem 5.5rem;
+    }
+
+    .welcome-copy {
+      z-index: 4;
+      padding-top: 0.5rem;
+    }
+
+    h1 {
+      font-size: clamp(3rem, 14.2vw, 5.8rem);
+    }
+
+    h1 span:last-child {
+      margin-left: 0.2em;
+    }
+
+    .welcome-lede {
+      margin-top: 1.6rem;
+      font-size: 0.88rem;
+    }
+
+    .welcome-art {
+      position: absolute;
+      right: -20%;
+      bottom: -3%;
+      width: min(78vw, 26rem);
+      min-height: 25rem;
+      opacity: 0.68;
+    }
+
+    .wabi-note,
+    .stone-two {
+      display: none;
+    }
+
+    .scroll-note {
+      bottom: 1.35rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lens-refraction {
+      animation: none;
+    }
+
+    .welcome-art,
+    .liquid-lens,
+    .welcome-action svg,
+    .welcome-action::after {
+      transition-duration: 0.01ms;
+    }
+  }
+</style>
+
+<script>
+  const initWabiWelcome = () => {
+    const welcome = document.querySelector<HTMLElement>(".wabi-welcome");
+    const art = welcome?.querySelector<HTMLElement>(".welcome-art");
+
+    if (!welcome || !art || welcome.dataset.motionReady === "true") return;
+    welcome.dataset.motionReady = "true";
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+
+    const moveLens = (event: PointerEvent) => {
+      if (reduceMotion.matches || event.pointerType === "touch") return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const bounds = welcome.getBoundingClientRect();
+        const x = ((event.clientX - bounds.left) / bounds.width - 0.5) * 24;
+        const y = ((event.clientY - bounds.top) / bounds.height - 0.5) * 24;
+        art.style.setProperty("--pointer-x", `${x}px`);
+        art.style.setProperty("--pointer-y", `${y}px`);
+      });
+    };
+
+    const resetLens = () => {
+      art.style.setProperty("--pointer-x", "0px");
+      art.style.setProperty("--pointer-y", "0px");
+    };
+
+    welcome.addEventListener("pointermove", moveLens);
+    welcome.addEventListener("pointerleave", resetLens);
+  };
+
+  initWabiWelcome();
+  document.addEventListener("astro:page-load", initWabiWelcome);
+</script>

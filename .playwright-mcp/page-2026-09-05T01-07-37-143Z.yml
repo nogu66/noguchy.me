@@ -1,0 +1,17 @@
+- generic [active] [ref=f2e1]:
+  - main [ref=f2e2]:
+    - generic [ref=f2e4]:
+      - heading "間を、ひらく" [level=1] [ref=f2e7]
+      - region [ref=f2e8]:
+        - generic [ref=f2e9]:
+          - paragraph [ref=f2e10]: noguchy.me
+          - paragraph [ref=f2e11]: つくったもの、考えたことを、静かに置いていく場所。
+          - link "はじめる" [ref=f2e12] [cursor=pointer]:
+            - /url: /
+          - link "noguについて" [ref=f2e13] [cursor=pointer]:
+            - /url: /about/
+  - generic [ref=f2e16]:
+    - button [ref=f2e17]
+    - button [ref=f2e23]
+    - button [ref=f2e27]
+    - button [ref=f2e32]

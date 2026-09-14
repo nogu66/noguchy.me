@@ -1,0 +1,596 @@
+---
+import Layout from "@/layouts/Layout.astro";
+
+// Welcome screen prototype: a wabi (侘び) themed first-open screen with a
+// liquid-glass panel that refracts the scene behind it. The refraction is
+// an SVG displacement filter (lens map + hand-blown-glass turbulence), so it
+// works in Safari and Firefox as well as Chromium — no backdrop-filter:url().
+
+const title = "Welcome | noguchy.me";
+const description =
+  "noguchy.me のウェルカム画面。侘びに着想を得た液体ガラスのプロトタイプ。";
+
+// Karesansui (dry garden) geometry: straight rake lines across the scene,
+// concentric rings around the main stone. Generated here so the markup
+// stays readable.
+const STONE = { cx: 250, cy: 330 };
+const RING_LIMIT = 300;
+const PITCH = 13;
+const rakeLines = Array.from({ length: 66 }, (_, i) => 6 + i * PITCH);
+const rakeRings = Array.from(
+  { length: Math.floor((RING_LIMIT - 78) / PITCH) + 1 },
+  (_, i) => 78 + i * PITCH
+);
+---
+
+<Layout title={title} description={description}>
+  <Fragment slot="head">
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500&display=swap"
+    />
+  </Fragment>
+
+  <main class="welcome">
+    <div class="phone">
+      <div class="screen" data-screen>
+        <svg class="scene" aria-hidden="true">
+          <use href="#wabi-scene" width="100%" height="100%"></use>
+        </svg>
+
+        <h1 class="headline">間を、ひらく</h1>
+
+        <section class="glass" data-glass aria-labelledby="welcome-title">
+          <div class="glass__refract" aria-hidden="true">
+            <svg class="scene scene--copy">
+              <use href="#wabi-scene" width="100%" height="100%"></use>
+            </svg>
+          </div>
+          <div class="glass__sheen" aria-hidden="true"></div>
+          <div class="glass__body">
+            <p class="wordmark" id="welcome-title">noguchy.me</p>
+            <p class="lede">
+              つくったもの、考えたことを、<br />静かに置いていく場所。
+            </p>
+            <a class="cta" href="/" data-cta>はじめる</a>
+            <a class="secondary" href="/about/">noguについて</a>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="w-ground" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--w-ground-1)"></stop>
+          <stop offset="1" stop-color="var(--w-ground-2)"></stop>
+        </linearGradient>
+        <linearGradient id="w-mist" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--w-mist)" stop-opacity="0.7"></stop>
+          <stop offset="0.42" stop-color="var(--w-mist)" stop-opacity="0"
+          ></stop>
+        </linearGradient>
+        <radialGradient id="w-moss" cx="0.35" cy="0.3" r="0.8">
+          <stop offset="0" stop-color="var(--w-moss-1)"></stop>
+          <stop offset="1" stop-color="var(--w-moss-2)"></stop>
+        </radialGradient>
+
+        <clipPath id="w-inside">
+          <circle cx={STONE.cx} cy={STONE.cy} r={RING_LIMIT}></circle>
+        </clipPath>
+        <mask id="w-outside">
+          <rect width="390" height="844" fill="#fff"></rect>
+          <circle cx={STONE.cx} cy={STONE.cy} r={RING_LIMIT} fill="#000"
+          ></circle>
+        </mask>
+
+        <!-- Hand-raked wobble on the gravel lines -->
+        <filter id="w-hand" x="-2%" y="-2%" width="104%" height="104%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.018"
+            numOctaves="2"
+            seed="3"
+            result="n"></feTurbulence>
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="n"
+            scale="3.5"
+            xChannelSelector="R"
+            yChannelSelector="G"></feDisplacementMap>
+        </filter>
+        <filter id="w-soft" x="-30%" y="-100%" width="160%" height="300%">
+          <feGaussianBlur stdDeviation="5"></feGaussianBlur>
+        </filter>
+        <!-- Washi grain -->
+        <filter id="w-grain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.9"
+            numOctaves="2"
+            seed="11"></feTurbulence>
+          <feColorMatrix
+            type="matrix"
+            values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0.3 0.3 0.3 0 0"
+          ></feColorMatrix>
+        </filter>
+
+        <!--
+          Liquid glass refraction. The lens map bends the edge like a thick
+          rim; the low-frequency turbulence adds the uneven pull of
+          hand-blown glass. 128 in the map means "no displacement".
+        -->
+        <filter
+          id="wabi-refract"
+          x="0"
+          y="0"
+          width="1"
+          height="1"
+          filterUnits="objectBoundingBox"
+          color-interpolation-filters="sRGB"
+        >
+          <feImage
+            href="/welcome/lens-map.png"
+            preserveAspectRatio="none"
+            result="lens"></feImage>
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.011 0.016"
+            numOctaves="2"
+            seed="7"
+            result="noise"></feTurbulence>
+          <feColorMatrix
+            in="noise"
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0 1"
+            result="noiseOpaque"></feColorMatrix>
+          <feComposite
+            in="lens"
+            in2="noiseOpaque"
+            operator="arithmetic"
+            k1="0"
+            k2="1"
+            k3="0.28"
+            k4="-0.14"
+            result="map"></feComposite>
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="map"
+            scale="44"
+            xChannelSelector="R"
+            yChannelSelector="G"
+            result="bent"></feDisplacementMap>
+          <feGaussianBlur in="bent" stdDeviation="0.8"></feGaussianBlur>
+        </filter>
+
+        <symbol
+          id="wabi-scene"
+          viewBox="0 0 390 844"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <rect width="390" height="844" fill="url(#w-ground)"></rect>
+
+          <g
+            fill="none"
+            stroke="var(--w-line)"
+            stroke-width="1.1"
+            stroke-linecap="round"
+            filter="url(#w-hand)"
+          >
+            <g mask="url(#w-outside)">
+              {rakeLines.map(y => <line x1="-20" y1={y} x2="410" y2={y} />)}
+            </g>
+            <g clip-path="url(#w-inside)">
+              {rakeRings.map(r => <circle cx={STONE.cx} cy={STONE.cy} r={r} />)}
+            </g>
+          </g>
+
+          <!-- Stones -->
+          <ellipse
+            cx="254"
+            cy="372"
+            rx="66"
+            ry="9"
+            fill="var(--w-stone-shadow)"
+            filter="url(#w-soft)"></ellipse>
+          <path
+            d="M190 336C186 306 214 284 250 282C292 280 318 300 316 332C314 362 282 378 246 376C214 375 194 360 190 336Z"
+            fill="url(#w-moss)"></path>
+          <path
+            d="M208 318C214 300 236 292 258 294C272 295 284 302 288 312C270 306 246 306 226 314C218 317 212 320 208 318Z"
+            fill="var(--w-moss-0)"
+            opacity="0.22"
+            filter="url(#w-soft)"></path>
+
+          <ellipse
+            cx="120"
+            cy="549"
+            rx="30"
+            ry="5"
+            fill="var(--w-stone-shadow)"
+            filter="url(#w-soft)"></ellipse>
+          <path
+            d="M92 532C90 516 104 506 120 506C138 506 150 516 148 532C146 546 132 552 116 551C102 550 93 543 92 532Z"
+            fill="url(#w-moss)"></path>
+
+          <rect width="390" height="844" fill="url(#w-mist)"></rect>
+          <rect
+            width="390"
+            height="844"
+            filter="url(#w-grain)"
+            opacity="0.07"
+            style="mix-blend-mode: soft-light"></rect>
+        </symbol>
+      </defs>
+    </svg>
+  </main>
+</Layout>
+
+<style>
+  /*
+    Design rules for this screen
+    - One accent: celadon (青磁). Same hue in both themes, luminance adjusted.
+    - One grey family: warm.
+    - Shapes: actions are pills, the glass panel is 28, the device frame is 44.
+    - One display size: the vertical headline. Everything else is body scale.
+  */
+  .welcome {
+    --w-font:
+      "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP",
+      serif;
+    --w-page: #d8d4cb;
+    --w-bezel: #2a2823;
+    --w-ground-1: #dcd8cf;
+    --w-ground-2: #c6c1b6;
+    --w-line: #a9a398;
+    --w-mist: #f1efe9;
+    --w-moss-0: #a3a98f;
+    --w-moss-1: #7e8570;
+    --w-moss-2: #4e5443;
+    --w-stone-shadow: rgb(60 55 45 / 0.28);
+    --w-ink: #2a2823;
+    --w-ink-2: #5c5850;
+    --w-glass-tint: rgb(238 235 228 / 0.38);
+    --w-glass-edge: rgb(255 255 255 / 0.55);
+    --w-sheen: rgb(255 255 255 / 0.3);
+    --w-accent: #3e5c55;
+    --w-accent-press: #33504a;
+    --w-on-accent: #eeebe3;
+    --w-focus: #3e5c55;
+
+    position: relative;
+    width: 100%;
+    background: var(--w-page);
+    color: var(--w-ink);
+    font-family: var(--w-font);
+  }
+
+  :global([data-theme="dark"]) .welcome {
+    --w-page: #151614;
+    --w-bezel: #0e0f0d;
+    --w-ground-1: #2b2c29;
+    --w-ground-2: #1d1e1b;
+    --w-line: #4a4b45;
+    --w-mist: #3a3b37;
+    --w-moss-0: #7d8570;
+    --w-moss-1: #5d6553;
+    --w-moss-2: #2f3429;
+    --w-stone-shadow: rgb(0 0 0 / 0.45);
+    --w-ink: #e6e1d6;
+    --w-ink-2: #a9a399;
+    --w-glass-tint: rgb(40 41 38 / 0.42);
+    --w-glass-edge: rgb(255 255 255 / 0.16);
+    --w-sheen: rgb(255 255 255 / 0.1);
+    --w-accent: #9dbdb2;
+    --w-accent-press: #8aaa9f;
+    --w-on-accent: #17201d;
+    --w-focus: #9dbdb2;
+  }
+
+  .phone {
+    width: 100%;
+  }
+
+  .screen {
+    position: relative;
+    width: 100%;
+    height: 100dvh;
+    min-height: 560px;
+    overflow: hidden;
+    background: var(--w-ground-2);
+    isolation: isolate;
+  }
+
+  .scene {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .headline {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 64px);
+    right: 28px;
+    margin: 0;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: var(--w-font);
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: 0.2em;
+    color: var(--w-ink);
+    animation: ink 700ms cubic-bezier(0.23, 1, 0.32, 1) 160ms both;
+  }
+
+  .glass {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: max(20px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+    border-radius: 28px;
+    corner-shape: squircle;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--w-glass-tint);
+    box-shadow:
+      inset 0 1px 0 var(--w-glass-edge),
+      inset 0 0 0 1px rgb(255 255 255 / 0.08),
+      0 24px 48px -28px rgb(0 0 0 / 0.5);
+    animation: rise 520ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+
+  .glass__refract {
+    position: absolute;
+    inset: 0;
+    filter: url(#wabi-refract);
+    pointer-events: none;
+  }
+
+  .scene--copy {
+    /* Sized to the screen and offset so it lines up with the scene behind,
+       then bent by the refraction filter. Values set from the script. */
+    width: var(--sw, 100%);
+    height: var(--sh, 100%);
+    left: var(--ox, 0px);
+    top: var(--oy, 0px);
+    right: auto;
+    bottom: auto;
+  }
+
+  .glass__sheen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      165deg,
+      var(--w-sheen) 0%,
+      transparent 38%,
+      transparent 72%,
+      rgb(255 255 255 / 0.06) 100%
+    );
+  }
+
+  .glass__body {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    padding: 28px 24px 20px;
+  }
+
+  .wordmark {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    color: var(--w-ink);
+  }
+
+  .lede {
+    margin: 0 0 8px;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--w-ink-2);
+    max-width: 28em;
+  }
+
+  .cta,
+  .secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    text-decoration: none;
+    font-family: var(--w-font);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    border-radius: 999px;
+    transition:
+      transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 120ms linear;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .cta {
+    min-height: 52px;
+    background: var(--w-accent);
+    color: var(--w-on-accent);
+  }
+  .cta:hover {
+    background: var(--w-accent-press);
+  }
+  .cta:active {
+    background: var(--w-accent-press);
+    transform: scale(0.97);
+  }
+
+  .secondary {
+    color: var(--w-ink-2);
+    font-weight: 400;
+  }
+  .secondary:hover {
+    color: var(--w-ink);
+  }
+  .secondary:active {
+    transform: scale(0.97);
+  }
+
+  .cta:focus-visible,
+  .secondary:focus-visible {
+    outline: 2px solid var(--w-focus);
+    outline-offset: 3px;
+  }
+
+  .defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+  @keyframes ink {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* Desktop: present the screen inside a phone-sized frame. */
+  @media (min-width: 720px) {
+    .welcome {
+      display: grid;
+      place-items: center;
+      min-height: 100svh;
+      padding: 40px 24px;
+      box-sizing: border-box;
+    }
+    .phone {
+      width: auto;
+      padding: 10px;
+      border-radius: 54px;
+      background: var(--w-bezel);
+      box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.55);
+    }
+    .screen {
+      width: 390px;
+      height: 844px;
+      border-radius: 44px;
+      corner-shape: squircle;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glass,
+    .headline {
+      animation-duration: 240ms;
+      animation-delay: 0ms;
+    }
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: none;
+      }
+    }
+    .cta:active,
+    .secondary:active {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  // Keep the refracted copy of the scene aligned with the scene behind the
+  // glass. offsetLeft/offsetTop ignore the entrance transform, so the copy
+  // never drifts while the panel rises.
+  function alignGlass(screen: HTMLElement, glass: HTMLElement) {
+    glass.style.setProperty("--sw", `${screen.clientWidth}px`);
+    glass.style.setProperty("--sh", `${screen.clientHeight}px`);
+    glass.style.setProperty("--ox", `${-glass.offsetLeft}px`);
+    glass.style.setProperty("--oy", `${-glass.offsetTop}px`);
+  }
+
+  // First-open moment: the glass starts thick and unfocused and settles
+  // into place. Reduce Motion skips straight to the settled state.
+  function settleGlass() {
+    const disp = document.querySelector<SVGFEDisplacementMapElement>(
+      "#wabi-refract feDisplacementMap"
+    );
+    const blur = document.querySelector<SVGFEGaussianBlurElement>(
+      "#wabi-refract feGaussianBlur"
+    );
+    if (!disp || !blur) return;
+
+    const END = { scale: 44, blur: 0.8 };
+    const START = { scale: 120, blur: 7 };
+    const DURATION = 900;
+
+    if (REDUCED.matches) {
+      disp.setAttribute("scale", String(END.scale));
+      blur.setAttribute("stdDeviation", String(END.blur));
+      return;
+    }
+
+    const t0 = performance.now();
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    const step = (now: number) => {
+      const p = Math.min(1, (now - t0) / DURATION);
+      const e = easeOut(p);
+      disp.setAttribute(
+        "scale",
+        String(START.scale + (END.scale - START.scale) * e)
+      );
+      blur.setAttribute(
+        "stdDeviation",
+        String(START.blur + (END.blur - START.blur) * e)
+      );
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  function init() {
+    const screen = document.querySelector<HTMLElement>("[data-screen]");
+    const glass = document.querySelector<HTMLElement>("[data-glass]");
+    if (!screen || !glass) return;
+
+    alignGlass(screen, glass);
+    const observer = new ResizeObserver(() => alignGlass(screen, glass));
+    observer.observe(screen);
+    observer.observe(glass);
+
+    settleGlass();
+
+    // Welcome is a one-way door: entering the site replaces this screen in
+    // history so Back does not land here again.
+    const cta = document.querySelector<HTMLAnchorElement>("[data-cta]");
+    cta?.addEventListener("click", event => {
+      if (
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        event.button !== 0
+      ) {
+        return;
+      }
+      event.preventDefault();
+      window.location.replace(cta.href);
+    });
+  }
+
+  document.addEventListener("astro:page-load", init);
+</script>

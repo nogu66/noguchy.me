@@ -1,0 +1,61 @@
+- generic [active] [ref=e1]:
+  - heading "RevenueCat AI Toolkit" [level=1] [ref=e2]
+  - paragraph [ref=e3]: 技術者向け完全解説 — アーキテクチャ・MCP Tools・スキル・Swift実装パターン
+  - generic [ref=e4]:
+    - generic [ref=e5] [cursor=pointer]:
+      - text: RevenueCat AI Toolkit
+      - generic [ref=e6]: 課金バックエンド側を操作
+    - generic [ref=e7] [cursor=pointer]:
+      - text: asc CLI
+      - generic [ref=e8]: App Store Connect 側を操作
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e11] [cursor=pointer]: 概要
+      - generic [ref=e12] [cursor=pointer]: アーキテクチャ
+      - generic [ref=e13] [cursor=pointer]: MCP Tools
+      - generic [ref=e14] [cursor=pointer]: スキル一覧
+      - generic [ref=e15] [cursor=pointer]: Swift実装
+      - generic [ref=e16] [cursor=pointer]: Play Billing
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - heading "何をするプラグインか" [level=3] [ref=e19]
+        - paragraph [ref=e20]: アプリ内課金バックエンド「RevenueCat」をAIコーディングエージェントから直接操作するためのプラグインマーケットプレイス。ダッシュボードを開かずにプロジェクト作成・商品設定・KPI分析・A/Bテスト結果取得まで完結する。
+      - generic [ref=e21]:
+        - heading "構成" [level=3] [ref=e22]
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - heading "Plugin 1 RevenueCat" [level=3] [ref=e25]:
+              - generic [ref=e26]: Plugin 1
+              - text: RevenueCat
+            - paragraph [ref=e27]: メインプラグイン。MCPサーバー + 14スキル。iOS / Android / Flutter / React Native / KMP をカバー。
+          - generic [ref=e28]:
+            - heading "Plugin 2 play-billing" [level=3] [ref=e29]:
+              - generic [ref=e30]: Plugin 2
+              - text: play-billing
+            - paragraph [ref=e31]: Android特化。Google Play Billingライフサイクルに関する19スキル。MCP無し（スキルのみ）。
+      - generic [ref=e32]:
+        - heading "対応IDE" [level=3] [ref=e33]
+        - generic [ref=e34]:
+          - generic [ref=e35]: Claude Code
+          - generic [ref=e36]: Cursor
+          - generic [ref=e37]: OpenAI Codex
+          - generic [ref=e38]: VS Code
+          - generic [ref=e39]: Gemini CLI
+        - paragraph [ref=e40]: 各IDE用のアダプター（.claude-plugin/ .codex-plugin/ .cursor-plugin/ gemini-extension.json）を同一リポジトリ内に配置し、同じスキルとMCPを共有する設計。
+      - generic [ref=e41]:
+        - heading "認証" [level=3] [ref=e42]
+        - paragraph [ref=e43]: ブラウザベースOAuth。RevenueCatアカウントの権限に基づくアクセス制御。APIキーの手動設定は不要。
+      - generic [ref=e44]:
+        - heading "📖 もっと簡単に理解するには（DeepWiki）" [level=3] [ref=e45]
+        - paragraph [ref=e46]:
+          - text: ai-toolkit のリポジトリ構造・スキル・MCP の関係をより手軽に把握したい場合は、AI生成のドキュメントサイト
+          - strong [ref=e47]: DeepWiki
+          - text: を使うと理解が早い。リポジトリ全体を自然言語で要約・図解し、コードを直接読まなくても全体像をつかめる。
+        - list [ref=e48]:
+          - listitem [ref=e49]: リポジトリの構造図とコンポーネント間の関係を自動生成
+          - listitem [ref=e50]: 「このスキルは何をするか」をチャット形式で質問できる
+          - listitem [ref=e51]: 本ページの内容と併読すると、概要 → 詳細の流れで把握しやすい
+        - paragraph [ref=e52]:
+          - text: 🔗
+          - link "deepwiki.com/RevenueCat/ai-toolkit" [ref=e53] [cursor=pointer]:
+            - /url: https://deepwiki.com/RevenueCat/ai-toolkit

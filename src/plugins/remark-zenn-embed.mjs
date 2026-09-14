@@ -166,10 +166,7 @@ function youtubeIframe(id) {
 }
 
 function tweetEmbed(url) {
-  return (
-    `<blockquote class="twitter-tweet"><a href="${escapeAttr(url)}">${escapeHtml(url)}</a></blockquote>` +
-    `<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>`
-  );
+  return `<blockquote class="twitter-tweet"><a href="${escapeAttr(url)}">${escapeHtml(url)}</a></blockquote>`;
 }
 
 function linkCard(url, { title, description, image }) {

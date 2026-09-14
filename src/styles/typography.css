@@ -92,6 +92,16 @@
       @apply text-foreground-dark;
     }
 
+    /* Xポストは埋め込み前のリンク表示と、変換後のウィジェットを中央揃えにする */
+    blockquote.twitter-tweet,
+    blockquote.twitter-tweet-rendered,
+    iframe[src*="platform.twitter.com"] {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin-inline: auto !important;
+    }
+
     details {
       @apply inline-block cursor-pointer text-foreground select-none [&_p]:hidden [&_ul]:my-0!;
     }

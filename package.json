@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "lint": "eslint .",
     "new-post": "node scripts/create-post.js",
+    "new-news": "node scripts/create-news.js",
     "test": "vitest run"
   },
   "dependencies": {

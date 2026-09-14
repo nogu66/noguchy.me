@@ -1,6 +1,8 @@
 ---
 import toggleThemeScript from "@/scripts/toggle-theme.js?raw";
+import xPostEmbedScript from "@/scripts/x-post-embed.js?raw";
 ---
 
 <!-- Inlined to avoid a render-blocking request; must run synchronously to prevent FOUC -->
 <script is:inline set:html={toggleThemeScript} />
+<script is:inline set:html={xPostEmbedScript} />
