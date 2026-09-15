@@ -1,129 +1,31 @@
 ---
-import { NEWS_SITE_URL } from "@/config";
-
-const { pathname } = Astro.url;
-const currentPath = pathname.replace(/\/$/, "") || "/";
-const newsHomePath = new URL(NEWS_SITE_URL).pathname.replace(/\/$/, "") || "/";
+import IconMoon from "@/assets/icons/IconMoon.svg";
+import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
+import { SITE } from "@/config";
 ---
 
-<header class="news-header">
-  <div class="news-header__topline">
-    <div class="news-header__inner">
-      <a
-        href={NEWS_SITE_URL}
-        class="news-header__brand"
-        aria-label="noguchy.me NEWS ホーム"
+<header class="news-masthead">
+  <a href="#main-content" class="sr-only focus:not-sr-only">本文へスキップ</a>
+  <div class="news-container news-masthead-inner">
+    <a href="/" aria-label="noguchy.me NEWS トップ" class="news-wordmark">
+      noguchy.me <span>NEWS</span>
+    </a>
+    <nav aria-label="メインメニュー" class="news-nav">
+      <a href="/" aria-current={Astro.url.pathname === "/" ? "page" : undefined}
+        >ニュース</a
       >
-        <img
-          src="/images/news/noguchy-logo.png"
-          alt="noguchy.me NEWS"
-          width="2048"
-          height="640"
-        />
-      </a>
-      <a href="/" class="news-header__site-link">noguchy.me 本体へ</a>
-    </div>
+      <a href={SITE.website} class="news-nav-profile">noguchy.me ↗</a>
+      <a href="/rss.xml" class="news-nav-rss">RSS ↗</a>
+      <button
+        id="theme-btn"
+        class="news-theme-button relative text-muted hover:text-accent"
+        title="表示テーマの切り替え"
+        aria-label="auto"
+        aria-live="polite"
+      >
+        <IconMoon class="size-5 dark:hidden" />
+        <IconSunHigh class="hidden size-5 dark:block" />
+      </button>
+    </nav>
   </div>
-  <nav class="news-header__nav" aria-label="ニュースカテゴリ">
-    <div class="news-header__inner news-header__nav-inner">
-      <a
-        href={NEWS_SITE_URL}
-        class:list={{
-          active: currentPath === newsHomePath || currentPath === "/news",
-        }}
-      >
-        トップ
-      </a>
-      <a href={`${NEWS_SITE_URL}#latest`}>最新ニュース</a>
-      <a href={`${NEWS_SITE_URL}#ai`}>AI・テクノロジー</a>
-      <a href={`${NEWS_SITE_URL}#design`}>デザイン</a>
-    </div>
-  </nav>
 </header>
-
-<style>
-  .news-header {
-    border-bottom: 1px solid #294761;
-    background: #0d2237;
-  }
-
-  .news-header__topline {
-    background: #1769aa;
-  }
-
-  .news-header__inner {
-    display: flex;
-    width: min(100% - 2rem, 72rem);
-    margin: 0 auto;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .news-header__brand {
-    display: block;
-    width: 9.5rem;
-    padding: 0.7rem 0;
-    color: #fff;
-  }
-
-  .news-header__brand img {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-
-  .news-header__site-link {
-    color: #dbeeff;
-    font-size: 0.75rem;
-  }
-
-  .news-header__site-link:hover,
-  .news-header__brand:hover {
-    color: #fff;
-    opacity: 0.8;
-  }
-
-  .news-header__nav-inner {
-    justify-content: flex-start;
-    gap: 1.5rem;
-    overflow-x: auto;
-  }
-
-  .news-header__nav a {
-    position: relative;
-    flex: 0 0 auto;
-    padding: 0.75rem 0;
-    color: #b8cde0;
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-
-  .news-header__nav a:hover,
-  .news-header__nav a.active {
-    color: #8bd2ff;
-  }
-
-  .news-header__nav a.active::after {
-    position: absolute;
-    right: 0;
-    bottom: -1px;
-    left: 0;
-    height: 3px;
-    background: #8bd2ff;
-    content: "";
-  }
-
-  @media (max-width: 640px) {
-    .news-header__inner {
-      width: min(100% - 1.5rem, 72rem);
-    }
-
-    .news-header__brand {
-      width: 7.7rem;
-    }
-
-    .news-header__site-link {
-      font-size: 0.7rem;
-    }
-  }
-</style>

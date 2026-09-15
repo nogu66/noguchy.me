@@ -1,0 +1,135 @@
+---
+import type { Page } from "astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+import NewsLayout from "@/layouts/NewsLayout.astro";
+import NewsHeader from "./NewsHeader.astro";
+import Footer from "./NewsFooter.astro";
+import NewsCard from "./NewsCard.astro";
+import Pagination from "./Pagination.astro";
+import { NEWS } from "@/news.config";
+import { SITE } from "@/config";
+import getSortedNews from "@/utils/getSortedNews";
+import IconSearch from "@/assets/icons/IconSearch.svg";
+
+interface Props {
+  page: Page<CollectionEntry<"news">>;
+}
+const { page } = Astro.props;
+const allNews = getSortedNews(await getCollection("news"));
+const visibleIds = new Set(page.data.map(item => item.id));
+const topics = [...new Set(allNews.flatMap(item => item.data.tags))];
+---
+
+<NewsLayout
+  title={page.currentPage === 1
+    ? NEWS.title
+    : `${page.currentPage}ページ目 | ${NEWS.title}`}
+>
+  <div class="flex min-h-screen flex-col">
+    <NewsHeader />
+    <main id="main-content" class="news-container news-index-main">
+      <div class="news-section-heading">
+        <div>
+          <p class="news-eyebrow">AI & TECHNOLOGY</p>
+          <h1>ニュース</h1>
+          <p class="news-intro">AIとテクノロジーの動きを、コンパクトに。</p>
+        </div>
+        <a href="/rss.xml" class="news-subscribe-link"
+          >RSSで最新記事を受け取る ↗</a
+        >
+      </div>
+      <div class="news-index-grid">
+        <news-feed>
+          <div class="news-tools" data-news-tools hidden>
+            <form role="search" class="news-search">
+              <IconSearch aria-hidden="true" />
+              <label for="news-search" class="sr-only">ニュースを検索</label>
+              <input
+                id="news-search"
+                type="search"
+                name="q"
+                placeholder="キーワードで検索"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                data-clear-search
+                hidden
+                aria-label="検索と絞り込みを解除">クリア</button
+              >
+            </form>
+            <div
+              class="news-topic-filters"
+              role="group"
+              aria-label="トピックで絞り込み"
+            >
+              <button type="button" data-topic="" aria-pressed="true"
+                >すべて</button
+              >
+              {
+                topics.map(tag => (
+                  <button type="button" data-topic={tag} aria-pressed="false">
+                    {tag}
+                  </button>
+                ))
+              }
+            </div>
+          </div>
+          <div class="news-results-heading">
+            <h2 data-results-heading>新着ニュース</h2>
+            <p data-results-count role="status" aria-live="polite">
+              全 {allNews.length} 件
+            </p>
+          </div>
+          <ul class="news-results-list">
+            {
+              allNews.map(data => (
+                <NewsCard
+                  {...data}
+                  initiallyHidden={!visibleIds.has(data.id)}
+                />
+              ))
+            }
+          </ul>
+          <div class="news-empty" data-news-empty hidden={allNews.length > 0}>
+            <IconSearch aria-hidden="true" />
+            <h3>
+              {
+                allNews.length
+                  ? "該当するニュースがありません"
+                  : "ニュースはまだありません"
+              }
+            </h3>
+            <p>別のキーワードやトピックで探してみてください。</p>
+            <button type="button" data-reset-filters
+              >すべてのニュースを見る</button
+            >
+          </div>
+          <div data-news-pagination><Pagination {page} /></div>
+        </news-feed>
+        <aside class="news-about" aria-label="このサイトについて">
+          <p class="news-eyebrow">ABOUT THIS SITE</p>
+          <h2>気になる変化を、<br />少しずつ。</h2>
+          <p>
+            AIやテクノロジーのニュースから、気になった話題を短くまとめています。
+          </p>
+          <a href={SITE.website} class="news-author-link"
+            ><span aria-hidden="true">n.</span><span
+              >nogu<small>このサイトの運営者</small></span
+            ><span aria-hidden="true">↗</span></a
+          >
+          <div class="news-about-subscribe">
+            <h3>更新を見逃さない</h3>
+            <p>お使いのRSSリーダーで、新しい記事を受け取れます。</p>
+            <a href="/rss.xml">RSSフィードを開く ↗</a>
+          </div>
+        </aside>
+      </div>
+    </main>
+    <Footer />
+  </div>
+</NewsLayout>
+
+<script>
+  import "@/scripts/news-feed";
+</script>

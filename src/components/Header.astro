@@ -9,6 +9,7 @@ import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
 import LinkButton from "./LinkButton.astro";
 import SearchModal from "./SearchModal.astro";
 import { SITE } from "@/config";
+import { NEWS } from "@/news.config";
 
 const { pathname } = Astro.url;
 
@@ -72,9 +73,7 @@ const isActive = (path: string) => {
           ]}
         >
           <li class="col-span-2">
-            <a href="/news" class:list={{ "active-nav": isActive("/news") }}>
-              News
-            </a>
+            <a href={NEWS.website}> News </a>
           </li>
           <li class="col-span-2">
             <a href="/posts" class:list={{ "active-nav": isActive("/posts") }}>

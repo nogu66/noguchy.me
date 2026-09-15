@@ -1,16 +1,15 @@
 ---
 import { render, type CollectionEntry } from "astro:content";
-import Layout from "@/layouts/Layout.astro";
-import NewsHeader from "@/components/NewsHeader.astro";
-import NewsFooter from "@/components/NewsFooter.astro";
-import Tag from "@/components/Tag.astro";
-import Datetime from "@/components/Datetime.astro";
-import ShareLinks from "@/components/ShareLinks.astro";
-import BackButton from "@/components/BackButton.astro";
+import Layout from "@/layouts/NewsLayout.astro";
+import Header from "@/components/NewsHeader.astro";
+import Footer from "@/components/NewsFooter.astro";
+import NewsDate from "@/components/NewsDate.astro";
+import NewsShare from "@/components/NewsShare.astro";
 import BackToTopButton from "@/components/BackToTopButton.astro";
 import { getNewsPath } from "@/utils/getNewsPath";
 import { slugifyStr } from "@/utils/slugify";
 import { SITE } from "@/config";
+import { NEWS } from "@/news.config";
 
 export interface Props {
   newsItem: CollectionEntry<"news">;
@@ -28,8 +27,17 @@ const {
   tags,
   contents,
   thumbnail,
+  ogImage,
 } = newsItem.data;
 const { Content } = await render(newsItem);
+const readingMinutes = Math.max(
+  1,
+  Math.ceil((newsItem.body ?? "").replace(/https?:\/\/\S+/g, "").length / 600)
+);
+const shareURL = new URL(
+  getNewsPath(newsItem.id, newsItem.filePath),
+  NEWS.website
+).href;
 
 const allNews = news.map(({ data: { title }, id, filePath }) => ({
   id,
@@ -50,50 +58,59 @@ const nextNews =
   {description}
   {pubDatetime}
   {modDatetime}
-  ogImage={thumbnail}
-  bodyClass="news-site"
+  ogImage={(typeof ogImage === "string" ? ogImage : ogImage?.src) ?? thumbnail}
   scrollSmooth
 >
-  <NewsHeader />
-  <BackButton />
+  <Header />
+  <div class="mx-auto w-full max-w-3xl px-4 py-5">
+    <a href="/" class="text-sm text-muted hover:text-accent">← ニュース一覧</a>
+  </div>
   <main
     id="main-content"
     class:list={[
-      "mx-auto w-full max-w-5xl px-4 pb-12",
+      "mx-auto w-full max-w-3xl px-4 pb-12",
       { "mt-8": !SITE.showBackButton },
     ]}
     data-pagefind-body
   >
+    <header
+      class="news-article-heading border-b border-border pt-4 pb-7 sm:pt-8 sm:pb-9"
+    >
+      <p
+        class="mb-4 text-xs font-semibold tracking-[0.2em] text-accent uppercase"
+      >
+        {tags[0] ?? "News"}
+      </p>
+      <h1
+        transition:name={slugifyStr(title)}
+        class="font-bold text-foreground-dark"
+      >
+        {title}
+      </h1>
+      <div class="news-article-meta">
+        <NewsDate {pubDatetime} {modDatetime} {timezone} />
+        <span
+          >執筆：<a href={SITE.website} class="hover:text-accent">{author}</a
+          ></span
+        >
+        <span>約{readingMinutes}分で読めます</span>
+      </div>
+    </header>
+
     {
       thumbnail && (
-        <figure class="mb-8 overflow-hidden rounded-lg border border-border bg-light">
+        <figure class="news-article-cover">
           <img
             src={thumbnail}
             alt={title}
-            class="aspect-video w-full object-cover"
+            width="1200"
+            height="675"
             loading="eager"
+            fetchpriority="high"
           />
         </figure>
       )
     }
-    <header class="border-b border-border pt-4 pb-7 sm:pt-8 sm:pb-9">
-      <p
-        class="mb-4 text-xs font-semibold tracking-[0.2em] text-accent uppercase"
-      >
-        News
-      </p>
-      <h1
-        transition:name={slugifyStr(title)}
-        class="max-w-4xl text-3xl leading-tight font-bold text-foreground-dark sm:text-5xl"
-      >
-        {title}
-      </h1>
-      <div
-        class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted"
-      >
-        <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
-      </div>
-    </header>
 
     {
       contents.length > 0 && (
@@ -133,18 +150,29 @@ const nextNews =
       </p>
       <article
         id="article"
-        class="app-prose max-w-none prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"
+        class="news-article-body app-prose max-w-none prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"
       >
         <Content />
       </article>
     </div>
 
     <hr class="my-8 border-dashed" />
-    <ul class="my-8">
-      {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} />)}
+    <ul class="my-8 flex flex-wrap gap-2">
+      {
+        tags.map(tag => (
+          <li class="rounded-sm bg-light px-3 py-1 text-sm text-muted">
+            <a
+              href={`/?tag=${encodeURIComponent(tag)}`}
+              class="hover:text-accent"
+            >
+              #{tag} のニュース
+            </a>
+          </li>
+        ))
+      }
     </ul>
     <BackToTopButton />
-    <ShareLinks {title} />
+    <NewsShare {title} url={shareURL} />
     <hr class="my-6 border-dashed" />
     <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {
@@ -154,7 +182,7 @@ const nextNews =
             class="flex w-full gap-1 hover:opacity-75"
           >
             <div>
-              <span>Previous News</span>
+              <span>新しいニュース</span>
               <div class="text-sm text-accent/85">{prevNews.title}</div>
             </div>
           </a>
@@ -167,13 +195,18 @@ const nextNews =
             class="flex w-full justify-end text-end hover:opacity-75 sm:col-start-2"
           >
             <div>
-              <span>Next News</span>
+              <span>以前のニュース</span>
               <div class="text-sm text-accent/85">{nextNews.title}</div>
             </div>
           </a>
         )
       }
     </div>
+    <a
+      href="/"
+      class="mt-8 block rounded border border-border px-4 py-3 text-center text-sm hover:text-accent"
+      >ニュース一覧に戻る →</a
+    >
   </main>
   <NewsFooter />
 </Layout>

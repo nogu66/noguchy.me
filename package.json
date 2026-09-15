@@ -4,6 +4,10 @@
   "version": "5.5.0",
   "scripts": {
     "dev": "astro dev",
+    "dev:news": "astro dev --config astro.news.config.ts",
+    "build:news": "astro check --config astro.news.config.ts && astro build --config astro.news.config.ts",
+    "preview:news": "wrangler dev --config wrangler.news.jsonc",
+    "deploy:news": "pnpm run build:news && wrangler deploy --config wrangler.news.jsonc",
     "build": "astro check && astro build && pagefind --site dist && cp -r dist/pagefind public/",
     "preview": "astro preview",
     "sync": "astro sync",
@@ -64,6 +68,7 @@
     "typescript-eslint": "^8.51.0",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "wrangler": "^4.131.2"
   }
 }

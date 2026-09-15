@@ -1,0 +1,73 @@
+---
+interface Props {
+  title: string;
+  url: string;
+}
+const { title, url } = Astro.props;
+const shareURL = `https://x.com/intent/post?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
+---
+
+<news-share class="news-share" data-title={title} data-url={url}>
+  <span class="news-share-label">この記事を共有</span>
+  <a
+    href={shareURL}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="この記事をXで共有（新しいタブ）">Xでシェア ↗</a
+  >
+  <button type="button" data-copy hidden>リンクをコピー</button>
+  <button type="button" data-native-share hidden>その他のアプリ</button>
+  <span role="status" aria-live="polite" data-copy-status></span>
+  <input
+    type="text"
+    readonly
+    value={`${title}\n${url}`}
+    aria-label="共有するタイトルとリンク"
+    data-copy-fallback
+    hidden
+  />
+</news-share>
+
+<script>
+  class NewsShare extends HTMLElement {
+    connectedCallback() {
+      if (this.dataset.ready) return;
+      this.dataset.ready = "true";
+      const title = this.dataset.title!;
+      const url = this.dataset.url!;
+      const status = this.querySelector<HTMLElement>("[data-copy-status]")!;
+      const copy = this.querySelector<HTMLButtonElement>("[data-copy]")!;
+      copy.hidden = false;
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(`${title}\n${url}`);
+          status.textContent = "コピーしました";
+        } catch {
+          const fallback = this.querySelector<HTMLInputElement>(
+            "[data-copy-fallback]"
+          )!;
+          fallback.hidden = false;
+          fallback.focus();
+          fallback.select();
+          status.textContent = "選択されたテキストをコピーしてください";
+        }
+      });
+      const share = this.querySelector<HTMLButtonElement>(
+        "[data-native-share]"
+      )!;
+      if (navigator.share) {
+        share.hidden = false;
+        share.addEventListener("click", async () => {
+          try {
+            await navigator.share({ title, text: title, url });
+          } catch (error) {
+            if (!(error instanceof DOMException && error.name === "AbortError"))
+              status.textContent = "リンクをコピーして共有してください";
+          }
+        });
+      }
+    }
+  }
+  if (!customElements.get("news-share"))
+    customElements.define("news-share", NewsShare);
+</script>

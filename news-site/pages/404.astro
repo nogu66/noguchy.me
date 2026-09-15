@@ -1,0 +1,17 @@
+---
+import NewsLayout from "@/layouts/NewsLayout.astro";
+import NewsHeader from "@/components/NewsHeader.astro";
+import Footer from "@/components/NewsFooter.astro";
+---
+
+<NewsLayout title="ページが見つかりません | noguchy.me">
+  <div class="flex min-h-screen flex-col">
+    <NewsHeader />
+    <main id="main-content" class="mx-auto w-full max-w-5xl flex-1 px-4 py-16">
+      <h1 class="text-2xl font-bold">ページが見つかりません</h1>
+      <p class="my-5">記事が移動したか、公開されていない可能性があります。</p>
+      <a href="/" class="text-accent underline">ニュース一覧へ戻る</a>
+    </main>
+    <Footer />
+  </div>
+</NewsLayout>

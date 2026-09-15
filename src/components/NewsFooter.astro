@@ -1,46 +1,17 @@
 ---
-import { NEWS_SITE_URL } from "@/config";
-
-const currentYear = new Date().getFullYear();
+import { SITE } from "@/config";
 ---
 
 <footer class="news-footer">
-  <div class="news-footer__inner">
-    <a href={NEWS_SITE_URL} class="news-footer__brand">noguchy.me NEWS</a>
-    <p>Copyright &#169; {currentYear} nogu. All rights reserved.</p>
+  <div class="news-container news-footer-inner">
+    <div>
+      <a href="/" class="news-footer-brand">noguchy.me <span>NEWS</span></a>
+      <p>AIとテクノロジーの動きを、コンパクトに。</p>
+    </div>
+    <nav aria-label="フッターメニュー">
+      <a href={SITE.website}>運営者について ↗</a>
+      <a href="/rss.xml">RSSで購読 ↗</a>
+    </nav>
+    <small>© {new Date().getFullYear()} nogu</small>
   </div>
 </footer>
-
-<style>
-  .news-footer {
-    width: 100%;
-    margin-top: auto;
-    border-top: 1px solid #294761;
-    background: #0d2237;
-  }
-
-  .news-footer__inner {
-    display: flex;
-    width: min(100% - 2rem, 72rem);
-    margin: 0 auto;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.25rem 0;
-    color: #a9bfd3;
-    font-size: 0.75rem;
-  }
-
-  .news-footer__brand {
-    color: #a9dcff;
-    font-weight: 700;
-  }
-
-  @media (max-width: 640px) {
-    .news-footer__inner {
-      width: min(100% - 1.5rem, 72rem);
-      align-items: flex-start;
-      flex-direction: column;
-    }
-  }
-</style>

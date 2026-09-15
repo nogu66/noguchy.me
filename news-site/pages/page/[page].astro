@@ -1,0 +1,22 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection } from "astro:content";
+import NewsIndex from "@/components/NewsIndex.astro";
+import getSortedNews from "@/utils/getSortedNews";
+import { SITE } from "@/config";
+
+export const getStaticPaths = (async ({ paginate }) => {
+  return paginate(getSortedNews(await getCollection("news")), {
+    pageSize: SITE.postPerPage,
+  })
+    .filter(({ props }) => props.page.currentPage > 1)
+    .map(route => {
+      if (route.props.page.currentPage === 2) route.props.page.url.prev = "/";
+      route.props.page.url.first = "/";
+      return route;
+    });
+}) satisfies GetStaticPaths;
+const { page } = Astro.props;
+---
+
+<NewsIndex {page} />

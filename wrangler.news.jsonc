@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "noguchy-news",
+  "compatibility_date": "2026-09-14",
+  "workers_dev": false,
+  "routes": [{ "pattern": "news.noguchy.me", "custom_domain": true }],
+  "assets": {
+    "directory": "./dist-news",
+    "html_handling": "force-trailing-slash",
+    "not_found_handling": "404-page",
+  },
+}

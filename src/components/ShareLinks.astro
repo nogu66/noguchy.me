@@ -4,10 +4,10 @@ import LinkButton from "./LinkButton.astro";
 
 interface Props {
   title: string;
+  url?: string;
 }
 
-const { title } = Astro.props;
-const url = Astro.url.href;
+const { title, url = Astro.url.href } = Astro.props;
 const encodedUrl = encodeURIComponent(url);
 const encodedTitle = encodeURIComponent(title);
 const encodedShareText = encodeURIComponent(`${title}\n${url}`);
