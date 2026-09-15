@@ -19,6 +19,7 @@ export default [
       "dist/**",
       "dist-news/**",
       ".wrangler/**",
+      ".local/news-editor/**",
       ".astro",
       "public/pagefind/**",
     ],

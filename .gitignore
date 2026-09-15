@@ -32,3 +32,4 @@ tags-blue.png
 .vercel
 .env*.local
 .gstack/
+.local/news-editor/

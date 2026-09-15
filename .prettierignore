@@ -16,3 +16,9 @@ public/sandbox
 !.prettierrc
 !eslint.config.js
 !README.md
+!/tools
+/tools/*
+!/tools/news-editor
+!/scripts
+/scripts/*
+!/scripts/news-editor*.mjs
