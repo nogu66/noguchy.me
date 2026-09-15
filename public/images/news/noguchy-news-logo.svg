@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="500" viewBox="0 0 1600 500" role="img" aria-labelledby="title desc">
+  <title id="title">noguchy.me NEWS</title>
+  <desc id="desc">The noguchy.me NEWS wordmark in white</desc>
+  <text
+    x="800"
+    y="240"
+    text-anchor="middle"
+    fill="#e5edf2"
+    font-family="Helvetica Neue, Arial, sans-serif"
+    font-size="190"
+    font-weight="700"
+    letter-spacing="-3"
+  >noguchy.me</text>
+  <text
+    x="800"
+    y="405"
+    text-anchor="middle"
+    fill="#e5edf2"
+    font-family="Helvetica Neue, Arial, sans-serif"
+    font-size="112"
+    font-weight="700"
+    letter-spacing="22"
+  >NEWS</text>
+</svg>

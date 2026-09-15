@@ -22,3 +22,5 @@ export const SITE = {
   timezone: "Asia/Tokyo", // Default global timezone (IANA format) https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   twitterId: "@_nogu66", // Twitter account for og:site and og:creator
 } as const;
+
+export const NEWS_SITE_URL = "https://news.noguchy.me/";

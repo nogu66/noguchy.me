@@ -1,10 +1,9 @@
 ---
 import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
-import Main from "@/layouts/Main.astro";
 import Layout from "@/layouts/Layout.astro";
-import Header from "@/components/Header.astro";
-import Footer from "@/components/Footer.astro";
+import NewsHeader from "@/components/NewsHeader.astro";
+import NewsFooter from "@/components/NewsFooter.astro";
 import NewsCard from "@/components/NewsCard.astro";
 import Pagination from "@/components/Pagination.astro";
 import getSortedNews from "@/utils/getSortedNews";
@@ -18,18 +17,160 @@ export const getStaticPaths = (async ({ paginate }) => {
 }) satisfies GetStaticPaths;
 
 const { page } = Astro.props;
+const allNews = getSortedNews(await getCollection("news"));
+const aiNews = allNews.filter(({ data }) =>
+  data.tags.some(tag =>
+    /ai|claude|anthropic|openai|technology|テクノロジー/i.test(tag)
+  )
+);
+const designNews = allNews.filter(({ data }) =>
+  data.tags.some(tag => /design|デザイン/i.test(tag))
+);
 ---
 
-<Layout title={`News | ${SITE.title}`}>
-  <Header />
-  <Main
-    pageTitle="News"
-    pageDesc="Short notes on AI, tools, and things I'm following."
-  >
-    <ul>
-      {page.data.map(data => <NewsCard {...data} />)}
-    </ul>
-  </Main>
-  <Pagination {page} />
-  <Footer noMarginTop={page.lastPage > 1} />
+<Layout
+  title={`ニュース | ${SITE.title}`}
+  description="AIやテクノロジーに関するニュース、気になった情報を短くまとめています。"
+  ogImage="/images/news/news-ogp.png"
+  bodyClass="news-site"
+>
+  <NewsHeader />
+  <main id="main-content" class="news-main">
+    <div class="news-main__intro">
+      <p class="news-main__eyebrow">noguchy.me NEWS</p>
+      <h1>ニュース</h1>
+    </div>
+    <section class="news-section" aria-labelledby="latest-heading">
+      <div class="news-section__heading">
+        <h2 id="latest-heading">最新ニュース</h2>
+        <span>Latest</span>
+      </div>
+      <ul id="latest">
+        {page.data.map(data => <NewsCard {...data} />)}
+      </ul>
+    </section>
+    {
+      page.currentPage === 1 && (
+        <div class="news-categories">
+          <section class="news-section" aria-labelledby="ai-heading">
+            <div class="news-section__heading">
+              <h2 id="ai-heading">AI・テクノロジー</h2>
+              <span>AI &amp; Technology</span>
+            </div>
+            <ul id="ai">
+              {aiNews.map(data => (
+                <NewsCard {...data} variant="compact" />
+              ))}
+            </ul>
+          </section>
+          <section class="news-section" aria-labelledby="design-heading">
+            <div class="news-section__heading">
+              <h2 id="design-heading">デザイン</h2>
+              <span>Design</span>
+            </div>
+            {designNews.length > 0 ? (
+              <ul id="design">
+                {designNews.map(data => (
+                  <NewsCard {...data} variant="compact" />
+                ))}
+              </ul>
+            ) : (
+              <p id="design" class="news-section__empty">
+                デザインに関するニュースは準備中です。
+              </p>
+            )}
+          </section>
+        </div>
+      )
+    }
+    <Pagination {page} />
+  </main>
+  <NewsFooter />
 </Layout>
+
+<style>
+  .news-main {
+    width: min(100% - 2rem, 72rem);
+    margin: 0 auto;
+    padding: 2.5rem 0 4rem;
+  }
+
+  .news-main__intro {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+
+  .news-main__eyebrow {
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .news-main__intro h1 {
+    margin: 0;
+    color: var(--foreground-dark);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  .news-section {
+    margin-top: 2.5rem;
+  }
+
+  .news-section__heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+  }
+
+  .news-section__heading h2 {
+    margin: 0;
+    color: var(--foreground-dark);
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+  }
+
+  .news-section__heading span {
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .news-categories {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem;
+  }
+
+  .news-categories .news-section {
+    min-width: 0;
+  }
+
+  .news-section__empty {
+    margin: 1.25rem 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 640px) {
+    .news-main {
+      width: min(100% - 1.5rem, 72rem);
+      padding-top: 2rem;
+    }
+
+    .news-categories {
+      display: block;
+    }
+
+    .news-section__heading span {
+      display: none;
+    }
+  }
+</style>

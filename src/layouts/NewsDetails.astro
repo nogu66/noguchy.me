@@ -1,8 +1,8 @@
 ---
 import { render, type CollectionEntry } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
-import Header from "@/components/Header.astro";
-import Footer from "@/components/Footer.astro";
+import NewsHeader from "@/components/NewsHeader.astro";
+import NewsFooter from "@/components/NewsFooter.astro";
 import Tag from "@/components/Tag.astro";
 import Datetime from "@/components/Datetime.astro";
 import ShareLinks from "@/components/ShareLinks.astro";
@@ -51,9 +51,10 @@ const nextNews =
   {pubDatetime}
   {modDatetime}
   ogImage={thumbnail}
+  bodyClass="news-site"
   scrollSmooth
 >
-  <Header />
+  <NewsHeader />
   <BackButton />
   <main
     id="main-content"
@@ -174,7 +175,7 @@ const nextNews =
       }
     </div>
   </main>
-  <Footer />
+  <NewsFooter />
 </Layout>
 
 <style>

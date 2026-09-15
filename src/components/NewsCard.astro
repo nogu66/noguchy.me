@@ -21,7 +21,7 @@ const {
 
 <li
   class:list={[
-    "group rounded-lg border border-border bg-background transition-all hover:border-accent/30 hover:shadow-sm",
+    "group rounded-lg border border-border bg-background transition-all hover:border-accent/60 hover:shadow-sm",
     variant === "compact" ? "my-3 p-4" : "my-4 p-5",
   ]}
 >
@@ -31,7 +31,7 @@ const {
         <a
           href={getNewsPath(id, filePath)}
           class:list={[
-            "block aspect-video overflow-hidden rounded-md border border-border bg-light",
+            "block aspect-video overflow-hidden rounded-md border border-[#d8e1ec] bg-[#f5f8fb]",
             {
               "w-28 shrink-0 sm:w-36": variant === "compact",
               "w-28 shrink-0 sm:w-40": variant === "default",
@@ -58,7 +58,7 @@ const {
       </div>
       <a
         href={getNewsPath(id, filePath)}
-        class="inline-block text-lg font-semibold text-foreground-dark decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
+        class="inline-block text-lg font-semibold text-foreground-dark decoration-dashed underline-offset-4 hover:text-accent hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
       >
         {title}
       </a>

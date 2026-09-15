@@ -26,6 +26,17 @@ html[data-theme="dark"] {
   --light: #222;
 }
 
+body.news-site {
+  --background: #081525;
+  --foreground: #c8d8e8;
+  --foreground-dark: #f8fbff;
+  --accent: #8bd2ff;
+  --accent-hover: #c2eaff;
+  --muted: #a8bfd3;
+  --border: #294761;
+  --light: #102a44;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
