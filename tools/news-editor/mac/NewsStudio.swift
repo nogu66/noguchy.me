@@ -9,6 +9,7 @@ final class StudioApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDe
     var webView: WKWebView!
     var root = ""
     var node = ""
+    var pnpm = ""
     var server: Process?
     var didStartServer = false
     var isClosing = false
@@ -18,12 +19,14 @@ final class StudioApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDe
         guard let configURL = Bundle.main.url(forResource: "LocalConfig", withExtension: "plist"),
               let config = NSDictionary(contentsOf: configURL),
               let repository = config["Repository"] as? String,
-              let executable = config["Node"] as? String else {
+              let executable = config["Node"] as? String,
+              let packageManager = config["Pnpm"] as? String else {
             fail("アプリの設定を読み込めませんでした。リポジトリで pnpm run editor:news:install を実行してください。")
             return
         }
         root = repository
         node = executable
+        pnpm = packageManager
         makeMenu()
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
@@ -115,7 +118,8 @@ final class StudioApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDe
         process.arguments = ["scripts/news-editor-server.mjs"]
         process.currentDirectoryURL = URL(fileURLWithPath: root)
         var environment = ProcessInfo.processInfo.environment
-        environment["PATH"] = URL(fileURLWithPath: node).deletingLastPathComponent().path + ":/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        environment["PATH"] = URL(fileURLWithPath: node).deletingLastPathComponent().path + ":" + URL(fileURLWithPath: pnpm).deletingLastPathComponent().path + ":/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        environment["NEWS_EDITOR_PNPM"] = pnpm
         environment["NEWS_EDITOR_PORT"] = "4323"
         process.environment = environment
         let folder = URL(fileURLWithPath: root).appendingPathComponent(".local/news-editor")

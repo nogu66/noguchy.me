@@ -18,6 +18,9 @@ if (process.platform !== "darwin")
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const applications = path.join(os.homedir(), "Applications");
 const destination = path.join(applications, "News Studio.app");
+const pnpm = execFileSync("/usr/bin/which", ["pnpm"], {
+  encoding: "utf8",
+}).trim();
 const temporary = await mkdtemp(path.join(os.tmpdir(), "news-studio-build-"));
 const bundle = path.join(temporary, "News Studio.app");
 const contents = path.join(bundle, "Contents");
@@ -61,7 +64,7 @@ await writeFile(
 );
 await writeFile(
   path.join(resources, "LocalConfig.plist"),
-  plist({ Repository: root, Node: process.execPath })
+  plist({ Repository: root, Node: process.execPath, Pnpm: pnpm })
 );
 console.log("News Studio.app を作成しています…");
 execFileSync(

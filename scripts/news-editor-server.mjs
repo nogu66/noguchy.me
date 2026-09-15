@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 import path from "node:path";
+import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 import { createNewsStore, EditorError } from "./news-editor-store.mjs";
@@ -10,6 +11,48 @@ const port = Number(process.env.NEWS_EDITOR_PORT || 4323);
 const host = `127.0.0.1:${port}`;
 const origin = `http://${host}`;
 const store = createNewsStore(root);
+let deployPromise = null;
+
+function deployNews() {
+  if (deployPromise) throw new EditorError("すでに公開処理を実行中です。", 409);
+  const packageManager =
+    process.env.NEWS_EDITOR_PNPM || process.env.npm_execpath;
+  const command = packageManager ? process.execPath : "pnpm";
+  const args = packageManager
+    ? [packageManager, "run", "deploy:news"]
+    : ["run", "deploy:news"];
+  deployPromise = new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: root,
+      env: { ...process.env, CI: "1" },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let output = "";
+    const collect = chunk => {
+      output = `${output}${chunk}`.slice(-12_000);
+    };
+    child.stdout.on("data", collect);
+    child.stderr.on("data", collect);
+    child.on("error", error => reject(error));
+    child.on("close", code => {
+      if (code === 0) {
+        resolve({
+          message: "公開しました。news.noguchy.meに反映されています。",
+        });
+      } else {
+        reject(
+          new EditorError(
+            `公開に失敗しました。Cloudflareへのログイン状態とログを確認してください。\n${output.trim().slice(-2_000)}`,
+            502
+          )
+        );
+      }
+    });
+  }).finally(() => {
+    deployPromise = null;
+  });
+  return deployPromise;
+}
 
 async function readBody(req, limit) {
   let size = 0;
@@ -78,6 +121,8 @@ const server = await createServer({
               );
               return send(200, await store.save(data));
             }
+            if (req.method === "POST" && url.pathname === "/api/deploy")
+              return send(200, await deployNews());
             if (req.method === "POST" && url.pathname === "/api/images") {
               if (!req.headers["content-type"]?.startsWith("image/"))
                 throw new EditorError("画像ファイルを選択してください。");

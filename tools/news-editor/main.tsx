@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Circle,
   CloudCheck,
+  CloudUpload,
   Download,
   FileText,
   ImagePlus,
@@ -60,6 +61,7 @@ function App() {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [localSaved, setLocalSaved] = useState(false);
   const [sidebar, setSidebar] = useState(true);
@@ -70,7 +72,7 @@ function App() {
   const latest = useRef({ draft, session, baseline });
   latest.current = { draft, session, baseline };
   const saveRef = useRef<() => void>(() => {});
-  const busy = saving || uploading || loading;
+  const busy = saving || publishing || uploading || loading;
   const dirty = !!draft && fingerprint(draft) !== baseline;
 
   function persist() {
@@ -218,8 +220,8 @@ function App() {
   function update(patch: Partial<Article>) {
     setDraft(current => (current ? { ...current, ...patch } : current));
   }
-  async function save() {
-    if (!draft || busy) return;
+  async function save(): Promise<Article | null> {
+    if (!draft || busy) return null;
     setSaving(true);
     setError("");
     persist();
@@ -251,13 +253,33 @@ function App() {
         "記事ファイルに保存しました。公開サイトへの反映はデプロイ後です。"
       );
       await refreshList();
+      return result;
     } catch (error) {
       setError(messageOf(error));
+      return null;
     } finally {
       setSaving(false);
     }
   }
   saveRef.current = save;
+  async function publish() {
+    if (!draft || busy) return;
+    setError("");
+    const saved = await save();
+    if (!saved) return;
+    setPublishing(true);
+    setNotice("記事を保存しました。公開処理を実行しています…");
+    try {
+      const result = await api<{ message: string }>("/api/deploy", {
+        method: "POST",
+      });
+      setNotice(result.message);
+    } catch (error) {
+      setError(messageOf(error));
+    } finally {
+      setPublishing(false);
+    }
+  }
   function addTags() {
     if (!draft) return;
     update({
@@ -496,12 +518,24 @@ function App() {
               <Settings2 size={18} />
             </button>
             <button
-              className="primary-button"
+              className="secondary-header-button"
               disabled={!draft || busy}
               onClick={save}
             >
               <Check size={15} />
               保存する<kbd>⌘S</kbd>
+            </button>
+            <button
+              className="primary-button"
+              disabled={!draft || busy}
+              onClick={publish}
+            >
+              {publishing ? (
+                <Loader2 size={15} className="spin" />
+              ) : (
+                <CloudUpload size={15} />
+              )}
+              {publishing ? "公開中" : "保存して公開"}
             </button>
           </div>
         </header>
@@ -678,7 +712,7 @@ function App() {
                         <option value="published">公開対象</option>
                       </select>
                       <span className="property-note">
-                        保存後のデプロイで反映
+                        「保存して公開」で反映
                       </span>
                     </div>
                   </div>
