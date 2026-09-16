@@ -37,6 +37,16 @@ import "./style.css";
 
 type Summary = Omit<Article, "body">;
 type Cache = { article: Article; baseline: string; at: number };
+type PublishState = {
+  deployedAt: string | null;
+  articles: Record<string, string>;
+};
+type Publication = {
+  label: string;
+  detail: string;
+  tone: "published" | "pending" | "draft" | "unknown";
+};
+const emptyPublishState: PublishState = { deployedAt: null, articles: {} };
 const storageKey = (key: string) => `noguchy.news.studio.v1:${key}`;
 const formatDate = (value: string) =>
   Number.isFinite(Date.parse(value))
@@ -48,9 +58,65 @@ const formatDate = (value: string) =>
     : "日時未設定";
 const messageOf = (error: unknown) =>
   error instanceof Error ? error.message : "処理に失敗しました。";
+const publishDate = (value: string | null) =>
+  value
+    ? new Intl.DateTimeFormat("ja-JP", {
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        timeZone: "Asia/Tokyo",
+      }).format(new Date(value))
+    : "未確認";
+
+function publicationOf(
+  article: Summary | Article,
+  state: PublishState,
+  dirty = false
+): Publication {
+  const deployedRevision = state.articles[article.id];
+  if (!article.published) {
+    return deployedRevision
+      ? {
+          label: "公開停止待ち",
+          detail: "公開ページには前の版が残っています。",
+          tone: "pending",
+        }
+      : {
+          label: "下書き",
+          detail: "公開設定を「公開対象」にすると公開できます。",
+          tone: "draft",
+        };
+  }
+  if (dirty)
+    return {
+      label: article.revision ? "変更あり・未公開" : "未保存・未公開",
+      detail: "「保存して公開」を押すとサイトに反映されます。",
+      tone: "pending",
+    };
+  if (!state.deployedAt)
+    return {
+      label: "公開状況未確認",
+      detail: "「保存して公開」で公開状態を記録できます。",
+      tone: "unknown",
+    };
+  if (deployedRevision === article.revision)
+    return {
+      label: "公開済み",
+      detail: `最終公開 ${publishDate(state.deployedAt)}`,
+      tone: "published",
+    };
+  return {
+    label: deployedRevision ? "未公開の変更" : "公開待ち",
+    detail: "「保存して公開」を押すとサイトに反映されます。",
+    tone: "pending",
+  };
+}
 
 function App() {
   const [articles, setArticles] = useState<Summary[]>([]);
+  const [publishState, setPublishState] =
+    useState<PublishState>(emptyPublishState);
   const [draft, setDraft] = useState<Article | null>(null);
   const [session, setSession] = useState("");
   const [baseline, setBaseline] = useState("");
@@ -100,10 +166,13 @@ function App() {
     }
   }
   async function refreshList() {
-    const result = await api<{ articles: Summary[]; warnings: string[] }>(
-      "/api/articles"
-    );
+    const result = await api<{
+      articles: Summary[];
+      warnings: string[];
+      deployment?: PublishState;
+    }>("/api/articles");
     setArticles(result.articles);
+    setPublishState(result.deployment ?? emptyPublishState);
     if (result.warnings.length) setError(result.warnings.join("\n"));
     return result.articles;
   }
@@ -270,10 +339,15 @@ function App() {
     setPublishing(true);
     setNotice("記事を保存しました。公開処理を実行しています…");
     try {
-      const result = await api<{ message: string }>("/api/deploy", {
-        method: "POST",
-      });
+      const result = await api<{ message: string; deployment: PublishState }>(
+        "/api/deploy",
+        {
+          method: "POST",
+        }
+      );
       setNotice(result.message);
+      setPublishState(result.deployment);
+      await refreshList();
     } catch (error) {
       setError(messageOf(error));
     } finally {
@@ -348,6 +422,9 @@ function App() {
   );
   const wordCount =
     draft?.body.replace(/[#*`\[\]()>_-]/g, "").replace(/\s/g, "").length ?? 0;
+  const currentPublication = draft
+    ? publicationOf(draft, publishState, dirty)
+    : null;
 
   return (
     <div className={`studio ${sidebar ? "" : "sidebar-hidden"}`}>
@@ -395,7 +472,7 @@ function App() {
             },
             {
               id: "published",
-              label: "公開対象",
+              label: "公開設定",
               icon: BookOpen,
               count: articles.filter(article => article.published).length,
             },
@@ -437,10 +514,16 @@ function App() {
               onClick={() => openArticle(article.id)}
             >
               <span
-                className={`article-status ${article.published ? "ready" : ""}`}
+                className={`article-status ${publicationOf(article, publishState, session === article.id && dirty).tone}`}
               >
                 <Circle size={8} fill="currentColor" />
-                {article.published ? "公開対象" : "下書き"}
+                {
+                  publicationOf(
+                    article,
+                    publishState,
+                    session === article.id && dirty
+                  ).label
+                }
                 <time>{formatDate(article.pubDatetime)}</time>
               </span>
               <strong>{article.title || "無題の記事"}</strong>
@@ -507,6 +590,16 @@ function App() {
                 </>
               )}
             </span>
+            {currentPublication && (
+              <span
+                className={`publish-indicator ${currentPublication.tone}`}
+                role="status"
+                title={currentPublication.detail}
+              >
+                <CloudUpload size={14} />
+                {publishing ? "公開中" : currentPublication.label}
+              </span>
+            )}
             <button
               className="icon-button"
               disabled={!draft || busy}
@@ -588,9 +681,9 @@ function App() {
                   <div className="document-overline">
                     <span>
                       <span
-                        className={`status-dot ${draft.published ? "ready" : ""}`}
+                        className={`status-dot ${currentPublication?.tone === "published" ? "ready" : ""}`}
                       />
-                      {draft.published ? "公開対象" : "下書き"}
+                      {currentPublication?.label}
                     </span>
                     <span>NEWS / EDITOR</span>
                   </div>

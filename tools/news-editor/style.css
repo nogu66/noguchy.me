@@ -353,6 +353,32 @@ kbd {
 .save-indicator svg {
   color: var(--accent);
 }
+.publish-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.publish-indicator svg {
+  color: var(--muted);
+}
+.publish-indicator.published,
+.article-status.published {
+  color: var(--accent);
+}
+.publish-indicator.published svg {
+  color: var(--accent);
+}
+.publish-indicator.pending,
+.article-status.pending {
+  color: var(--dark);
+}
+.publish-indicator.unknown,
+.article-status.unknown {
+  color: var(--muted);
+}
 .primary-button {
   display: inline-flex;
   align-items: center;
@@ -1109,6 +1135,9 @@ input[type="checkbox"] {
     gap: 8px;
   }
   .save-indicator {
+    display: none;
+  }
+  .publish-indicator {
     display: none;
   }
 }

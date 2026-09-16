@@ -3,6 +3,7 @@
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { createServer } from "vite";
 import { createNewsStore, EditorError } from "./news-editor-store.mjs";
 
@@ -11,7 +12,55 @@ const port = Number(process.env.NEWS_EDITOR_PORT || 4323);
 const host = `127.0.0.1:${port}`;
 const origin = `http://${host}`;
 const store = createNewsStore(root);
+const deploymentStateFile = path.join(
+  root,
+  ".local/news-editor/deployment-state.json"
+);
 let deployPromise = null;
+
+const emptyDeploymentState = { deployedAt: null, articles: {} };
+
+async function readDeploymentState() {
+  try {
+    const value = JSON.parse(await readFile(deploymentStateFile, "utf8"));
+    if (!value || typeof value !== "object") return emptyDeploymentState;
+    return {
+      deployedAt:
+        typeof value.deployedAt === "string" ? value.deployedAt : null,
+      articles:
+        value.articles && typeof value.articles === "object"
+          ? Object.fromEntries(
+              Object.entries(value.articles).filter(
+                ([id, revision]) =>
+                  typeof id === "string" && typeof revision === "string"
+              )
+            )
+          : {},
+    };
+  } catch (error) {
+    if (error.code !== "ENOENT") console.error(error);
+    return emptyDeploymentState;
+  }
+}
+
+async function writeDeploymentState() {
+  const { articles } = await store.list();
+  const state = {
+    deployedAt: new Date().toISOString(),
+    articles: Object.fromEntries(
+      articles
+        .filter(article => article.published && article.revision)
+        .map(article => [article.id, article.revision])
+    ),
+  };
+  await mkdir(path.dirname(deploymentStateFile), { recursive: true });
+  const temporary = `${deploymentStateFile}.tmp`;
+  await writeFile(temporary, `${JSON.stringify(state, null, 2)}\n`, {
+    flag: "wx",
+  });
+  await rename(temporary, deploymentStateFile);
+  return state;
+}
 
 function deployNews() {
   if (deployPromise) throw new EditorError("すでに公開処理を実行中です。", 409);
@@ -36,9 +85,14 @@ function deployNews() {
     child.on("error", error => reject(error));
     child.on("close", code => {
       if (code === 0) {
-        resolve({
-          message: "公開しました。news.noguchy.meに反映されています。",
-        });
+        writeDeploymentState()
+          .then(deployment =>
+            resolve({
+              message: "公開しました。news.noguchy.meに反映されています。",
+              deployment,
+            })
+          )
+          .catch(reject);
       } else {
         reject(
           new EditorError(
@@ -110,7 +164,10 @@ const server = await createServer({
             }
             if (!url.pathname.startsWith("/api/")) return next();
             if (req.method === "GET" && url.pathname === "/api/articles")
-              return send(200, await store.list());
+              return send(200, {
+                ...(await store.list()),
+                deployment: await readDeploymentState(),
+              });
             if (req.method === "GET" && url.pathname === "/api/article")
               return send(200, await store.read(url.searchParams.get("id")));
             if (req.method === "POST" && url.pathname === "/api/article") {
