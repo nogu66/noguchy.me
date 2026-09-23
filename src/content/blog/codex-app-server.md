@@ -1,7 +1,7 @@
 ---
 title: "Codex App Server を使ってみよう！"
 pubDatetime: 2026-07-15T12:00:00+09:00
-featured: true
+featured: false
 published: true
 tags: ["codex", "openai", "ai", "agent"]
 description: "Codexを自分のアプリやサービスに組み込めるCodex App Serverについて、通常の生成AI APIとの違いや活用例を紹介します。"

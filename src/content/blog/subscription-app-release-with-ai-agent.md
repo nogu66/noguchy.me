@@ -1,7 +1,7 @@
 ---
 title: "世界一簡単なサブスクアプリのリリース方法"
 pubDatetime: 2026-07-13T12:00:00+09:00
-featured: true
+featured: false
 published: true
 tags:
   [
