@@ -240,7 +240,11 @@ const nextPost =
    * allowing users to copy code easily. */
   function attachCopyButtons() {
     const copyButtonLabel = "Copy";
-    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+    // mermaid blocks are diagrams, not code: skip them so the button text
+    // doesn't leak into the rendered SVG
+    const codeBlocks = Array.from(
+      document.querySelectorAll("pre:not(.mermaid)")
+    );
 
     for (const codeBlock of codeBlocks) {
       const wrapper = document.createElement("div");
@@ -294,9 +298,14 @@ const nextPost =
 </script>
 
 <script>
-  // mermaid 図がある記事だけ動的に描画する
-  const blocks = document.querySelectorAll<HTMLElement>("pre.mermaid");
-  if (blocks.length > 0) {
+  // mermaid 図がある記事だけ動的に描画する。
+  // ClientRouter 経由の遷移ではモジュールスクリプトが再実行されないため、
+  // astro:page-load（初回表示・遷移後の両方で発火）で描画する
+  async function renderMermaid() {
+    const blocks = document.querySelectorAll<HTMLElement>(
+      "pre.mermaid:not([data-processed])"
+    );
+    if (blocks.length === 0) return;
     const { default: mermaid } = await import("mermaid");
     const isDark =
       document.documentElement.getAttribute("data-theme") === "dark";
@@ -306,4 +315,5 @@ const nextPost =
     });
     await mermaid.run({ nodes: blocks });
   }
+  document.addEventListener("astro:page-load", renderMermaid);
 </script>

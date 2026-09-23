@@ -82,6 +82,9 @@ export default defineConfig({
     plugins: [tailwindcss()],
     optimizeDeps: {
       exclude: ["@resvg/resvg-js"],
+      // mermaid is imported lazily from PostDetails; pre-bundle it so the dev
+      // server doesn't re-optimize mid-session and serve "Outdated Optimize Dep"
+      include: ["mermaid"],
     },
   },
   image: {

@@ -4,7 +4,9 @@ function loadXPostEmbeds() {
 
   const render = () => {
     if (window.twttr?.widgets?.load) {
-      window.twttr.widgets.load(document);
+      // widgets.load calls HTMLElement#matches on its argument, so it must be
+      // an element (passing `document` throws "Illegal invocation")
+      window.twttr.widgets.load(document.body);
     }
   };
   const existingScript = document.querySelector(
