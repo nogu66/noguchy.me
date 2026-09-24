@@ -4,6 +4,8 @@ permissions:
   contents: read
 
 on:
+  push:
+    branches: [main]
   pull_request:
     types:
       - opened
@@ -20,7 +22,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20]
+        node-version: [22]
 
     steps:
       - name: "☁️ Checkout repository"
@@ -45,6 +47,9 @@ jobs:
 
       - name: "📝 Checking code format"
         run: pnpm run format:check
+
+      - name: "🧪 Run tests"
+        run: pnpm run test
 
       - name: "🚀 Build the project"
         run: pnpm run build
