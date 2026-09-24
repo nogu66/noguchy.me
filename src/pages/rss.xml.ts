@@ -17,13 +17,13 @@ export async function GET() {
       link: getPath(id, filePath),
       title: data.title,
       description: data.description,
-      pubDate: new Date(data.modDatetime ?? data.pubDatetime),
+      pubDate: new Date(data.pubDatetime),
     })),
     ...sortedNews.map(({ data, id, filePath }) => ({
       link: new URL(getNewsPath(id, filePath), NEWS.website).href,
       title: data.title,
       description: data.description,
-      pubDate: new Date(data.modDatetime ?? data.pubDatetime),
+      pubDate: new Date(data.pubDatetime),
     })),
   ].sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
 
@@ -32,5 +32,6 @@ export async function GET() {
     description: SITE.desc,
     site: SITE.website,
     items,
+    customData: `<language>${SITE.lang}</language>`,
   });
 }

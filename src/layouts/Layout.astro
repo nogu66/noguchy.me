@@ -23,6 +23,8 @@ export interface Props {
   siteImage?: string;
   rssURL?: string;
   articleType?: "BlogPosting" | "NewsArticle";
+  headline?: string;
+  noindex?: boolean;
 }
 
 const {
@@ -40,6 +42,8 @@ const {
   siteImage = SITE.ogImage ? `/${SITE.ogImage}` : "/og.png",
   rssURL = new URL("rss.xml", Astro.site).href,
   articleType = "BlogPosting",
+  headline = title,
+  noindex = false,
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, canonicalURL);
@@ -48,7 +52,7 @@ const structuredData = pubDatetime
   ? {
       "@context": "https://schema.org",
       "@type": articleType,
-      headline: `${title}`,
+      headline,
       image: `${socialImageURL}`,
       datePublished: `${pubDatetime.toISOString()}`,
       ...(modDatetime && { dateModified: modDatetime.toISOString() }),
@@ -64,12 +68,10 @@ const structuredData = pubDatetime
         "@id": `${canonicalURL}`,
       },
       publisher: {
-        "@type": "Organization",
-        name: siteName,
-        logo: {
-          "@type": "ImageObject",
-          url: `${new URL(siteImage, canonicalURL)}`,
-        },
+        "@type": "Person",
+        name: `${author}`,
+        ...(profile && { url: profile }),
+        image: `${new URL(siteImage, canonicalURL)}`,
       },
     }
   : null;
@@ -91,9 +93,9 @@ const structuredData = pubDatetime
 
     <!-- General Meta Tags -->
     <title>{title}</title>
-    <meta name="title" content={title} />
     <meta name="description" content={description} />
     <meta name="author" content={author} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Open Graph / Facebook -->
@@ -124,21 +126,13 @@ const structuredData = pubDatetime
     }
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={socialImageURL} />
-    {
-      SITE.twitterId && (
-        <meta property="twitter:site" content={SITE.twitterId} />
-      )
-    }
-    {
-      SITE.twitterId && (
-        <meta property="twitter:creator" content={SITE.twitterId} />
-      )
-    }
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalURL} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImageURL} />
+    {SITE.twitterId && <meta name="twitter:site" content={SITE.twitterId} />}
+    {SITE.twitterId && <meta name="twitter:creator" content={SITE.twitterId} />}
 
     <!-- Google JSON-LD Structured data -->
     {
@@ -160,7 +154,7 @@ const structuredData = pubDatetime
       href={rssURL}
     />
 
-    <meta name="theme-color" content="#fdfdfd" />
+    <meta name="theme-color" content="#ffffff" />
 
     {
       // If PUBLIC_GOOGLE_SITE_VERIFICATION is set in the environment variable,

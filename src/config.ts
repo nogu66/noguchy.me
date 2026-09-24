@@ -1,5 +1,5 @@
 export const SITE = {
-  website: "https://noguchy.me/", // replace this with your deployed domain
+  website: "https://noguchy.me/",
   author: "nogu",
   profile: "https://noguchy.me/",
   desc: "noguの個人サイト。AIエージェント開発・生成AI推進に取り組むソフトウェアエンジニア。Claude Code、Manus等のAIツールやプロダクト開発、SNSマーケティングについて発信中。",
@@ -12,9 +12,9 @@ export const SITE = {
   showArchives: true,
   showBackButton: true, // show back button in post detail
   editPost: {
-    enabled: true,
+    enabled: false,
     text: "Edit page",
-    url: "https://github.com/satnaing/astro-paper/edit/main/",
+    url: "",
   },
   dynamicOgImage: true,
   dir: "ltr", // "rtl" | "auto"
