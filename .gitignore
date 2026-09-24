@@ -33,3 +33,8 @@ tags-blue.png
 .env*.local
 .gstack/
 .local/news-editor/
+
+# local tooling artifacts
+.playwright-mcp/
+live-*.png
+screenshot-*.png
