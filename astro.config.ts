@@ -12,6 +12,8 @@ import remarkZennMermaid from "./src/plugins/remark-zenn-mermaid.mjs";
 import remarkZennFigure from "./src/plugins/remark-zenn-figure.mjs";
 import remarkZennEmbed from "./src/plugins/remark-zenn-embed.mjs";
 import remarkMath from "remark-math";
+import remarkHasMath from "./src/plugins/remark-has-math.mjs";
+import rehypeContentImages from "./src/plugins/rehype-content-images.mjs";
 import rehypeKatex from "rehype-katex";
 import { transformerZennDiff } from "./src/utils/transformers/zennDiff";
 import {
@@ -40,12 +42,14 @@ export default defineConfig({
       filter: page =>
         (SITE.showArchives || !page.endsWith("/archives")) &&
         !page.includes("/welcome") &&
+        !page.endsWith("/search/") &&
         !new URL(page).pathname.startsWith("/news"),
     }),
   ],
   build: {
-    // CSS を HTML にインライン化し、レンダーブロッキングの外部リクエストをゼロにする
-    inlineStylesheets: "always",
+    // 共通 CSS は外部ファイル化して immutable キャッシュに乗せる（always だと
+    // ClientRouter の遷移ごとに約 13KB gzip を HTML と一緒に再取得していた）
+    inlineStylesheets: "auto",
   },
   markdown: {
     remarkPlugins: [
@@ -56,10 +60,11 @@ export default defineConfig({
       remarkZennFigure,
       remarkZennEmbed,
       remarkMath,
+      remarkHasMath,
       remarkToc,
       [remarkCollapse, { test: "Table of contents" }],
     ],
-    rehypePlugins: [rehypeKatex],
+    rehypePlugins: [rehypeKatex, rehypeContentImages],
     shikiConfig: {
       // For more themes, visit https://shiki.style/themes
       themes: { light: "min-light", dark: "night-owl" },

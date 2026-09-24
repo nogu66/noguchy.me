@@ -36,11 +36,10 @@ const {
   hideEditPost,
 } = post.data;
 
-const { Content } = await render(post);
+const { Content, remarkPluginFrontmatter } = await render(post);
 
-// KaTeX CSS は数式を含む記事だけで読み込む（"$" を含まない記事では数式は
-// 生成されない。誤検出しても余分に CSS が載るだけで表示は壊れない）
-const needsKatex = post.body?.includes("$") ?? false;
+// KaTeX CSS は数式を含む記事だけで読み込む（remark-has-math が判定）
+const needsKatex = remarkPluginFrontmatter.hasMath === true;
 
 let ogImageUrl: string | undefined;
 
@@ -63,6 +62,7 @@ const ogImage = ogImageUrl
 
 const layoutProps = {
   title: `${title} | ${SITE.title}`,
+  headline: title,
   author,
   description,
   pubDatetime,
