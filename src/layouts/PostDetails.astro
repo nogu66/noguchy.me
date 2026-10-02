@@ -316,4 +316,12 @@ const nextPost =
     await mermaid.run({ nodes: blocks });
   }
   document.addEventListener("astro:page-load", renderMermaid);
+
+  // インタラクティブ図解（<div data-interactive="...">）がある記事だけ読み込む
+  async function mountInteractive() {
+    if (!document.querySelector("[data-interactive]")) return;
+    const { mountAll } = await import("@/scripts/interactive");
+    await mountAll();
+  }
+  document.addEventListener("astro:page-load", mountInteractive);
 </script>

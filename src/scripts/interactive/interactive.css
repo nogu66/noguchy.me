@@ -1,0 +1,433 @@
+/* 記事内インタラクティブ図解（src/scripts/interactive）。色はサイトのテーマ変数に追従する */
+
+.ix {
+  --ix-ok: #10b981;
+  --ix-deny: #f43f5e;
+  --ix-warn: #f59e0b;
+  --ix-org: #d97706;
+  --ix-tint: color-mix(in srgb, var(--accent) 12%, transparent);
+  --ix-mono:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  margin: 1.75rem 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.ix [hidden],
+.ix[hidden] {
+  display: none !important;
+}
+
+.ix code {
+  font-family: var(--ix-mono);
+  font-size: 0.78rem;
+}
+
+.ix-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ix-badge {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--ix-tint);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ix-title {
+  color: var(--foreground-dark);
+  font-weight: 700;
+}
+
+.ix-desc {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+.ix-controls {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.ix-field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+.ix-controls .ix-field {
+  margin-bottom: 0;
+}
+
+.ix-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.ix-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ix-chip {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s,
+    color 0.15s;
+}
+.ix-chip:hover {
+  border-color: var(--accent);
+}
+.ix-chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--ix-tint);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ===== next() パターン ===== */
+
+.ix-lanes {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.ix-lane {
+  display: grid;
+  place-items: center;
+  padding: 0.5rem 0.4rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.5rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+}
+.ix-lane.is-active {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--ix-tint);
+  color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.ix-lane-arrow {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.ix-code {
+  padding: 0.6rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--light);
+  font-family: var(--ix-mono);
+  font-size: 0.78rem;
+  line-height: 1.75;
+}
+
+.ix-code-line {
+  width: max-content;
+  min-width: 100%;
+  padding: 0 0.75rem;
+  border-left: 3px solid transparent;
+  white-space: pre;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+.ix-code-line.is-active {
+  border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--foreground-dark);
+}
+
+/* ===== 5層チェーン ===== */
+
+.ix-onion {
+  margin-bottom: 0.25rem;
+}
+
+.ix-tier {
+  padding: 0.35rem 0.45rem 0.45rem;
+  border: 1.5px solid var(--border);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.ix-tier.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.ix-tier.is-unreached > .ix-tier-head {
+  opacity: 0.45;
+}
+
+.ix-tier-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.5rem;
+  padding: 0 0.15rem 0.35rem;
+  transition: opacity 0.2s;
+}
+.ix-tier-core > .ix-tier-head {
+  padding-bottom: 0;
+}
+
+.ix-tier-name {
+  color: var(--foreground-dark);
+  font-family: var(--ix-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.ix-tier[data-tier="prepend"] > .ix-tier-head > .ix-tier-name,
+.ix-tier[data-tier="append"] > .ix-tier-head > .ix-tier-name {
+  color: var(--ix-org);
+}
+.ix-tier[data-tier="user"] > .ix-tier-head > .ix-tier-name {
+  color: var(--accent);
+}
+
+.ix-tier-owner {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.ix-tier-mark {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.ix-tier.is-unreached > .ix-tier-head > .ix-tier-mark {
+  color: var(--muted);
+}
+
+.ix-select {
+  max-width: 100%;
+  margin-left: auto;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  background: var(--background);
+  color: var(--foreground-dark);
+  font-size: 0.75rem;
+}
+
+/* ===== 共通: 操作ボタン・ログ・結果 ===== */
+
+.ix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.ix-btn {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--background);
+  color: var(--foreground-dark);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.ix-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.ix-btn:disabled {
+  opacity: 0.6;
+}
+.ix-btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--background);
+}
+.ix-btn-primary:hover:not(:disabled) {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.ix-log {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+}
+
+.ix-log li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.4rem;
+  background: var(--light);
+  opacity: 0.7;
+}
+.ix-log li.is-current {
+  opacity: 1;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.ix-log li.ix-log-empty {
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--muted);
+  opacity: 1;
+}
+
+.ix-log-dir {
+  font-weight: 700;
+}
+.ix-log-dir[data-dir="down"] {
+  color: var(--accent);
+}
+.ix-log-dir[data-dir="up"] {
+  color: var(--ix-ok);
+}
+
+.ix-log-at {
+  min-width: 4.2rem;
+  color: var(--foreground-dark);
+  font-family: var(--ix-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.ix-log .ix-log-payload {
+  flex-basis: 100%;
+  padding: 0;
+  background: transparent;
+  color: var(--foreground-dark);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.ix-result {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.ix-status {
+  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.ix-status-ok {
+  color: var(--ix-ok);
+}
+.ix-status-deny {
+  color: var(--ix-deny);
+}
+.ix-status-warn {
+  color: var(--ix-warn);
+}
+
+.ix .ix-result-value {
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.35rem;
+  background: var(--light);
+  color: var(--foreground-dark);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ===== カタログ絞り込み ===== */
+
+.ix-filter {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 5;
+  padding: 0.75rem;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.06);
+}
+
+.ix-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.ix-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  background: var(--background);
+  color: var(--foreground-dark);
+  font-size: 0.85rem;
+}
+.ix-input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.ix-count {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ix-empty {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+td.ix-ghost {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ix,
+  .ix * {
+    transition: none !important;
+  }
+}

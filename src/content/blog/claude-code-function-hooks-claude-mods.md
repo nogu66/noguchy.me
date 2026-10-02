@@ -1,30 +1,47 @@
 ---
-title: "Claude Mods 入門 | Claude Codeを自由にカスタマイズする"
+title: "完全版 Claude Mods 入門 | Claude Codeを自由にカスタマイズする"
 pubDatetime: 2026-09-19T12:00:00+09:00
+modDatetime: 2026-10-02T11:00:00+09:00
 featured: true
 published: true
 tags: ["claude", "claudecode", "ai", "plugin", "hooks", "mod"]
-description: "TypeScriptの関数でClaude Codeの機能や見た目を自由かつ安全にカスタマイズできるClaude Mods（Function Hooks）について、仕組み・5層のチェーン構造・実例・APIリファレンスまで解説します。"
+description: "TypeScriptの関数でClaude Codeの機能や見た目を自由かつ安全にカスタマイズできるClaude Mods（Function Hooks）について、仕組み・5層のチェーン構造・実例から、状態管理・テスト・配布まで含めたModの作り方、全イベントとAPIリファレンスまで解説します。"
 timezone: "Asia/Tokyo"
 ---
 
-:::message
-本記事は [Claude Code Issue #91870](https://github.com/anthropics/claude-code/issues/91870) で議論中の暫定仕様（2026年9月19日時点）をもとにしています。APIは今後変更される可能性があるため、最新情報は公式サイトを参照してください。
-:::
-
 noguです。
 
-先日、Claude Codeに**Claude Mods**という機能が公開されました。
+2026年10月1日、Claude Codeの**Claude Mods**が正式に発表されました。
+
+https://x.com/ClaudeDevs/status/2105721434807083061?s=20
 
 これは、TypeScriptの関数を用いて、Claude Codeの機能や見た目を自由かつ安全にカスタマイズできる拡張機能の仕組みです。個人的に、この機能は**かなり将来性の高い機能**だと感じています。
 
 本記事では、Claude Modsの機能について深掘りするとともに、どのように活用していくことができるのかまとめていきます。
 
+これからModを始める方が、仕組みを理解し、自分で作って配れるようになるまでを、1本にまとめました。
+
+**対象読者**
+
+- Claude Codeを使っていて、従来のhooksやプラグインでは物足りなくなってきた方
+- Modという言葉は聞いたが、何ができて、どう作るのかがわからない方
+
+**この記事でわかること**
+
+- Claude Modsの仕組み（`register`、`($, e, next)`、5層のチェーン）
+- 公式やコミュニティのModから見る、Modでできること
+- 状態管理・テスト・配布まで含めた、Modの作り方
+- すべてのイベントと`$`のAPI一覧
+
 https://x.com/bcherny/status/2099551291601248485?s=20
+
+https://claude.com/blog/claude-code-mods
 
 ## Claude Modsとは
 
 Claude Mods（以下、Mod）とは、Claude Codeの機能や見た目をカスタマイズできる、プラグインの仕組みです。
+
+**特徴として、CLIだけではなく、デスクトップアプリのカスタマイズもすることが可能です。**
 
 これまでもClaude Codeには「Hooks」という拡張の仕組みがあり、ツール実行の前後などのタイミングで、自分で用意したコマンドを実行できました。Modはその発展形です。
 
@@ -33,12 +50,15 @@ Claude Mods（以下、Mod）とは、Claude Codeの機能や見た目をカス�
 ```bash
 example-mod/
 ├── .claude-plugin/
-│   └── plugin.json      # プラグインのメタ情報
+│   ├── plugin.json      # プラグインのメタ情報
+│   └── types/           # Claude Codeが自動で書き出す型定義
 ├── hooks/
 │   ├── hooks.json       # どのモジュールをフックとして使うか宣言
 │   └── register.ts または register.tsx      # register(on, options) の実体
-└── types/
-    └── claude-code.d.ts # /plugin-types が生成する型定義
+├── types/
+│   └── index.d.ts       # 自分のModが持つ状態の型（$.stateを使う場合）
+└── tests/
+    └── example.test.ts  # claude plugin test で動かすテスト
 ```
 
 Modは、外付けの拡張機能ではありません。Claude Code自身に標準搭載されている[`/diff`コマンド](https://github.com/anthropics/claude-code/tree/main/mods/diff)やテレメトリ機能も、Modとして実装されています。さらに、Claude Code 2.1.277で追加された`AGENTS.md`のサポートも、[`agents-md`](https://github.com/anthropics/claude-code/tree/main/mods/agents-md)というModとして提供されています。**つまり、Claude Modsは、Claude Codeの標準機能自体を拡張できるということです。**
@@ -51,19 +71,15 @@ https://github.com/anthropics/claude-code/tree/main/mods
 
 ## Modを使うための準備
 
-Function Hooksは、現時点ではearly access機能です。使うには、環境変数`CLAUDE_CODE_ENABLE_FUNCTION_HOOKS`を`1`にして、明示的に有効化する必要があります。
+Modは、Claude Code 2.1.287以降で使えます。最初から有効なので、特別な設定は要りません。
 
-`~/.claude/settings.json`の`env`に、次のように設定します。
+まず、バージョンを確認します。古い場合は`claude update`で更新します。
 
-```json:~/.claude/settings.json
-{
-  "env": {
-    "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1"
-  }
-}
+```bash
+claude --version
 ```
 
-有効にしたら、`--plugin-dir`でModのフォルダを指定して起動します。インストールせずに、そのセッションだけで試せます。
+Modを試すときは、`--plugin-dir`でModのフォルダを指定して起動します。インストールせずに、そのセッションだけで試せます。
 
 ```bash
 claude --plugin-dir ./my-mod
@@ -82,6 +98,10 @@ Modのエントリポイントは、`hooks/hooks.json`の`modules`で指定し�
 ## Function Hooksとは
 
 前章でも説明した通り、Function Hooks（関数フック）とは、Modの基盤となるClaude Codeのハーネス（プログラム）自体を差し替えるようなフックです。
+
+:::message
+「Function Hooks」は、設計の提案（Issue #91870）や型定義のコメントで使われている呼び名です。公式ブログは、同じものを「mods」と「hook」で説明しています。本記事では、Modを支える仕組みを指すときにFunction Hooksと呼びます。
+:::
 
 従来のhooksは、対象イベントが起きるたびにClaude Codeが外部プロセスを起動し、標準入力にイベントのJSONを渡します。それを、標準出力や`exit code`で許可・拒否・加工結果を受け取る仕組みでした。
 
@@ -148,6 +168,10 @@ export function register(on) {
 
 Modは隔離環境で動くため、`$`を使わない限り、外の世界には何もできません。これが安全性の要です。
 
+:::message alert
+隔離されているのは実行環境です。`$`を通せば、ファイルもコマンドも扱えます。公式ガイドも「ModはClaude Codeと同じアクセス権で動くコードで、書いたのはAnthropicではなく公開者」と注意しています。信頼できる提供元のModだけを入れ、導入前にリポジトリを確認しましょう。
+:::
+
 具体例として、公式チートシートの「THE HOOK」を見てみましょう。`tool.call`で`rm -rf /`を拒否し、結果を加工して返す、基本形のすべてが入っています。
 
 <!-- prettier-ignore -->
@@ -208,6 +232,10 @@ on("tool.call", { tool: "Read" }, async ($, e, next) => {
 
 後続の処理が返した結果をそのまま返さず、加工してから返すこともできます。**ここでは`Read`ツールの出力に混じったAPIキーらしき文字列をマスクしています。**
 
+3つのパターンの違いは、動かしてみると分かりやすいです。パターンとツール呼び出しを切り替えて、「▶ 実行」を押してみてください。
+
+<div data-interactive="mods-next"></div>
+
 ### next のその他の機能
 
 `next`には、呼び出す以外にも、次のような機能があります。
@@ -223,8 +251,12 @@ on("tool.call", { tool: "Read" }, async ($, e, next) => {
 | `next.to(e, "builtin")`      | managed限定。より下位のtierで継続する（絞り込みのみ可）                                                  |
 | `next(e); next(e)`           | 0回以上呼べる。呼ぶたびに、内側で新しいディスパッチが発生する                                            |
 | `next.error` / `next.called` | `.catch`内で使う。`{ kind, message, budget }`と、すでにディスパッチしたかどうか。`next(e)`で再実行できる |
+| `next.signal`                | `AbortSignal`。ユーザーが中断した、または自分の持ち時間が尽きたことを検知する                            |
+| `next.budget`                | 自分の持ち時間。`next.budget.remainingMs`で残りを読める                                                  |
 
 `.catch`は、ハンドラが例外を投げたり、10秒を超えたときのための宣言です。宣言していなければ、そのハンドラは1行の薄い表示とともにスキップされます。宣言していれば、猶予予算の中で、`next`と同等の権限で代わりに答えられます。
+
+10秒は、ハンドラ自身のコードが動いた時間だけを数えます。`next(e)`や`$`の呼び出しを待つ時間は含みません（`$.clock`の待ちは除く）。1分かかる`$.model.complete`を呼んでも、持ち時間は減りません。`.catch`の猶予は1秒です。
 
 ## 5層のチェーン構造と権限
 
@@ -246,7 +278,9 @@ Function Hooksは、1つのイベントに複数のModが同時にフックし�
 
 組織はこのチェーンの両端、つまり`prepend`と`append`を押さえています。真ん中にいる`user`（自分がインストールしたMod）は、この2つに挟まれる形です。
 
-たとえば`user`のModがあるツール呼び出しを許可しても、外側の`append`にいる組織のModが後からそれを拒否できます。逆に`prepend`の組織ポリシーが先に拒否すれば、そもそも`user`のModにはイベントが届きません。個人のModが組織のルールを一方的に上書きできないよう、外側を組織で挟んでいるわけです。
+たとえば`user`のModがあるツール呼び出しを許可しても、その内側（coreの直前）の`append`にいる組織のModが後からそれを拒否できます。逆に`prepend`の組織ポリシーが先に拒否すれば、そもそも`user`のModにはイベントが届きません。個人のModが組織のルールを一方的に上書きできないよう、両側を組織で挟んでいるわけです。
+
+<div data-interactive="mods-chain"></div>
 
 何もフックを足さなければ、実質的には次の1行と同じ意味になります。
 
@@ -280,6 +314,8 @@ X = A · B · C · core = A(B(C(core(⊥))))
 ```
 
 `A`が最も外側で、`core`が最も内側です。`next(e)`は「自分より内側をすべて実行する」呼び出しなので、外側のフックほど、下りでは最初に`e`を見て、上りでは最後に結果を見ます。つまり、位置がそのまま権威になります。
+
+同じイベントに複数のModがフックした場合は、読み込まれた順に並びます。先に読み込まれたModが、イベントを最初に見て、結果を最後に見ます。
 
 チートシートでは、この構造を3つの視点で描いています。
 
@@ -335,6 +371,8 @@ https://github.com/anthropics/claude-code/tree/main/mods/diff
 
 コマンドを1つ足すだけでなく、画面の一部をModが描いている点がポイントです。従来のhooksでは、ここまで踏み込めませんでした。
 
+`/diff`はModなので、`/plugin`からオフにしたり、自分で書いた版に差し替えたりできます。Anthropicは、ほかの標準機能も順にModへ移す計画です。Claude Codeを小さな核まで削り、必要なものだけ足し直す使い方ができるようになります。
+
 ### agents-md：AGENTS.mdをプロジェクト指示として読む
 
 [agents-md](https://github.com/anthropics/claude-code/tree/main/mods/agents-md)は、Claude Codeが`CLAUDE.md`を読むのと同じ形で、`AGENTS.md`をプロジェクト指示として読み込むModです。前述のとおり、Claude Code 2.1.277のAGENTS.mdサポートは、このModで実現されています。
@@ -374,10 +412,17 @@ https://github.com/anthropics/claude-code/tree/main/mods/sec-default
 
 managedな端末やTeam/Enterpriseの組織では、最も外側の`prepend`に座ります。仕組みは、前章の「5層のチェーン構造と権限」で説明したとおりです。
 
+公式ブログは、チームでの使い道として次の3つを挙げています。
+
+- **CI/CDの状況表示**：会話の横のペインにパイプラインの状況を出し、ビルドの成否に合わせて更新する
+- **本番環境の保護**：本番の設定に触れるコマンドの前に、確認を必須にする
+- **監査ログ**：最初に読み込まれるModが、ほかのすべてのModの呼び出しを記録する
+
+Modはプラグインに入れて配るため、既存のプラグイン管理がそのまま効きます。管理者は、marketplaceの許可・ブロックを管理コンソールから設定できます。
+
 ### terminal-browser：ターミナル内でブラウザを開く
 
 :::message
-**追記(2026/9/22)**
 v2.1.278 時点において、Claude Codeの特殊文字列バグが発生しているため正常に動作しないことを確認
 :::
 
@@ -401,123 +446,296 @@ https://x.com/RobKnight__/status/2100622380439683541?s=20
 
 `diff`や`agents-md`のような公式の標準機能も、terminal-browserのようなコミュニティ製Modも、同じ`register`とイベントへのフックで作られています。「画面を描く」「指示の読み込み方を変える」「組織のルールを守る」「ブラウザを埋め込む」と、方向性はばらばらでも、書き方は変わりません。
 
-## 実践：小さなmodを作る（cc-arcadeの7イベントで読む）
+## 実践：自分のModを作って配る（turn-counter）
 
-[cc-arcade](https://github.com/sezaakgun/cc-arcade)は、Function Hooksを使った実例プラグインです。プロンプト欄の上でSnakeやTetris、Doomなどのゲームを遊べる、7つのイベントだけで作られたModです。ファイル構成は次の通りです。
+ここからは、自分でModを作ります。題材は、セッションのターン数をプロンプト欄の上に表示する小さなMod「turn-counter」です。状態管理から始めて、型定義の確認、検証、テスト、配布の順に進めます。**この章のコードは、すべてClaude Code 2.1.287で動作を確認しています。**
 
 ```
-cc-arcade/
+my-mods/
 ├── .claude-plugin/
-│   └── plugin.json
-└── hooks/
-    ├── hooks.json
-    ├── register.tsx
-    ├── boards/*.tsx
-    └── games/*.ts
+│   └── marketplace.json
+└── turn-counter/
+    ├── .claude-plugin/
+    │   └── plugin.json
+    ├── hooks/
+    │   ├── hooks.json
+    │   └── register.mjs
+    ├── types/
+    │   └── index.d.ts
+    └── tests/
+        └── turn-counter.test.ts
 ```
 
-### 登録されている7イベント一覧
+### 状態は`$.state`に置く
 
-```ts
-on('session.start', ...)
-on('command.run', {command: 'arcade'}, ...)
-on('turn.start', ...)
-on('turn.complete', ...)
-on('tool.call', ...)
-on('ui.message', ...)
-on('ui.render', {component: 'AbovePrompt'}, ...)
+まず、ターン数をどこに持つかを決めます。
+
+Modのファイルを保存すると、ホットリロードで`register()`が実行し直されます。このとき、モジュール変数は初期値に戻ります。カウンタをモジュール変数に持つ書き方では、保存のたびに値が消えてしまいます。
+
+`$.state`は、この問題を解決します。値をModのファイルではなくホスト側に置くので、ホットリロードのあとも値が残ります。
+
+```js:hooks/register.mjs
+// ホスト側に置く値。このファイルがホットリロードされても消えない
+const turns = { plugin: "turn-counter", key: "turns" }
+
+export function register(on) {
+  on("turn.complete", async ($, e, next) => {
+    const r = await next(e)
+    if (!e.agentId) {                       // サブエージェントのターンは数えない
+      const { value = 0 } = await $.state.get(turns)
+      await $.state.set(turns, value + 1)
+    }
+    return r
+  })
+
+  on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
+    const { value = 0 } = await $.state.get(turns) // 描画中のgetが、再描画の購読になる
+    if (value === 0) return next(e)
+    const { Text } = $.ui.resolve(e)
+    return Text({ dimColor: true, children: `このセッション ${value} ターン目` })
+  })
+}
 ```
 
-### next()の実装パターン（turn.complete / tool.call）
+`ui.render`の中で`$.state.get`を呼ぶと、その描画が値を購読します。あとで値が`$.state.set`で書き換わると、その描画は自動で描き直されます。再描画が自動になるので、`$.ui.invalidate('ui.render')`を呼ぶ必要はありません。
 
-cc-arcadeの`turn.complete`は、「横から観測するだけ」のパターンです。
+どのModも値を読めますが、書けるのは持ち主のModだけです。また、`ui.render`の描画中には`$.state.set`を呼べません。書き込みは、ほかのイベントやボタンの`onPress`から行います。
 
-```ts
-on("turn.complete", async ($, e, next) => {
-  const r = await next(e); // 本来の処理（他プラグイン→本体）を先に完了させる
-  turnStartedAt = undefined;
-  if (active && active !== PICKER) {
-    turnsDone++; // 自分のカウンタを増やす
-    $.ui.invalidate("ui.render"); // 「画面を再描画して」と要求
+`$.state`の値は、型の「契約」として宣言する必要があります。契約ファイルの場所は、`plugin.json`の`types`で指定します。
+
+```json:.claude-plugin/plugin.json
+{
+  "name": "turn-counter",
+  "version": "0.1.0",
+  "description": "ターン数をプロンプト欄の上に表示する",
+  "author": { "name": "nogu" },
+  "types": "./types/index.d.ts"
+}
+```
+
+```ts:types/index.d.ts
+export type TurnCount = number
+
+declare module "claude-code" {
+  interface PluginState {
+    "turn-counter": { turns: TurnCount }
   }
-  return r; // 元の結果をそのまま返す
-});
+}
 ```
 
-`next(e)`を先に呼んで本来の処理を素通りさせ、その後で自分のカウンタを更新し、画面の再描画だけ要求しています。結果自体には手を加えず、そのまま返しているのがポイントです。
-
-`tool.call`の方は、「ツールが呼ばれるたびに横取りして観測する」パターンです。
-
-```ts
-on("tool.call", async ($, e, next) => {
-  const r = await next(e); // 実際のツール実行は素通りさせる（邪魔しない）
-  const event = petEvent(e.tool, command, isError); // Bashコマンド文字列とエラー有無だけ見る
-  // ...ペットの状態を更新する処理が続く
-});
+```json:hooks/hooks.json
+{
+  "modules": ["./register.mjs"]
+}
 ```
 
-こちらも`next(e)`を先に呼んで実際のツール実行を邪魔せず、その結果（成功/失敗）だけを見てペットの状態を更新しています。どちらも「本来の処理を止めずに、横から観測する」という同じ設計です。
+:::message alert
+契約ファイルに書けるのは、`export type`と`export interface`だけです。私は最初、モジュール扱いにするために`export {}`を置いて、`claude plugin validate`にエラーで止められました。宣言していないキーを`$.state`で使った場合も、同じくエラーになります。
+:::
 
-### 描画は別スレッド（Client）という設計判断
+`$.store`との使い分けは、次のとおりです。
 
-- ゲームは毎秒10回（Doomは20回）の描画更新が必要 → メインのフック処理と分離
+|                | `$.state`                     | `$.store`                  |
+| -------------- | ----------------------------- | -------------------------- |
+| 寿命           | セッションの間                | セッションをまたいで永続化 |
+| ホットリロード | 残る                          | 残る                       |
+| 再描画         | 描画中の`get`が自動で購読する | しない                     |
+| 型の宣言       | `PluginState`に必要           | 不要                       |
 
-直感的には、`ui.render`のハンドラの中にゲームロジックまで全部書きたくなります。しかしそれをやると、毎秒10回の再計算がメインのフック処理チェーンに乗ってしまい、他のModの処理まで巻き込んで重くなります。
+画面に出す値は`$.state`、次回の起動でも使いたい値は`$.store`と覚えておけば十分です。
 
-そこでcc-arcadeは、各ゲーム盤（`boards/snake.tsx`など）を`register.tsx`本体とは別の実行コンテキスト（`Client`モジュール）として切り出す設計を選んでいます。
+### 起動して、型定義を確認する
 
-- 独自のフレームクロック（`surface.every(100, () => {...})`で100ms毎に1ティック進める）
-- 独自のキーボード処理（`surface.onKey(...)`）
-- 完了したら`surface.post({game: 'snake', score: ...})`で親に送信（＝`ui.message`イベントとして受信）
+ファイルがそろったので、`my-mods/`の中で起動します。
 
-実質「メインプロセスとワーカーの分離」です。ゲームループが重くなってもClaude Code自体は固まりません。ゲームのロジック（`games/snake.ts`）自体もUIと無関係な純粋関数として書かれていて、描画（`boards/snake.tsx`）はその`step()`を100msごとに呼ぶだけです。ロジックと描画を分けているぶん、テストもしやすくなっています。
+```bash
+claude --plugin-dir ./turn-counter
+```
 
-## 動かしてみる
+1回やり取りすると、プロンプト欄の上に「このセッション 1 ターン目」と表示されます。
 
-1. 「Modを使うための準備」の通り、`~/.claude/settings.json`の`env`に`CLAUDE_CODE_ENABLE_FUNCTION_HOOKS`を`"1"`で設定する
-2. `git clone https://github.com/sezaakgun/cc-arcade && cd cc-arcade`
-3. `claude --plugin-dir .` で1セッションだけ試す
-4. `/arcade` を実行
+次に、起動したまま`register.mjs`の「このセッション」を「ここまで」に書き換えて保存します。トランスクリプトに`turn-counter: reloaded (2 hooks: turn.complete, ui.render)`と出て、表示が「ここまで 1 ターン目」に変わります。コードは入れ替わりましたが、数字は`$.state`にあるので消えていません。
+
+:::message
+表示が出ないときは、起動したフォルダを信頼しているかを確認します。信頼していないフォルダでは、Modはエラーも出さずに読み込まれません。読み込まれたかどうかは、`claude --debug-file debug.log`で起動し、ログに`hooks module turn-counter@inline loaded`と出ているかで判断できます。
+:::
+
+Claude Codeは、Modを読み込むたびに、そのModの`.claude-plugin/types/`へ型定義を書き出します。起動したあとには、次のファイルができています。
+
+```
+turn-counter/
+├── .claude-plugin/
+│   └── types/
+│       ├── .gitignore
+│       ├── tsconfig.json
+│       ├── claude-code/index.d.ts        # イベントと$の型（約570KB）
+│       ├── claude-code-tools/index.d.ts  # 組み込みツールの入出力の型
+│       └── claude-code-mcp/index.d.ts
+└── tsconfig.json
+```
+
+`claude-code/index.d.ts`の1行目には、書き出したClaude Codeのバージョンが入ります。バージョンが上がれば、次の読み込みで自動的に書き直されます。**手元のバージョンの仕様は、このファイルが正です。**`$`の使い方やイベントの引数に迷ったら、まずここを検索します。
+
+### `claude plugin validate`で検証する
+
+`claude plugin validate`は、Modのソースを静的に読んで検証します。報告されるのは、どのイベントにフックし、`$`の何を呼び、どの状態を読み書きするかの一覧です。
+
+```bash
+$ claude plugin validate ./turn-counter
+  ❯ types ./types/index.d.ts declares state: turn-counter.turns
+  ❯ ./register.mjs hooks: turn.complete, ui.render{component=AbovePrompt}
+  ❯ ./register.mjs calls: $.state.get, $.state.set, $.ui.resolve
+  ❯ ./register.mjs state writes: turn-counter.turns
+  ❯ ./register.mjs state reads: turn-counter.turns
+✔ Validation passed
+```
+
+Modが何に触るのかを、セッションで読み込む前に一覧できます。他人のModを入れる前の確認にも使えます。
+
+### `claude plugin test`でテストする
+
+`claude plugin test`は、Modを本物のClaude Codeのランタイムに読み込んでテストします。テストは`tests/`に置き、`claude-code/testing`から`test`と`expect`を読み込みます。
+
+```ts:tests/turn-counter.test.ts
+import { expect, test } from "claude-code/testing"
+
+test("ターンが終わるたびに表示が増える", async ($, on) => {
+  // ここで登録したフックはModの内側で動き、Claude Code本体の答えを代行する
+  on("turn.complete", () => ({ text: "" }))
+
+  await $.turn.complete({ reason: "answer", answer: "ok", durationMs: 1 } as any)
+  const ui = await $.ui.mount({
+    plugin: "turn-counter",
+    surface: "terminal",
+    component: "AbovePrompt",
+    props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 120 },
+  } as any)
+  expect(await ui.find({ type: "Text", text: /1 ターン目/ })).toBeDefined()
+
+  // $.ui.invalidateを呼ばなくても、$.state.setだけで描き直される
+  await $.turn.complete({ reason: "answer", answer: "ok", durationMs: 1 } as any)
+  expect(await ui.find({ type: "Text", text: /2 ターン目/ })).toBeDefined()
+
+  await ui.unmount()
+})
+```
+
+```bash
+$ claude plugin test ./turn-counter
+
+tests/turn-counter.test.ts:
+(pass) ターンが終わるたびに表示が増える [30.81ms]
+
+ 1 pass
+ 0 fail
+```
+
+テストの中の`$`は、エンジン側の`$`です。`$.turn.complete(...)`でイベントを起こし、`$.ui.mount(...)`でModに描画させ、返ってきた`ui`から要素を探します。ボタンを押す`ui.press`や、入力する`ui.input`もあります。
+
+テスト内で`on(...)`に登録したフックは、Modより内側（coreの位置）で動きます。このフックは、Claude Code本体の代わりに答えを返すスタブです。
+
+:::message alert
+Modが`next(e)`を呼ぶイベントには、テスト内に答えるスタブが必要です。私は最初、ターン数が0のまま`$.ui.mount`を呼びました。Modはターン数が0のとき`next(e)`を呼ぶため、`ui.render`に答える相手がおらず、`no implementation for ui.render`で失敗しました。上の例では、先に1ターン進めてから描画しています。
+:::
+
+### marketplaceで配布する
+
+Modはプラグインの一部なので、配布にもプラグインと同じ仕組みを使います。リポジトリのルートに、marketplaceのマニフェストを置きます。
+
+```json:.claude-plugin/marketplace.json
+{
+  "name": "my-mods",
+  "description": "noguの自作Mod置き場",
+  "owner": { "name": "nogu" },
+  "plugins": [{ "name": "turn-counter", "source": "./turn-counter" }]
+}
+```
+
+リポジトリのルートで`claude plugin validate .`を実行すると、このマニフェストを検証できます。Mod本体のフックや状態まで確認するときは、`claude plugin validate ./turn-counter`のようにプラグインのフォルダを指定します。
+
+GitHubに公開したあと、使う側は次の3つのコマンドで導入します。
+
+```bash
+/plugin marketplace add <owner>/<repo>
+/plugin install turn-counter@my-mods
+/reload-plugins
+```
+
+さらに広く配りたい場合は、[Claude directory](https://claude.ai/directory)に提出できます。公式ブログによると、Modを含むプラグインはClaude directoryかCLIの`/plugin`から導入できます。
+
+:::message
+この節では、マニフェストの検証までを手元で確認しました。導入の3コマンドは、公式ガイドの記載です。
+:::
+
+### ターミナルとデスクトップアプリの両方で動く
+
+Modは、ターミナルとデスクトップアプリの両方を対象にできます。
+
+描画の書き方は、どちらでも同じです。`ui.render`のイベントには`e.surface`が入っていて、`$.ui.resolve(e)`がその画面用の`Box`や`Text`を返します。そのため、同じハンドラがそのまま両方の画面で動きます。画面ごとに出し分けたいときは、`e.surface`で分岐します。
+
+テストでも、`$.ui.mount`の`surface`を変えれば、画面ごとの挙動を確認できます。
+
+型定義には、`terminal`と`desktop`のほかに`mobile`と`vscode`もあります。
+
+`ui.render`の`component`に指定できる場所は、2.1.287時点で次の15種類です。
+
+```
+AskUserQuestion / UserMessage / AssistantMessage / ToolUse / ToolResult
+ToolGroup / ToolProgress / CommandOutput / Spinner / TurnDuration
+InfoNotice / SessionMode / PromptHint / AbovePrompt / Pane
+```
 
 ## APIリファレンス（$カタログ）
 
-チートシートに載っている`$`の名詞と動詞を、用途別にまとめます。各動詞は、それ自体がイベントでもあり、他のModからフックできます。正確な型は`/plugin-types`で生成される型定義が正です。
+`$`の名詞と動詞を、用途別にまとめます。各動詞は、それ自体がイベントでもあり、他のModからフックできます。正確な型は、Modの読み込み時に`.claude-plugin/types/`へ書き出される型定義が正です。
+
+<div data-interactive="mods-catalog">
 
 ### tool / command / prompt 系
 
-| 名詞        | 動詞                 | 説明                                               |
-| ----------- | -------------------- | -------------------------------------------------- |
-| `$.tool`    | `.call`              | hooksとpermissionsを通してツールを実行する         |
-|             | `.list`              | モデルが今使えるツール一覧を取得する               |
-|             | `.register`          | モデルに新しいツールを与える                       |
-| `$.command` | `.run`               | `/command`を打鍵したのと同様に実行する             |
-|             | `.list`              | 使えるスラッシュコマンド一覧を取得する             |
-|             | `.register`          | `/yourcommand`を追加する                           |
-| `$.prompt`  | `.submit`            | このプラグインとしてプロンプトをキューに入れる     |
-|             | `.fill` / `.suggest` | プロンプト欄に書き込む／ターン後に薄字の提案を出す |
+| 名詞        | 動詞                 | 説明                                                               |
+| ----------- | -------------------- | ------------------------------------------------------------------ |
+| `$.tool`    | `.call`              | hooksとpermissionsを通してツールを実行する                         |
+|             | `.list`              | モデルが今使えるツール一覧を取得する                               |
+|             | `.register`          | モデルに新しいツールを与える                                       |
+|             | `.check`             | permissionの判定だけを問い合わせる（実行もダイアログ表示もしない） |
+| `$.command` | `.run`               | `/command`を打鍵したのと同様に実行する                             |
+|             | `.list`              | 使えるスラッシュコマンド一覧を取得する                             |
+|             | `.register`          | `/yourcommand`を追加する                                           |
+| `$.prompt`  | `.submit`            | このプラグインとしてプロンプトをキューに入れる                     |
+|             | `.fill` / `.suggest` | プロンプト欄に書き込む／ターン後に薄字の提案を出す                 |
+|             | `.read`              | プロンプト欄の下書きとカーソル位置を読む                           |
+|             | `.compose`           | システムプロンプトのセクション一覧を得る                           |
 
-### ui / fs / store 系
+### ui / fs / state / store 系
 
-| 名詞      | 動詞                                  | 説明                                                           |
-| --------- | ------------------------------------- | -------------------------------------------------------------- |
-| `$.ui`    | `.log` / `.notice`                    | トランスクリプトへの1行 ／ ダイアログ下の1行                   |
-|           | `.toast` / `.status`                  | 通知バー ／ 自分のステータスライン枠                           |
-|           | `.ask`                                | エンジンのAskUserQuestionダイアログを出す                      |
-|           | `.open` / `.close`                    | pane（描画領域）の開閉                                         |
-|           | `.invalidate`                         | キャッシュ済みイベント（`ui.render`など）を再実行させる        |
-|           | `.resolve`                            | `e.surface`用のelementコンストラクタ一式を得る                 |
-| `$.fs`    | `.read` / `.write` / `.list`          | ホストのファイルシステムを操作する（プロセスと同じ到達範囲）   |
-|           | `.stat` / `.exists`                   | 種類/サイズ/mtimeを見る ／ 例外を投げずに存在確認する          |
-|           | `.ancestors`                          | cwdより上位にある指示ファイル（named instruction files）を得る |
-| `$.store` | `.get` / `.set` / `.delete` / `.keys` | プラグイン単位で永続化されるJSONを操作する                     |
+| 名詞      | 動詞                                  | 説明                                                                                    |
+| --------- | ------------------------------------- | --------------------------------------------------------------------------------------- |
+| `$.ui`    | `.log` / `.notice`                    | トランスクリプトへの1行 ／ ダイアログ下の1行                                            |
+|           | `.toast` / `.status`                  | 通知バー ／ 自分のステータスライン枠                                                    |
+|           | `.ask`                                | エンジンのAskUserQuestionダイアログを出す                                               |
+|           | `.open` / `.close`                    | pane（描画領域）の開閉                                                                  |
+|           | `.invalidate`                         | キャッシュ済みイベント（`ui.render`など）を再実行させる                                 |
+|           | `.resolve`                            | `e.surface`用のelementコンストラクタ一式を得る                                          |
+|           | `.panes`                              | 自分が開いているpaneの一覧を得る                                                        |
+|           | `.scroll` / `.focus`                  | 要素が見える位置までスクロールする ／ フォーカスを移す                                  |
+|           | `.blit`                               | 自分が描いた`Raster` / `Image`を、再描画なしで塗り替える                                |
+|           | `.copy`                               | クリップボードに書き込む                                                                |
+| `$.fs`    | `.read` / `.write` / `.list`          | ホストのファイルシステムを操作する（プロセスと同じ到達範囲）                            |
+|           | `.stat` / `.exists`                   | 種類/サイズ/mtimeを見る ／ 例外を投げずに存在確認する                                   |
+|           | `.ancestors`                          | cwdより上位にある指示ファイル（named instruction files）を得る                          |
+| `$.state` | `.get` / `.set`                       | セッション中の名前付きの値。ホットリロードを越えて残り、描画中の`get`は再描画を購読する |
+| `$.store` | `.get` / `.set` / `.delete` / `.keys` | プラグイン単位で永続化されるJSONを操作する                                              |
 
 ### http / process / mcp 系
 
-| 名詞        | 動詞     | 説明                                                                 |
-| ----------- | -------- | -------------------------------------------------------------------- |
-| `$.http`    | `.fetch` | ホスト経由でfetchする。`{ auth }`でauthorizeハンドルを消費できる     |
-| `$.process` | `.run`   | ホスト上でargvを実行する（シェルなし）。stdout/stderr/codeを受け取る |
-| `$.mcp`     | `.call`  | 接続済みMCPサーバー上のツールを呼ぶ                                  |
+| 名詞        | 動詞       | 説明                                                                 |
+| ----------- | ---------- | -------------------------------------------------------------------- |
+| `$.http`    | `.fetch`   | ホスト経由でfetchする。`{ auth }`でauthorizeハンドルを消費できる     |
+| `$.process` | `.run`     | ホスト上でargvを実行する（シェルなし）。stdout/stderr/codeを受け取る |
+|             | `.spawn`   | コマンドを起動し、出力をストリームで受け取る                         |
+| `$.mcp`     | `.call`    | 接続済みMCPサーバー上のツールを呼ぶ                                  |
+|             | `.connect` | 自分のマニフェストに書いたMCPサーバーへ接続する                      |
 
 ### agent / turn / session / model 系
 
@@ -525,87 +743,115 @@ on("tool.call", async ($, e, next) => {
 | ----------- | ----------------------------------- | ---------------------------------------------------------------------------- |
 | `$.agent`   | `.spawn`                            | サブエージェントを起動し、終了時にresolveする                                |
 |             | `.list`                             | サブエージェント一覧（id, name, parentId, status）                           |
+|             | `.register`                         | Agentツールが呼べるエージェント種別を、`<plugin>:<name>`の名前で定義する     |
 | `$.turn`    | `.abort`                            | 実行中のターンをキャンセルする                                               |
 | `$.session` | `.id` / `.cwd` / `.repo` / `.model` | 読み取り：識別子・場所・リポジトリ・使用モデル                               |
+|             | `.root` / `.version`                | 読み取り：プロジェクトのルート・エンジンのバージョン                         |
 |             | `.surfaces` / `.turns`              | 読み取り：現在接続中のsurface・これまでのターン数                            |
 |             | `.messages`                         | トランスクリプト（メッセージ単位）                                           |
 |             | `.usage`                            | コンテキストウィンドウの使用率、レート制限、コスト                           |
 |             | `.compact`                          | 今すぐcompactを実行する（`/compact`と同様、`session.compact`イベントを経由） |
+|             | `.send` / `.append`                 | ほかのエージェントやセッションへメッセージを送る ／ 会話に行を追加する       |
 |             | `.authorize`                        | 不透明な資格情報ハンドル。`http.fetch`で消費される                           |
 | `$.model`   | `.complete`                         | セッションのクライアントで1回completionする                                  |
 |             | `.fork`                             | このトランスクリプト上で、ツールなしのcompletionを行う（キャッシュ共有）     |
 |             | `.classify`                         | テキストに対して、自分で用意したラベルから1つ選ばせる                        |
 
-### settings / config / env / clock / audio / plugin 系
+### settings / config / env / clock / audio / telemetry / plugin 系
 
-| 名詞         | 動詞                                    | 説明                                                                               |
-| ------------ | --------------------------------------- | ---------------------------------------------------------------------------------- |
-| `$.settings` | `.read`                                 | 解決済みの設定、または特定ソースのレイヤを読む：`{ source: "policy" }`             |
-| `$.config`   | `.set` / `.list`                        | `/config`のメニューと同じ経路で、行を変更する／行の一覧を得る                      |
-| `$.env`      | `.get` / `.set`                         | 変数名をリテラルで指定して、1つ取得/設定する（`validate`が読み書き対象を列挙する） |
-| `$.clock`    | `.now` / `.sleep` / `.after` / `.every` | 時刻とタイマー（キャンセル可）                                                     |
-| `$.audio`    | `.play` / `.speak`                      | クリップの再生 ／ プラットフォームの音声合成                                       |
-| `$.plugin`   | `.name` / `.root`                       | 自分が誰で、どこにいるか                                                           |
+| 名詞          | 動詞                                    | 説明                                                                               |
+| ------------- | --------------------------------------- | ---------------------------------------------------------------------------------- |
+| `$.settings`  | `.read`                                 | 解決済みの設定、または特定ソースのレイヤを読む：`{ source: "policy" }`             |
+| `$.config`    | `.set` / `.list`                        | `/config`のメニューと同じ経路で、行を変更する／行の一覧を得る                      |
+| `$.env`       | `.get` / `.set`                         | 変数名をリテラルで指定して、1つ取得/設定する（`validate`が読み書き対象を列挙する） |
+| `$.clock`     | `.now` / `.sleep` / `.after` / `.every` | 時刻とタイマー（キャンセル可）                                                     |
+| `$.audio`     | `.play` / `.speak`                      | クリップの再生 ／ プラットフォームの音声合成                                       |
+| `$.telemetry` | `.log` / `.mark`                        | テレメトリの記録（公式の`telemetry`Modが追加する名詞）                             |
+| `$.plugin`    | `.name` / `.root`                       | 自分が誰で、どこにいるか                                                           |
 
 ## 全イベント（カテゴリ別）
 
+2.1.287の型定義にある43個のイベントを、カテゴリ別にまとめます。`on()`には、表の名前をそのまま書きます。
+
 凡例：◆ = coreに副作用あり（`next`を呼ばなければ発生せず、2回呼べば2回発生する）／◇ = coreに副作用なし
 
-### ツール系イベント（tool.call / describe / check）
+:::message
+`prompt.edit`、`prompt.section`、`prompt.compose`、`prompt.attachment`、`session.append`、`session.send`、`session.measure`、`session.end`、`ui.select`、`ui.scroll`、`ui.focus`、`attribution.text`、`telemetry.log`、`telemetry.mark`の◆/◇は、公式の表記がありません。型定義の説明文をもとに、私が判断しています。
+:::
 
-|     | イベント              | 説明                                                                 |
-| --- | --------------------- | -------------------------------------------------------------------- |
-| ◆   | `tool.call`           | `e = { tool, tool_use_id, agentId?, ...input }` → 結果 \| `{ deny }` |
-| ◇   | `describe`（tool）    | モデルに伝えられるツールの説明。`e.provider`＝提供元                 |
-| ◇   | `check`               | permissionの判定 → `{ decision }`                                    |
-| ◆   | `command.run`         | `/name args` → `{ text }`                                            |
-| ◇   | `describe`（command） | コマンドの一覧表示内容。`e.provider`                                 |
+### ツール・コマンド系（tool.\* / command.\*）
 
-### ターン・セッション系（turn.start/complete / session.start / compact）
+|     | イベント           | 説明                                                                 |
+| --- | ------------------ | -------------------------------------------------------------------- |
+| ◆   | `tool.call`        | `e = { tool, tool_use_id, agentId?, ...input }` → 結果 \| `{ deny }` |
+| ◇   | `tool.describe`    | モデルに伝えられるツールの説明。`e.provider`＝提供元                 |
+| ◇   | `tool.check`       | permissionの判定 → `{ decision }`                                    |
+| ◆   | `command.run`      | `/name args` → `{ text }`                                            |
+| ◇   | `command.describe` | コマンドの一覧表示内容。`e.provider`                                 |
 
-|     | イベント            | 説明                                                                                                     |
-| --- | ------------------- | -------------------------------------------------------------------------------------------------------- |
-| ◆   | `prompt.submit`     | 入力されたプロンプト。coreがターンを実行 → `{ text, context[] }`                                         |
-| ◆   | `fill` / `suggest`  | 欄への書き込み ／ ターン後の薄字提案。書き換え・拒否可                                                   |
-| ◇   | `context`           | ターンごとに注入されるcontext                                                                            |
-| ◇   | `turn.start`        | `{ turnId, text }`・ターン開始前                                                                         |
-| ◆   | `step`              | モデルへの1リクエスト（ストリーミング）。`async function*`で書き、`yield* next({ ...e, model, effort })` |
-| ◇   | `complete`（turn）  | `{ text }`・usage・ターン終了後                                                                          |
-| ◇   | `session.start`     | `{ cwd, ... }`・セッションにつき1回                                                                      |
-| ◇   | `receive`           | 受信データがcontextに入る前 → `{ text }` \| `{ consumed }`                                               |
-| ◆   | `compact`           | `{ trigger, instructions?, messages }` → `{ messages }` \| `{ skip }`                                    |
-| ◇   | `attach` / `detach` | surface（デスクトップ・スマホ）の接続/切断：`{ surface, clientId }`                                      |
-| ◆   | `agent.spawn`       | `{ prompt, model, provider, parentAgentId?, ... }` → `{ text }`                                          |
-| ◇   | `offer`             | モデルに提示されるエージェント種別                                                                       |
+### プロンプト・ターン・セッション系（prompt.\* / turn.\* / session.\* / agent.\*）
 
-### UI描画系（ui.render / press・input / message）
+|     | イベント                            | 説明                                                                                                                   |
+| --- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| ◆   | `prompt.submit`                     | 入力されたプロンプト。coreがターンを実行 → `{ text, context[] }`                                                       |
+| ◆   | `prompt.fill` / `prompt.suggest`    | 欄への書き込み ／ ターン後の薄字提案。書き換え・拒否可                                                                 |
+| ◇   | `prompt.context`                    | 会話の最初のユーザーメッセージに載るcontextブロック。会話ごとに1回 → `{ blocks }`                                      |
+| ◆   | `prompt.edit`                       | 入力欄が編集・貼り付けされた。戻り値の`decorations`で、入力中の文字に色や太字を付けられる                              |
+| ◇   | `prompt.section`                    | システムプロンプトのセクション1つを組み立てるとき → `{ text }`                                                         |
+| ◇   | `prompt.compose`                    | システムプロンプト全体を組み立てるとき → `{ sections }`。セクションの追加・差し替え・並べ替え・削除ができる            |
+| ◇   | `prompt.attachment`                 | エンジンがモデル向けに自動で差し込むメッセージ（リマインダー、メンションされたファイルなど）。`{ text: null }`で外せる |
+| ◇   | `turn.start`                        | `{ turnId, text }`・ターン開始前                                                                                       |
+| ◆   | `turn.step`                         | モデルへの1リクエスト（ストリーミング）。`async function*`で書き、`yield* next({ ...e, model, effort })`               |
+| ◇   | `turn.complete`                     | `{ text }`・usage・ターン終了後                                                                                        |
+| ◇   | `session.start`                     | `{ cwd, ... }`・セッションにつき1回                                                                                    |
+| ◇   | `session.receive`                   | 受信データがcontextに入る前 → `{ text }` \| `{ consumed }`                                                             |
+| ◆   | `session.compact`                   | `{ trigger, instructions?, messages }` → `{ messages }` \| `{ skip }`                                                  |
+| ◇   | `session.attach` / `session.detach` | surface（デスクトップ・スマホ）の接続/切断：`{ surface, clientId }`                                                    |
+| ◆   | `session.append`                    | 会話に行が保存される前。内容を書き換えられる                                                                           |
+| ◆   | `session.send`                      | ほかのエージェントやセッションへメッセージを送る前。書き換え・宛先変更・拒否ができる                                   |
+| ◇   | `session.measure`                   | コンテキスト使用率やレート制限が動いたときの通知。ポーリングせずに監視できる                                           |
+| ◆   | `session.end`                       | セッション終了時に1回。`e.reason`で理由がわかる                                                                        |
+| ◆   | `agent.spawn`                       | `{ prompt, model, provider, parentAgentId?, ... }` → `{ text }`                                                        |
+| ◇   | `agent.offer`                       | モデルに提示されるエージェント種別                                                                                     |
 
-|     | イベント                | 説明                                            |
-| --- | ----------------------- | ----------------------------------------------- |
-| ◇   | `ui.render`             | `{ surface, component, props }` → elementツリー |
-| ◆   | `press` / `input`       | 自分が描いたButton/Inputが使われた              |
-| ◆   | `message`（ui.message） | 自分のClient surfaceモジュールが投稿したデータ  |
-| ◇   | `resolve`               | あるsurface用のelementテーブル                  |
+### UI描画系（ui.\*）
 
-### 設定・組織・プラグイン系（config.set / plugin.register / classic.\*）
+|     | イベント                 | 説明                                                             |
+| --- | ------------------------ | ---------------------------------------------------------------- |
+| ◇   | `ui.render`              | `{ surface, component, props }` → elementツリー                  |
+| ◆   | `ui.press` / `ui.input`  | 自分が描いたButton/Inputが使われた                               |
+| ◆   | `ui.select`              | 自分が描いた`Select`から選ばれた                                 |
+| ◆   | `ui.scroll` / `ui.focus` | paneやプロンプト上の帯がスクロールされる前 ／ フォーカスが動く前 |
+| ◆   | `ui.message`             | 自分のClient surfaceモジュールが投稿したデータ                   |
+| ◇   | `ui.resolve`             | あるsurface用のelementテーブル                                   |
 
-|     | イベント             | 説明                                                                                                                                       |
-| --- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| ◆   | `config.set`         | `/config`行の変更：`{ key, value, previous, provider }` → `{ value }` \| `{ deny }`                                                        |
-| ◇   | `describe`（config） | メニュー上の行の表示。ラベル変更や非表示化                                                                                                 |
-| ◇   | `skill.prompt`       | スキルのテキストがロードされる際                                                                                                           |
-| ◇   | `engine.create`      | `$`のfold自体：名詞の追加・除去                                                                                                            |
-| ◇   | `plugin.register`    | 導入審査：`{ name, tier, uses[] }` → 許可 \| 拒否                                                                                          |
-| ◆   | `classic.*`          | 従来のsettingsフックと同一のJSON入出力。シェルhooksがそのseamのcore                                                                        |
-| ◆   | `*`                  | 上記すべてのイベント、および全`$`操作（`fs.read`、`http.fetch`、`store.set`など）を、自分の位置・同じ権限で書き換え・拒否・`next.to`できる |
+### 設定・組織・プラグイン系（config.\* / plugin.register / classic.\* など）
+
+|     | イベント           | 説明                                                                                                                                       |
+| --- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| ◆   | `config.set`       | `/config`行の変更：`{ key, value, previous, provider }` → `{ value }` \| `{ deny }`                                                        |
+| ◇   | `config.describe`  | メニュー上の行の表示。ラベル変更や非表示化                                                                                                 |
+| ◇   | `skill.prompt`     | スキルのテキストがロードされる際                                                                                                           |
+| ◇   | `attribution.text` | コミットやPRに付ける文言を、エンジンが組み立てるとき → `{ text }`                                                                          |
+| ◆   | `telemetry.log`    | テレメトリの記録が送られる前。記録の中身を書き換えられる                                                                                   |
+| ◇   | `telemetry.mark`   | 機能が1回使われたことの記録。エンジン自体は何もせず、公式のModが拾う                                                                       |
+| ◇   | `engine.create`    | `$`のfold自体：名詞の追加・除去                                                                                                            |
+| ◇   | `plugin.register`  | 導入審査：`{ name, tier, uses[] }` → 許可 \| 拒否                                                                                          |
+| ◆   | `classic.*`        | 従来のsettingsフックと同一のJSON入出力。シェルhooksがそのseamのcore                                                                        |
+| ◆   | `*`                | 上記すべてのイベント、および全`$`操作（`fs.read`、`http.fetch`、`store.set`など）を、自分の位置・同じ権限で書き換え・拒否・`next.to`できる |
+
+</div>
 
 ## 自分で作るには
 
 1. `.claude-plugin/plugin.json` と `hooks/hooks.json` を用意
 2. `hooks/register.ts` に `export const register: Register = on => { on('イベント名', ($, e, next) => {...}) }` を書く
-3. セッション内で `/plugin-types` を実行し `.claude/types/claude-code.d.ts` を生成して仕様を確認
-4. `claude plugin validate .` でフック登録を検証
-5. 保存すると実行中セッションにホットリロードされる
+3. `claude --plugin-dir .` で一度起動し、`.claude-plugin/types/` に書き出された型定義で仕様を確認
+4. 状態を持つなら、`types/index.d.ts` に `PluginState` を宣言し、`plugin.json` の `types` で指す
+5. `claude plugin validate .` でフック登録と状態の読み書きを検証
+6. `tests/` にテストを書き、`claude plugin test .` で実行
+7. 保存すると実行中セッションにホットリロードされる
+8. 配るときは `marketplace.json` を置き、GitHubに公開する
 
 ## まとめ
 
@@ -615,9 +861,9 @@ Claude Modsは、**「外部プロセスを挟まずにClaude Code自身を拡�
 
 **このことからも、Claude Modsは、Claude Codeハーネス自体をかなり深くカスタマイズすることができる機能であり、かなり将来性の高い機能であると言えます。**
 
-また、この記事の内容はスキル化しているので、すぐに試したい方はこちらからどうぞ
+覚えることは、`register`と`($, e, next)`という1つの形だけです。その形のまま、`$.state`で状態を持ち、`claude plugin test`でテストし、marketplaceで配るところまで進めます。
 
-https://github.com/nogu66/claude-code/tree/main/create-mods
+まずは`claude --plugin-dir`で小さなModを1つ動かし、書き出された型定義を眺めてみてください。
 
 ---
 
@@ -627,6 +873,9 @@ https://x.com/_nogu66
 
 ## 参考リンク
 
+- [Customize Claude Code with mods（公式ブログ）](https://claude.com/blog/claude-code-mods)
+- [Getting started with Claude Code mods（公式ガイド）](https://claude.dev/blog/getting-started-with-claude-code-mods/)
+- [Mods 公式ドキュメント](https://code.claude.com/docs/en/plugins/mods/overview)
 - [Claude Code Issue #91870（Function Hooks提案）](https://github.com/anthropics/claude-code/issues/91870#issuecomment-5666255143)
 - [cc-arcade（実例プラグイン）](https://github.com/sezaakgun/cc-arcade)
 - [Claude Code 公式 Mods](https://github.com/anthropics/claude-code/tree/main/mods)
