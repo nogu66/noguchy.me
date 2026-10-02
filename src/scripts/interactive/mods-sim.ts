@@ -71,7 +71,9 @@ export const PATTERNS: Pattern[] = [
     code: [
       `on("tool.call", { tool: "Read" }, async ($, e, next) => {`,
       `  const r = await next(e)`,
-      `  return { ...r, text: r.text.replace(/sk-[a-zA-Z0-9]+/g, "[REDACTED]") }`,
+      `  if (r.deny || r.isError || r.result.type !== "text") return r`,
+      `  const content = r.result.file.content.replace(/sk-[a-zA-Z0-9]+/g, "[REDACTED]")`,
+      `  return { result: { ...r.result, file: { ...r.result.file, content } } }`,
       `})`,
     ],
   },
@@ -215,10 +217,22 @@ export function runNext(patternId: PatternId, sampleId: SampleId): NextRun {
   steps.push({
     lane: "handler",
     line: 2,
-    note: "r.text の sk-... を [REDACTED] に置き換えて返す",
+    note: "拒否でもエラーでもなく、テキストの結果なので次の行へ",
+  });
+  steps.push({
+    lane: "handler",
+    line: 3,
+    note: "r.result.file.content の sk-... を [REDACTED] に置き換える",
     payload: redacted,
   });
-  return finish(textResult(redacted));
+  steps.push({
+    lane: "handler",
+    line: 4,
+    note: "{ result } として返す。モデルに届くのはこの result",
+  });
+  return finish(
+    `{ result: { …, file: { …, content: ${JSON.stringify(redacted)} } } }`
+  );
 }
 
 /* ========== 5層チェーン ========== */
