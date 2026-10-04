@@ -17,8 +17,22 @@ const linkUrls = [
   "https://noguchy.me/",
   "https://zenn.dev/nogu66",
   "https://github.com/nogu66",
+  "https://github.com/nogu66/md-prompt",
   "https://qr.shuhary.com/",
 ];
+
+// OGPのHTMLエンティティをデコードする関数
+function decodeEntities(text: string) {
+  return text
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
+      String.fromCodePoint(parseInt(code, 16))
+    )
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
 
 // OGP情報を取得する関数
 async function fetchOgp(url: string) {
@@ -56,7 +70,9 @@ async function fetchOgp(url: string) {
 
     return {
       url,
-      title: getMetaContent("og:title") || titleMatch?.[1] || url,
+      title: decodeEntities(
+        getMetaContent("og:title") || titleMatch?.[1] || url
+      ),
       image: getMetaContent("og:image") || null,
       siteName: getMetaContent("og:site_name") || new URL(url).hostname,
       isGithubChart: false,
