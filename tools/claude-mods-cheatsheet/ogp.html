@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Claude Mods Cheat Sheet — OGP</title>
+<!-- OGP card (1200 × 630 px). Same palette and font stack as cheatsheet.html. -->
+<style>
+  :root{
+    --page:#faf9f5; --fg:#141413; --dim:#5e5d59; --faint:#87867f; --rule2:#d6d3c7;
+    --clay:#d97757; --clay-ink:#bd5d3a;
+    --serif:"Anthropic Serif","Tiempos Text",Georgia,"Noto Serif CJK JP",serif;
+    --sans:"Anthropic Sans","Styrene B LC",Inter,"Noto Sans CJK JP",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--page)}
+  .card{position:relative;width:1200px;height:630px;padding:64px 72px 52px;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+  #bg{position:absolute;inset:0;z-index:0}
+  .card>*:not(#bg){position:relative;z-index:1}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;font:600 19px/1.9 var(--sans);letter-spacing:2.4px;color:var(--faint);text-transform:uppercase}
+  .top b{color:var(--clay-ink);font-weight:700}
+  .dollar{font:700 64px/1 var(--sans);color:var(--clay);letter-spacing:0}
+  h1{margin:0;font:500 148px/1.02 var(--serif);color:var(--fg);letter-spacing:-2.5px}
+  .foot{display:flex;justify-content:space-between;align-items:baseline;padding-top:18px;border-top:2px solid var(--fg);font:600 19px/1.4 var(--sans);letter-spacing:2.4px;color:var(--faint);text-transform:uppercase}
+  .foot .site{color:var(--fg);letter-spacing:1px;text-transform:none;font-size:22px}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <svg id="bg"></svg>
+  <div class="top">
+    <span class="dollar">$</span>
+    <div style="text-align:right">
+      <div>PRIMITIVE: <b>FUNCTION HOOK</b></div>
+      <div>PRODUCT: <b>CLAUDE MOD</b></div>
+    </div>
+  </div>
+  <h1>Claude Mods<br>Cheat Sheet</h1>
+  <div class="foot">
+    <span id="meta"></span>
+    <span class="site">noguchy.me</span>
+  </div>
+</div>
+<script>
+const QS = new URLSearchParams(location.search);
+document.getElementById('meta').innerHTML =
+  `CLAUDE CODE v${QS.get('v') || '2.1.x'} &nbsp;·&nbsp; AS OF ${QS.get('date') || 'YYYY-MM-DD'}`;
+
+/* background: the same seeded flowing lines as the sheet */
+(function drawBg(){
+  const W = 1200, H = 630, bg = document.getElementById('bg');
+  bg.setAttribute('width', W); bg.setAttribute('height', H); bg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let s = 91870;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const P = [];
+  for (let i = 0; i < 46; i++) {
+    let x = rnd() * W, y = rnd() * H, a = rnd() * Math.PI * 2, turn = (rnd() - .5) * .12;
+    const n = 20 + Math.floor(rnd() * 110), pts = [[x, y]];
+    for (let k = 0; k < n; k++) { turn += (rnd() - .5) * .03; turn = Math.max(-.09, Math.min(.09, turn)); a += turn; x += Math.cos(a) * 5; y += Math.sin(a) * 5; pts.push([x, y]); }
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let k = 1; k < pts.length - 1; k += 2) d += ` Q${pts[k][0].toFixed(1)},${pts[k][1].toFixed(1)} ${pts[k+1][0].toFixed(1)},${pts[k+1][1].toFixed(1)}`;
+    const accent = rnd() < .16, last = pts[pts.length - 1];
+    P.push(`<path d="${d}" fill="none" stroke="${accent ? '#d97757' : '#e3dfd2'}" stroke-width="${accent ? 1.6 : (.9 + rnd() * .6).toFixed(2)}" stroke-linecap="round" opacity="${accent ? .35 : (.55 + rnd() * .45).toFixed(2)}"/>`);
+    if (accent) P.push(`<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3.2" fill="#faf9f5" stroke="#d97757" stroke-width="1.6" opacity=".7"/>`);
+  }
+  bg.innerHTML = P.join('');
+})();
+</script>
+</body>
+</html>

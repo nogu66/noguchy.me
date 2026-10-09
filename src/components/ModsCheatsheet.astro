@@ -1,0 +1,140 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Main from "@/layouts/Main.astro";
+import sheet from "@/data/claude-mods-cheatsheet.json";
+
+export interface Props {
+  lang: "ja" | "en";
+}
+
+const { lang } = Astro.props;
+
+const copy = {
+  ja: {
+    title: "Claude Mods チートシート",
+    desc: "Claude Code の Mods（function hooks）を 1 枚にまとめた早見表。フック、next、5 層のチェーン、$ API、イベント、描画、コマンドを載せています。",
+    version: "対応バージョン",
+    updated: "最終更新",
+    png: "PNG を保存",
+    svg: "SVG を保存",
+    open: "フルサイズで開く",
+    other: "English",
+    otherHref: "/en/claude-mods-cheatsheet/",
+    history: "更新履歴",
+    alt: "Claude Mods チートシート",
+    note: "API はリリース間で変わることがあります。Claude Code のアップデートに合わせて定期的に更新しています。",
+    article: "解説記事: Claude Mods 完全ガイド",
+  },
+  en: {
+    title: "Claude Mods Cheat Sheet",
+    desc: "A one-page reference for Claude Code mods (function hooks): the hook, next, the five-tier chain, the $ API, events, drawing and commands.",
+    version: "Claude Code version",
+    updated: "Last updated",
+    png: "Save PNG",
+    svg: "Save SVG",
+    open: "Open full size",
+    other: "日本語",
+    otherHref: "/claude-mods-cheatsheet/",
+    history: "Changelog",
+    alt: "Claude Mods cheat sheet",
+    note: "The API can change between releases. This sheet is updated regularly as Claude Code ships.",
+    article: "Article (Japanese): The complete guide to Claude Mods",
+  },
+}[lang];
+
+const base = `/claude-mods-cheatsheet/claude-mods-cheatsheet-${lang}`;
+// Cache-bust the files on every update
+const v = `?v=${sheet.date}`;
+---
+
+<Layout
+  title={`${copy.title} | noguchy.me`}
+  description={copy.desc}
+  ogImage="/claude-mods-cheatsheet/ogp.png"
+>
+  <Header />
+  <Main pageTitle={copy.title} pageDesc={copy.desc}>
+    <div class="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+      <span>
+        <span class="text-muted">{copy.version}</span>
+        <span class="ml-1 font-mono font-semibold">v{sheet.version}</span>
+      </span>
+      <span>
+        <span class="text-muted">{copy.updated}</span>
+        <time class="ml-1 font-mono font-semibold" datetime={sheet.date}>
+          {sheet.date}
+        </time>
+      </span>
+      <a
+        href={copy.otherHref}
+        class="ml-auto underline decoration-dashed underline-offset-4 hover:text-accent"
+      >
+        {copy.other}
+      </a>
+    </div>
+
+    <div class="mb-6 flex flex-wrap gap-3">
+      <a
+        href={`${base}.png${v}`}
+        download={`claude-mods-cheatsheet-${lang}-v${sheet.version}.png`}
+        class="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-85"
+      >
+        {copy.png}
+      </a>
+      <a
+        href={`${base}.svg${v}`}
+        download={`claude-mods-cheatsheet-${lang}-v${sheet.version}.svg`}
+        class="rounded-md border border-accent px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent/10"
+      >
+        {copy.svg}
+      </a>
+      <a
+        href={`${base}.png${v}`}
+        target="_blank"
+        rel="noopener"
+        class="rounded-md border border-border px-4 py-2 text-sm transition-colors hover:border-accent hover:text-accent"
+      >
+        {copy.open}
+      </a>
+    </div>
+
+    <a href={`${base}.png${v}`} target="_blank" rel="noopener" class="block">
+      <img
+        src={`${base}.webp${v}`}
+        alt={copy.alt}
+        width="1240"
+        height="1754"
+        class="w-full rounded-lg border border-border"
+      />
+    </a>
+
+    <p class="mt-4 text-sm text-muted">{copy.note}</p>
+    <p class="mt-2 text-sm">
+      <a
+        href="/posts/claude-code-function-hooks-claude-mods/"
+        class="underline decoration-dashed underline-offset-4 hover:text-accent"
+      >
+        {copy.article}
+      </a>
+    </p>
+
+    <section class="mt-10">
+      <h2 class="mb-4 text-xl font-semibold">{copy.history}</h2>
+      <ul class="space-y-3 text-sm">
+        {
+          sheet.history.map(entry => (
+            <li class="flex flex-col gap-1 sm:flex-row sm:gap-4">
+              <span class="shrink-0 font-mono text-muted">
+                {entry.date} · v{entry.version}
+              </span>
+              <span>{entry[lang]}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </Main>
+  <Footer />
+</Layout>

@@ -697,9 +697,9 @@ InfoNotice / SessionMode / PromptHint / AbovePrompt / Pane
 
 フック、`next`、5層のチェーン、`$`の名詞と動詞、イベント、描画、コマンドを、1枚のチートシートにまとめました。Modを書くときの早見表として使ってください。
 
-![Claude Mods チートシート](/images/claude-code-function-hooks-claude-mods/claude-mods-cheatsheet-ja.png)
+![Claude Mods チートシート](/claude-mods-cheatsheet/claude-mods-cheatsheet-ja.png)
 
-[チートシートをフルサイズで開く](/images/claude-code-function-hooks-claude-mods/claude-mods-cheatsheet-ja.png)
+[チートシートの最新版（PNG / SVG の保存、English 版）はこちら](/claude-mods-cheatsheet/)
 
 ## APIリファレンス（$カタログ）
 

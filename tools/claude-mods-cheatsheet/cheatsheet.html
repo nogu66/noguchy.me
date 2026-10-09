@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Claude Mods Cheat Sheet</title>
+<!--
+  Claude Mods — the $ cheat sheet  (A4 portrait · 2480 × 3508 px)
+  Source of truth: https://code.claude.com/docs/en/plugins/mods/reference
+
+  ・バージョンと日付は src/data/claude-mods-cheatsheet.json が正。export.mjs が ?v=…&date=… で渡します。
+
+  ・説明文はすべて下の DATA にある { ja, en } のペアで管理しています。
+  ・英語版は URL に ?lang=en を付けるか、右上のボタンで切り替え。
+  ・文字サイズはページ（A4）にちょうど収まるよう自動で決まります（fit()）。
+  ・書き出し: node tools/claude-mods-cheatsheet/export.mjs  → PNG / SVG / WebP（日英）
+-->
+<style>
+  :root{
+    /* Anthropic brand palette */
+    --page:#faf9f5; --panel:#ffffff; --card:#141413; --rule:#e8e6dc; --rule2:#d6d3c7;
+    --fg:#141413; --mid:#3d3d3a; --dim:#5e5d59; --faint:#87867f;
+    --clay:#d97757; --clay-ink:#bd5d3a; --blue:#3f6f9e; --green:#5f7046; --kraft:#a8743f; --plum:#8f5e86;
+    /* code card (dark) */
+    --c-fg:#faf9f5; --c-mid:#c9c6bb; --c-faint:#87867f; --c-kw:#c7b6e8; --c-str:#b4c99a; --c-e:#e2b48f; --c-nx:#93bde8;
+    --serif:"Anthropic Serif","Tiempos Text",Georgia,"Noto Serif CJK JP",serif;
+    --sans:"Anthropic Sans","Styrene B LC",Inter,"Noto Sans CJK JP",system-ui,sans-serif;
+    --mono:"Anthropic Mono","JetBrains Mono","SF Mono",Menlo,"DejaVu Sans Mono","Noto Sans Mono CJK JP",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--page)}
+  body{width:2480px;color:var(--mid);font:13px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+  .sheet{position:relative;width:2480px;height:3508px;padding:64px 64px 52px;overflow:hidden;display:flex;flex-direction:column}
+  #bg{position:absolute;inset:0;z-index:0;pointer-events:none}
+  .sheet>*:not(#bg){position:relative;z-index:1}
+
+  header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:24px;border-bottom:2px solid var(--fg);margin-bottom:28px}
+  h1{margin:0;font:500 96px/1 var(--serif);color:var(--fg);letter-spacing:-1.5px;display:flex;align-items:baseline;gap:36px}
+  h1 small{font:500 46px/1 var(--sans);color:var(--dim);letter-spacing:0}
+  .dollar{color:var(--clay);font-weight:700}
+  .sub{margin-top:16px;font-size:25px;line-height:1.45;color:var(--mid);max-width:1560px}
+  .meta{text-align:right;font:600 19px/1.9 var(--sans);letter-spacing:2.4px;color:var(--faint);text-transform:uppercase}
+  .meta b{color:var(--clay-ink);font-weight:700}
+
+  .fitbox{flex:1;min-height:0}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch;transform-origin:0 0}
+  .col{display:flex;flex-direction:column;gap:16px}
+  .col>.panel:last-child{flex:1}
+  .panel{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:22px 22px 20px}
+  .label{font:700 11px/1.3 var(--sans);letter-spacing:1.6px;color:var(--clay-ink);text-transform:uppercase;margin-bottom:14px}
+  .label.sm{margin:18px 0 9px}
+  .hr{height:1px;background:var(--rule);margin:14px 0}
+  .dash{height:0;border-top:1px dashed var(--rule2);margin:6px 0}
+
+  pre.code{margin:0;background:var(--card);border-radius:10px;padding:14px 16px;font:13.6px/1.55 var(--mono);color:var(--c-mid);white-space:pre}
+  pre.code.sm{font-size:12.6px;padding:11px 14px}
+  .c-kw{color:var(--c-kw)} .c-str{color:var(--c-str)} .c-d{color:var(--clay);font-weight:700}
+  .c-e{color:var(--c-e);font-weight:600} .c-nx{color:var(--c-nx);font-weight:600} .c-fn{color:var(--c-fg);font-weight:600}
+  .c-cm{color:var(--c-faint)}
+  /* tokens used outside code cards */
+  .kv .c-d,.note .c-d{color:var(--clay-ink)} .kv .c-e{color:var(--kraft)} .kv .c-nx{color:var(--blue)}
+  .m{font-family:var(--mono);color:var(--fg)}
+  .fg{color:var(--fg)} .dim{color:var(--dim)}
+
+  .kv{display:grid;column-gap:14px;row-gap:8px;align-items:baseline}
+  .kv .k{font:600 13.6px/1.4 var(--mono);color:var(--fg);white-space:nowrap}
+  .kv .d{font-size:13px;color:var(--mid)}
+  .next .kv{grid-template-columns:218px 1fr}
+  .rules .kv{grid-template-columns:78px 1fr;row-gap:7px}
+  .rules .kv .k{font-size:12.4px;color:var(--clay-ink)}
+  .rules .kv .d{font-size:12.4px}
+  .ref .kv{grid-template-columns:262px 1fr;row-gap:5px}
+  .ref .kv .k{font-size:12.2px;font-weight:500}
+  .ref .kv .d{font-size:12.2px}
+
+  .api .grp{display:grid;grid-template-columns:112px 250px 1fr;column-gap:12px;row-gap:4px;align-items:baseline}
+  .api .noun{font:600 15px/1.4 var(--mono);grid-row:span var(--n)}
+  .api .noun b{color:var(--clay-ink);font-weight:700}
+  .api .noun i{font-style:normal;color:var(--faint)}
+  .api .meth{font:500 13.4px/1.45 var(--mono);color:var(--fg)}
+  .api .d{font-size:12.8px}
+
+  .ev-list .grp{display:grid;grid-template-columns:15px 214px 1fr;column-gap:6px;row-gap:4px;align-items:baseline}
+  .ev-list .cat{font:700 10.5px/1 var(--sans);letter-spacing:1.6px;color:var(--faint);text-transform:uppercase;margin:12px 0 7px}
+  .ev-list .cat:first-of-type{margin-top:0}
+  .ev-list .n{font:600 13px/1.45 var(--mono);color:var(--fg);white-space:nowrap}
+  .ev-list .d{font-size:12.4px}
+  .dia{width:9px;height:9px;transform:translateY(-1px) rotate(45deg);display:inline-block}
+  .dia.fx{background:var(--clay)}
+  .dia.px{border:1.5px solid var(--blue)}
+  .legend{display:grid;grid-template-columns:15px 1fr;column-gap:8px;row-gap:5px;align-items:baseline;font-size:12px}
+
+  .chain{position:relative;height:126px}
+  .tiers{display:flex;gap:10px;align-items:center}
+  .tier{width:122px;height:64px;border:2px solid;border-radius:8px;background:var(--page);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .tier .t{font:700 16px/1 var(--mono)}
+  .tier .s{font:500 10.5px/1.2 var(--sans);color:var(--dim);text-align:center}
+  .chain svg{position:absolute;left:0;top:0}
+  .note{font-size:12.6px;margin-top:10px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:5px 6px}
+  .chip{font:500 11.8px/1 var(--mono);color:var(--fg);border:1px solid var(--rule2);border-radius:5px;padding:5px 7px;background:var(--page)}
+  .chip.t{border-color:#e2c3a3;color:var(--kraft);background:#fbf3ea}
+  .chip.d{border-color:#b8cde2;color:var(--blue);background:#eef3f9}
+  .draw .kv{grid-template-columns:84px 1fr;row-gap:10px}
+  .draw .kv .k{font-size:12.6px;color:var(--clay-ink)}
+  .draw .kv .d{font-size:12.4px}
+
+  footer{margin-top:20px;padding-top:14px;border-top:1px solid var(--rule2);display:flex;justify-content:space-between;gap:40px;font:17px/1.4 var(--sans);color:var(--faint)}
+
+  #lang{position:fixed;top:12px;right:12px;z-index:9;display:flex;gap:6px}
+  #lang button{font:600 12px var(--sans);background:#fff;color:var(--mid);border:1px solid var(--rule2);border-radius:6px;padding:6px 10px;cursor:pointer}
+  #lang button.on{color:var(--fg);border-color:var(--clay)}
+  .export #lang{display:none}
+  @page{size:2480px 3508px;margin:0}
+  @media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact} #lang{display:none}}
+</style>
+</head>
+<body>
+<div id="lang"><button data-l="ja">日本語</button><button data-l="en">English</button></div>
+<div class="sheet" id="sheet">
+  <svg id="bg"></svg>
+
+  <header>
+    <div>
+      <h1>Claude Mods <small data-t="title.sub"></small></h1>
+      <div class="sub" data-t="title.lead"></div>
+    </div>
+    <div class="meta">
+      <div>PRIMITIVE: <b>FUNCTION HOOK</b></div>
+      <div>PRODUCT: <b>CLAUDE MOD</b></div>
+      <div data-t="title.meta"></div>
+    </div>
+  </header>
+
+  <div class="fitbox" id="fitbox">
+  <div class="cols" id="cols">
+    <!-- ───────────── LEFT ───────────── -->
+    <div class="col">
+      <section class="panel">
+        <div class="label" data-t="hook.label"></div>
+        <pre class="code" id="hook-code"></pre>
+        <div class="kv next" id="hook-legend" style="grid-template-columns:70px 1fr;row-gap:5px;margin-top:14px"></div>
+      </section>
+
+      <section class="panel next">
+        <div class="label">NEXT</div>
+        <div class="kv" id="next-rows"></div>
+      </section>
+
+      <section class="panel">
+        <div class="label" data-t="chain.label"></div>
+        <div class="chain">
+          <div class="tiers" id="tiers"></div>
+          <svg width="652" height="126" viewBox="0 0 652 126">
+            <path d="M61,70 C101,104 387,104 451,78" fill="none" stroke="#3f6f9e" stroke-width="1.6" stroke-dasharray="5 4"/>
+            <path d="M461.2,73.9 L453.3,83.6 L448.7,72.4 Z" fill="#3f6f9e"/>
+            <text x="256" y="114" text-anchor="middle" font-family="JetBrains Mono, DejaVu Sans Mono, monospace" font-size="12" fill="#3f6f9e">next.to(e, "builtin")</text>
+          </svg>
+        </div>
+        <pre class="code sm" id="chain-code"></pre>
+        <div class="note" data-t="chain.note"></div>
+      </section>
+
+      <section class="panel api">
+        <div class="label" data-t="api.label"></div>
+        <div id="api"></div>
+      </section>
+      <section class="panel rules">
+        <div class="label" data-t="rules.label"></div>
+        <div class="kv" id="rules"></div>
+      </section>
+    </div>
+
+    <!-- ───────────── RIGHT ───────────── -->
+    <div class="col">
+      <section class="panel ev-list">
+        <div class="label" data-t="ev.label"></div>
+        <div id="events"></div>
+        <div class="hr"></div>
+        <div class="legend">
+          <span class="dia fx"></span><span data-t="ev.fx"></span>
+          <span class="dia px"></span><span data-t="ev.px"></span>
+        </div>
+      </section>
+
+      <section class="panel draw">
+        <div class="label" data-t="draw.label"></div>
+        <pre class="code sm" id="draw-code"></pre>
+        <div class="kv" id="draw-rows" style="margin-top:14px"></div>
+      </section>
+
+
+      <section class="panel ref">
+        <div class="label" data-t="files.label"></div>
+        <div class="kv" id="files"></div>
+        <div class="label sm" data-t="cli.label"></div>
+        <div class="kv" id="cli"></div>
+        <div class="label sm" data-t="settings.label"></div>
+        <div class="kv" id="settings"></div>
+      </section>
+    </div>
+  </div>
+  </div>
+
+  <footer>
+    <span data-t="foot.src"></span>
+    <span data-t="foot.note" style="text-align:right"></span>
+  </footer>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   DATA — 文言はすべてここ。{ ja, en } を編集すれば両言語に反映されます。
+   ════════════════════════════════════════════════════════════════ */
+const QS = new URLSearchParams(location.search);
+const META = { version: QS.get('v') || '2.1.x', date: QS.get('date') || 'YYYY-MM-DD' };
+const T = {
+  "title.sub":  { ja:'<span class="dollar">$</span> チートシート', en:'the <span class="dollar">$</span> cheat sheet' },
+  "title.lead": { ja:'mod は hooks/hooks.json が 1 つのモジュールを指すプラグイン。土台は function hook ― イベントごとの async 関数を middleware として合成する。',
+                  en:'A mod is a plugin whose hooks/hooks.json names one module. The primitive underneath is the function hook: one async function per event, composed as middleware.' },
+  "title.meta": { ja:`CLAUDE CODE v${META.version} &nbsp;·&nbsp; ${META.date} 時点`, en:`CLAUDE CODE v${META.version} &nbsp;·&nbsp; AS OF ${META.date}` },
+
+  "hook.label":  { ja:'フック', en:'THE HOOK' },
+  "chain.label": { ja:'チェーン · 5 つの tier · core に近いほど権限は弱い', en:'THE CHAIN · FIVE TIERS · AUTHORITY DECREASES TOWARD CORE' },
+  "chain.note":  { ja:'下り：各リンクが e を書き換え → core（Claude Code）が既定の答えを出す → 上り：各リンクが結果を書き換え。組織は両端を握る。sec-default@builtin は管理端末と Team / Enterprise で全ユーザー mod より前に読み込まれる（managed の prependPlugins を設定した場合は、そこに書いた位置でのみ）。',
+                   en:'One fold for every event: on the way down each link may refine e, core (Claude Code) answers by default, on the way up each link may refine the result. An org holds both ends. sec-default@builtin loads ahead of every user mod on managed machines and Team / Enterprise plans — or, if managed prependPlugins is set, only where that list names it.' },
+  "rules.label": { ja:'ルールと上限', en:'RULES & LIMITS' },
+  "api.label":   { ja:'$ · 名詞と動詞 · 各動詞はそれ自体が他の mod からフックできるイベント', en:'$ · NOUNS AND VERBS · EACH VERB IS ALSO AN EVENT OTHERS CAN HOOK' },
+  "nest.label":  { ja:'順序 = 入れ子 · ひとつの fold の 3 つの見え方', en:'ORDER IS NESTING · THREE VIEWS OF ONE FOLD' },
+  "nest.noun":   { ja:'全員の $ に名詞を足す:', en:'add a noun for everyone:' },
+  "nest.v1a": { ja:'正面から：シーケンス図', en:'from the front: a sequence diagram' },
+  "nest.v1b": { ja:'実行 → next(e) → 中空で待つ → 再開', en:'run, call next(e), wait hollow, resume' },
+  "nest.v2a": { ja:'回すと：各バーはリング', en:'turned: each bar was a ring' },
+  "nest.v2b": { ja:'中空の中心が「下の呼び出し」', en:'its hollow middle is the call beneath' },
+  "nest.v3a": { ja:'上から：玉ねぎ、core が最内', en:'from above: an onion, core innermost' },
+  "nest.v3b": { ja:'先に登録したほど外側＝位置が権限', en:'earlier wraps more: position is authority' },
+  "files.label":    { ja:'ファイル構成', en:'FILES' },
+  "cli.label":      { ja:'コマンド', en:'COMMANDS' },
+  "settings.label": { ja:'設定と環境変数', en:'SETTINGS & ENVIRONMENT' },
+  "ev.label": { ja:'エンジンイベント · on("…")', en:'ENGINE EVENTS · ON("…")' },
+  "ev.fx": { ja:'core に副作用あり：next を呼ばなければ起きない、2 回呼べば 2 回起きる', en:'core has a side effect: no next = it did not happen, next twice = it happened twice' },
+  "ev.px": { ja:'core に副作用なし（説明・判定・描画の問い合わせ）', en:'core has no side effect (descriptions, decisions, draws)' },
+  "draw.label": { ja:'描画 · UI.RENDER', en:'DRAWING · UI.RENDER' },
+  "foot.src":  { ja:'出典: code.claude.com/docs/en/plugins/mods/reference · 最新版: noguchy.me/claude-mods-cheatsheet', en:'Source: code.claude.com/docs/en/plugins/mods/reference · Latest: noguchy.me/en/claude-mods-cheatsheet' },
+  "foot.note": { ja:'API はリリース間で変わりうる。正はビルドごとに書き出される .claude-plugin/types/claude-code/index.d.ts', en:'The API can change between releases. The authority is .claude-plugin/types/claude-code/index.d.ts, written for your build.' },
+};
+
+const HOOK_CODE = [
+  ['export function register(on, options) {'],
+  ['  on("tool.call", { tool: "Bash" }, async ($, e, next) => {'],
+  ['    if (e.command.includes("rm -rf /")) return { deny: "no" }', '// answer'],
+  ['    const r = await next({ ...e, command: e.command.trim() })', '// rewrite'],
+  ['    $.ui.toast("Bash ran")', '// observe'],
+  ['    return r'],
+  ['  })'],
+  ['  .catch(($, e, next) =>', '// throw|timeout|re-entry'],
+  ['    next.called ? next(e) : { deny: next.error.kind })'],
+  ['}'],
+];
+const HOOK_LEGEND = [
+  ['<span class="c-d">$</span>', { ja:'mods API。<span class="m">$.ns.method(…)</span> と省略せず書く（読み込み時に静的に棚卸しされる）', en:'the mods API; write every call in full as <span class="m">$.ns.method(…)</span> — it is inventoried statically' }],
+  ['<span class="c-e">e</span>', { ja:'イベント入力。深く freeze されたプレーンデータ。変えるならコピーを next へ', en:'the event\'s input, deeply frozen plain data; pass a copy to next to change it' }],
+];
+const NEXT_ROWS = [
+  ['<span class="c-nx">next</span>(e)', { ja:'後続のフック → Claude Code 本体を実行し、結果で resolve', en:'runs the hooks after you, then Claude Code; resolves to the result' }],
+  ['return <span class="c-nx">without next</span>', { ja:'本体の代わりに答える：{ deny } · { result } · { drop } · { skip } …', en:'answer in Claude Code\'s place: { deny } · { result } · { drop } · { skip } …' }],
+  ['<span class="c-nx">next</span>.origin', { ja:'発生元の { plugin, tier }。本体は { plugin: "engine", tier: "core" }', en:'{ plugin, tier } of whoever raised it; Claude Code is { plugin: "engine", tier: "core" }' }],
+  ['<span class="c-nx">next</span>.signal', { ja:'イベントが放棄されると発火する AbortSignal（Esc など）', en:'an AbortSignal that fires when the event is abandoned (Esc, …)' }],
+  ['<span class="c-nx">next</span>.budget', { ja:'このフックの制限時間 { ms, remainingMs }', en:'this hook\'s time limit: { ms, remainingMs }' }],
+  ['<span class="c-nx">next</span>.to(e, "append")', { ja:'後段の tier（append · builtin · core）へ飛ぶ。prepend/appendPlugins の mod のみ', en:'skip to a later tier (append · builtin · core); only mods in prepend/appendPlugins' }],
+  ['yield* <span class="c-nx">next</span>(e)', { ja:'turn.step と process.spawn のフックは async generator', en:'hooks on turn.step and process.spawn are async generators' }],
+  ['<span class="c-nx">next</span>.error · .called', { ja:'.catch 内のみ：{ kind: throw | timeout | re-entry, message } · next を呼んでいたか', en:'in .catch only: { kind: throw | timeout | re-entry, message } · had it called next?' }],
+];
+const TIERS = [
+  ['prepend', '#b5537a', { ja:'組織ポリシー<br>prependPlugins', en:'org policy<br>prependPlugins' }],
+  ['user',    '#5f7046', { ja:'あなたが<br>入れた mod', en:'what you<br>install' }],
+  ['append',  '#b5537a', { ja:'組織ポリシー<br>appendPlugins', en:'org policy<br>appendPlugins' }],
+  ['builtin', '#a8743f', { ja:'バイナリ同梱<br>sec-default など', en:'ships in binary<br>sec-default, …' }],
+  ['core',    '#bd5d3a', { ja:'Claude Code<br>本体', en:'the engine' }],
+];
+const CHAIN_CODE = [['on("*", ($, e, next) => next.to(e, "append"))', '// managed: skip user mods']];
+const RULES = [
+  ['loading', { ja:'v2.1.287 以降は既定でオン（フラグ不要）。claude --plugin-dir ./my-mod で保存時にホットリロード。Claude に「こういう mod を作って」と頼めば書いてくれる', en:'on by default from v2.1.287 (no flag). claude --plugin-dir ./my-mod hot-reloads on save, and Claude can write the mod for you' }],
+  ['time',    { ja:'1 イベントあたり自身の実行 10 秒（next や $ 呼び出し中は数えない。clock.sleep は数える）· .catch は 1 秒 · session.end 全体で 1.5 秒', en:'10 s of a hook\'s own time per event (time inside next or $ calls is not counted, clock.sleep is) · .catch 1 s · all session.end hooks 1.5 s' }],
+  ['size',    { ja:'fs.read / write 1 ファイル 4 MiB · $.store 合計 4 MiB · 1 ツリーのテキストは先頭 100,000 字 · session.messages() は最新 4,096 件 · drop / deny の理由は 4,096 字', en:'fs.read / write 4 MiB per file · $.store 4 MiB of JSON · text in one tree: first 100,000 chars · session.messages() newest 4,096 · a drop / deny reason 4,096 chars' }],
+  ['redraw',  { ja:'ui.invalidate("ui.render") は毎秒 10 回まで（terminal の表示中ペイン・バンド・ヒント行は 30）· toast は 4 秒表示', en:'ui.invalidate("ui.render") throttled to 10/s (30 in the terminal for the visible pane, band and hint line) · toast shows 4 s' }],
+  ['reload',  { ja:'保存のたびに register と session.start が再実行。残したい値はモジュール変数でなく $.state に', en:'every save reruns register and session.start: keep data in $.state, not module variables' }],
+  ['trust',   { ja:'mod は Claude Code と同じ権限で動く信頼済みコード。組織は plugin.register で入場を拒否できる', en:'mods are trusted code with Claude Code\'s reach; orgs govern admission with plugin.register' }],
+];
+
+/* $ table: [noun, [[methods, {ja,en}], ...]] */
+const API = [
+  ['plugin', [['.name · root', { ja:'自分のプラグイン名とディレクトリ', en:'this plugin\'s name and directory' }]]],
+  ['ui', [
+    ['.resolve', { ja:'この surface の要素コンストラクタ（Box, Text …）', en:'element constructors for this surface (Box, Text, …)' }],
+    ['.invalidate', { ja:'キャッシュ済みイベント（ui.render など）を再実行', en:'re-run a cached event such as ui.render' }],
+    ['.open · close · panes', { ja:'ペインを開く・閉じる・一覧', en:'open, close and list panes' }],
+    ['.focus · scroll', { ja:'フォーカス・スクロール位置を動かす', en:'move focus or a scroll position' }],
+    ['.toast · status · log', { ja:'通知バー · ステータス行の枠 · トランスクリプトに一行', en:'notification bar · status-line slot · transcript line' }],
+    ['.ask · copy · notice', { ja:'AskUserQuestion ダイアログ · コピー · ダイアログ下の一行', en:'AskUserQuestion dialog · clipboard · line under a dialog' }],
+    ['.selection · blit', { ja:'マウスで最後に選択したテキスト · 再描画なしで Raster / Image を差し替え', en:'what the person last selected with the mouse · swap a Raster / Image without a redraw' }],
+  ]],
+  ['command', [['.register · run · list', { ja:'/コマンド追加 · 入力したように実行 · 一覧', en:'add /yourcommand · run as if typed · list' }]]],
+  ['tool', [
+    ['.register · list', { ja:'モデルに新しいツールを渡す · 今あるツール', en:'give the model a new tool · tools it has now' }],
+    ['.call · check', { ja:'フックと権限を通して実行 · 許可判定だけ得る', en:'run through hooks and permissions · get the decision only' }],
+  ]],
+  ['agent', [['.register · spawn · list', { ja:'サブエージェント型を追加 · 起動（完了で resolve）· 一覧（status: running · idle · waiting …）', en:'add a subagent type · start one (resolves when settled) · list (status: running · idle · waiting, …)' }]]],
+  ['model', [['.complete · fork · classify', { ja:'補完 1 回 · この会話を共有するツールなし補完 · ラベル分類', en:'one completion · tool-less completion over this transcript · pick a label' }]]],
+  ['prompt', [
+    ['.submit', { ja:'mod 名義でプロンプトを送る。{ asUser: true } でユーザーの発言として', en:'queue a prompt as this mod; { asUser: true } sends it as the user\'s words' }],
+    ['.read · fill · suggest', { ja:'入力欄を読む · 書く · 薄字で提案', en:'read the prompt box · write it · propose dim text' }],
+    ['.compose', { ja:'システムプロンプトを組み立てて得る', en:'render a system prompt' }],
+  ]],
+  ['turn', [['.abort', { ja:'実行中のターンを中止', en:'cancel the running turn' }]]],
+  ['session', [
+    ['.id · cwd · root · repo', { ja:'識別子と場所', en:'identity and where' }],
+    ['.model · version · turns', { ja:'モデル · Claude Code のバージョン · ターン数', en:'model · Claude Code version · turns so far' }],
+    ['.messages · surfaces', { ja:'会話（1 メッセージ 1 項目）· 接続中のアプリ', en:'the transcript, one entry per message · attached apps' }],
+    ['.usage', { ja:'{ startedAt, context{tokens,window,percent}, rateLimits[], cost }', en:'{ startedAt, context{tokens,window,percent}, rateLimits[], cost }' }],
+    ['.compact · send · append', { ja:'今すぐ圧縮 · 他セッションへ送信 · 会話に行を足す', en:'compact now · message another session · add a row' }],
+    ['.authorize', { ja:'Anthropic 認証の不透明ハンドル。http.fetch の { auth } に渡す（秘密は mod に渡らない）', en:'an opaque handle to the Anthropic credential for http.fetch { auth }; the secret never reaches the mod' }],
+  ]],
+  ['config', [['.list · set', { ja:'/config の行一覧 · メニューと同じ経路で変更', en:'the /config rows · change one through the menu\'s own door' }]]],
+  ['settings', [['.read', { ja:'解決済みの設定、または 1 ソースの層', en:'the resolved settings, or one source\'s layer' }]]],
+  ['env', [['.get · set', { ja:'環境変数（名前はリテラルで書く）', en:'one variable, by literal name' }]]],
+  ['fs', [
+    ['.read · write · list', { ja:'ホストのファイル。write は非アトミック', en:'the host filesystem; write is not atomic' }],
+    ['.exists · stat · ancestors', { ja:'存在確認 · 種別/サイズ/mtime · cwd より上の指示ファイル', en:'never rejects · kind/size/mtime · instruction files above cwd' }],
+  ]],
+  ['store', [['.get · set · delete · keys', { ja:'マシン上の全セッションで共有する KV（JSON）', en:'a key-value store every session on the machine shares' }]]],
+  ['state', [
+    ['.get · set', { ja:'リロードを越えて残る値。render 中の get は購読 → set で自動再描画', en:'values that survive reloads; a get during render subscribes it' }],
+    ['atom · derive · …', { ja:'atom · read · update · derive · memberOf を "claude-code" から import', en:'atom · read · update · derive · memberOf, imported from "claude-code"' }],
+  ]],
+  ['clock', [['.now · sleep · after · every', { ja:'時刻とキャンセル可能なタイマー', en:'time and cancel-able timers' }]]],
+  ['http', [['.fetch', { ja:'ホスト経由の HTTP', en:'HTTP through the host' }]]],
+  ['process', [['.run · spawn', { ja:'argv で実行（shell なし）· ストリームで起動', en:'argv on the host, no shell · streamed' }]]],
+  ['mcp', [['.call · connect', { ja:'接続済み MCP のツール · manifest に書いたサーバーへ接続', en:'a tool on a connected server · connect one your manifest lists' }]]],
+  ['audio', [['.play · speak', { ja:'音声クリップ · OS の読み上げ', en:'a clip · the platform synthesizer' }]]],
+];
+
+const NOUN_CODE = [['on("engine.create", async ($, e, next) => ({ ...await next(e), audit: { record } }))']];
+
+const FILES = [
+  ['.claude-plugin/plugin.json', { ja:'通常の manifest。"types" で型契約を指す', en:'a normal manifest; "types" names the type contract' }],
+  ['hooks/hooks.json', { ja:'{ "modules": ["./register.ts"] } · 1 mod 1 モジュール', en:'{ "modules": ["./register.ts"] } · exactly one module' }],
+  ['hooks/register.ts', { ja:'register(on, options) を export する ES module', en:'an ES module exporting register(on, options)' }],
+  ['types/index.d.ts', { ja:'$.state の値（PluginState）と追加 namespace の宣言', en:'declares PluginState values and added namespaces' }],
+  ['tests/*.test.ts', { ja:'claude-code/testing で書き、claude plugin test で実行', en:'written with claude-code/testing, run by claude plugin test' }],
+];
+const CLI = [
+  ['claude --plugin-dir <dir>', { ja:'1 セッションだけ読み込み、保存でリロード', en:'load for one session; reload on save' }],
+  ['claude plugin validate <dir>', { ja:'hooks · calls · state を一覧（--strict --json）', en:'lists hooks, calls, state (--strict --json)' }],
+  ['claude plugin test [dir]', { ja:'*.test.ts を実行。失敗で exit 1', en:'runs *.test.ts; exits 1 on failure' }],
+  ['/plugin · /reload-plugins', { ja:'読み込み中の mod を表示 · 再読み込み', en:'shows active mods · reloads plugins' }],
+];
+const SETTINGS = [
+  ['prependPlugins · appendPlugins', { ja:'managed：ユーザー mod の前 / 後に記載順で実行', en:'managed: run before / after user mods, in order' }],
+  ['allowManagedModsOnly', { ja:'組織の mod と組み込みだけ読み込む', en:'only the org\'s and built-in mods load' }],
+  ['allowModsToOverrideDenyRules', { ja:'ユーザー mod が deny ルールの拒否を承認できるようにする', en:'lets a user\'s mod approve a call a deny rule refuses' }],
+  ['disableSideloadFlags', { ja:'managed：--plugin-dir / --plugin-url を起動時に拒否', en:'managed: rejects --plugin-dir / --plugin-url at startup' }],
+  ['pluginConfigs', { ja:'mod の userConfig 値。キーは plugin id（--plugin-dir は name@inline）', en:'userConfig values per mod, keyed by plugin id (name@inline for --plugin-dir)' }],
+  ['CLAUDE_CODE_PLUGIN_DIRS', { ja:'フラグを渡せないアプリ用。: 区切り（Windows は ;）', en:'for apps you can\'t pass a flag to; : separated (; on Windows)' }],
+  ['CLAUDE_CODE_PLUGIN_DIR_WATCH', { ja:'1 で非対話の長時間セッションも保存時にリロード', en:'1 makes a long-running non-interactive session reload on save' }],
+];
+
+/* events: [category {ja,en}, [[name, sideEffect, {ja,en}], ...]] */
+const EVENTS = [
+  [{ja:'ツール', en:'TOOLS'}, [
+    ['tool.call', 1, { ja:'ツール実行の直前 → next(e) | { deny } | { result }', en:'a tool is about to run → next(e) | { deny } | { result }' }],
+    ['tool.check', 0, { ja:'実行可否の判定（tool.call と PreToolUse の後）→ { decision: allow | ask | deny }。e.agentId · e.ceiling', en:'the permission decision, after tool.call and PreToolUse → { decision: allow | ask | deny }; e.agentId · e.ceiling' }],
+    ['tool.describe', 0, { ja:'Claude に初めて送るツール説明 → { description, isDeferred }（tool search の裏に置く / 先読み）', en:'a tool\'s description as first sent to Claude → { description, isDeferred } (behind tool search / upfront)' }],
+  ]],
+  [{ja:'プロンプトと Claude が読むもの', en:'PROMPTS & WHAT CLAUDE READS'}, [
+    ['prompt.submit', 1, { ja:'送信されたプロンプト → next({ ...e, text | context }) | { drop }', en:'a prompt is submitted → next({ ...e, text | context }) | { drop }' }],
+    ['prompt.fill · suggest', 1, { ja:'入力欄への下書き · 薄字の提案。書き換え可', en:'text going into the box as a draft · a dim suggestion' }],
+    ['prompt.compose', 0, { ja:'システムプロンプト全体 → { sections: [{ id, text, scope }] }', en:'a system prompt is rendered → { sections: [{ id, text, scope }] }' }],
+    ['prompt.section', 0, { ja:'名前付きセクションごと → { text } | { text: null } で除外', en:'once per named section → { text } | { text: null } to drop it' }],
+    ['prompt.context', 0, { ja:'会話ごとに 1 回、最初のメッセージに添える文脈 → { blocks }', en:'once per conversation, the context sent with the first message → { blocks }' }],
+    ['prompt.attachment', 0, { ja:'リマインダーなど本体が足すメッセージ（e.type · e.detail）→ { text } | null', en:'a message the engine adds, such as a reminder (e.type · e.detail) → { text } | null' }],
+    ['prompt.mention', 1, { ja:'@ メンションされたファイルを読む直前 → next({ ...e, path }) | { deny }', en:'a file a prompt @-mentions is about to be read → next({ ...e, path }) | { deny }' }],
+    ['skill.prompt', 0, { ja:'スキル本文の展開 → { text }', en:'a skill\'s text is expanded → { text }' }],
+  ]],
+  [{ja:'コマンドと設定', en:'COMMANDS & CONFIG'}, [
+    ['command.run', 1, { ja:'コマンド実行の直前 → { text } | {} | next(e)', en:'a command is about to run → { text } | {} | next(e)' }],
+    ['config.set', 1, { ja:'/config 行の変更 → next({ ...e, value }) | { deny }', en:'a /config row is about to change → next({ ...e, value }) | { deny }' }],
+  ]],
+  [{ja:'ターン', en:'TURNS'}, [
+    ['turn.start', 0, { ja:'ターン開始', en:'a turn begins' }],
+    ['turn.step', 1, { ja:'モデルへのリクエスト 1 回（generator）→ yield* next(e)、model / effort を差し替え可', en:'one model request (generator) → yield* next(e); swap model / effort' }],
+    ['turn.complete', 0, { ja:'ターン終了 → { text } で回答の下に一行', en:'a turn ended → { text } shows a line under the answer' }],
+  ]],
+  [{ja:'セッション', en:'SESSION'}, [
+    ['session.start', 0, { ja:'mod ごとに最初のプロンプト前（リロード後も）。/clear・/resume 後は来ない', en:'per mod before the first prompt, and after its reload; not after /clear or /resume' }],
+    ['session.end', 0, { ja:'終了・/clear・/resume・/branch。e.reason', en:'session ends, or /clear, /resume, /branch; e.reason' }],
+    ['session.compact', 1, { ja:'圧縮の直前 → { skip }', en:'about to compact → { skip }' }],
+    ['session.receive · send', 1, { ja:'他エージェント / セッションとのメッセージ → { consumed } · { isDelivered: false }', en:'messages with other agents or sessions → { consumed } · { isDelivered: false }' }],
+    ['session.append', 1, { ja:'保存される会話の各行 → message の content を書き換え', en:'each row before it\'s stored → rewrite its content' }],
+  ]],
+  [{ja:'サブエージェント', en:'SUBAGENTS'}, [
+    ['agent.offer', 0, { ja:'サブエージェント型を Claude に提示 → { isOffered: false } で隠す', en:'a subagent type is offered → { isOffered: false } withholds it' }],
+    ['agent.spawn', 1, { ja:'サブエージェント / チームメイト（e.isTeammate）起動の直前 → next({ ...e, model }) | { deny }', en:'a subagent or teammate (e.isTeammate) is about to start → next({ ...e, model }) | { deny }' }],
+  ]],
+  [{ja:'インターフェース', en:'INTERFACE'}, [
+    ['ui.render', 0, { ja:'描画サイトの描画直前 → 要素ツリー', en:'a render site is about to be drawn → element tree' }],
+    ['ui.press · input · select', 1, { ja:'自分が描いた Button / Input / Select が使われた', en:'a Button / Input / Select you drew was used' }],
+    ['ui.close', 1, { ja:'ペインが閉じる直前（e.origin.kind: plugin | person | unload）', en:'a pane is about to close (e.origin.kind: plugin | person | unload)' }],
+    ['ui.fault', 0, { ja:'自分の Client 要素が失敗（e.phase: load | render | run · e.reason）', en:'a Client element you drew failed (e.phase: load | render | run · e.reason)' }],
+  ]],
+  [{ja:'他の mod · その他', en:'OTHER MODS · MORE'}, [
+    ['plugin.register', 0, { ja:'モジュール読み込みの直前。e.uses を見て → { refuse }', en:'a hooks module is about to load; read e.uses → { refuse }' }],
+    ['engine.create', 0, { ja:'この mod 用の $ を構築 → namespace を足す / 隠す', en:'the $ for this mod is built → add or withhold a namespace' }],
+    ['telemetry.log · mark', 1, { ja:'記録の直前 → { deny }。名前か telemetry.* で指定（* では選ばれない）', en:'a record is about to be logged → { deny }; hook by name or telemetry.*, not *' }],
+    ['classic.<Event>', 1, { ja:'設定フック 1:1。e は stdin JSON（classic.PostToolUse など）', en:'settings hooks 1:1, stdin JSON as e (classic.PostToolUse, …)' }],
+    ['<ns>.<method>', 1, { ja:'すべての $ 呼び出し（fs.read …）。後続 mod の呼び出しを横取り → { deny } | { value }', en:'every $ call (fs.read, …) from later mods → { deny } | { value }' }],
+    ['*', 1, { ja:'上記すべて（telemetry 以外）。"tool.*" のような glob も可', en:'everything above (but telemetry); globs like "tool.*" too' }],
+  ]],
+];
+
+const DRAW_CODE = [
+  ['on("ui.render", { component: "ToolResult" }, async ($, e, next) => {'],
+  ['  const { Box, Text, Button } = $.ui.resolve(e)'],
+  ['  const drawn = await next(e)', '// what beneath drew'],
+  ['  return Box({ flexDirection: "column", children: ['],
+  ['    drawn,'],
+  ['    Text({ dimColor: true, children: "↳ reviewed" }),'],
+  ['    Button({ label: "copy", hotkey: "c", onPress: () => $.ui.toast("copied") }),'],
+  ['  ] })'],
+  ['})'],
+];
+const SITES_BOTH = ['Pane','AbovePrompt','UserMessage','AssistantMessage','ToolUse','ToolResult','ToolGroup','CommandOutput','AskUserQuestion','Spinner','SessionMode','PromptHint'];
+const SITES_TERM = ['ToolProgress','TurnDuration','InfoNotice'];
+const EL_BOTH = ['Box','Text','Button','Link','Code','Markdown','Input','Select','Client'];
+const EL_TERM = ['Raster','Image'];
+const EL_DESK = ['Svg'];
+const DRAW_ROWS = [
+  ['sites', 'chips:sites', { ja:'e.component の値。<span class="chip t" style="padding:2px 5px">茶</span> は terminal のみ', en:'values of e.component; <span class="chip t" style="padding:2px 5px">tan</span> = terminal only' }],
+  ['elements', 'chips:els', { ja:'$.ui.resolve(e) から得る。<span class="chip t" style="padding:2px 5px">茶</span> terminal のみ · <span class="chip d" style="padding:2px 5px">青</span> desktop のみ', en:'from $.ui.resolve(e); <span class="chip t" style="padding:2px 5px">tan</span> terminal only · <span class="chip d" style="padding:2px 5px">blue</span> desktop only' }],
+  ['e', null, { ja:'<span class="m">e.component · surface (terminal | desktop) · requestId · viewport</span>。それ以外は <span class="m">e.props</span>（bodyColumns, placement: dock | inline …）。幅は bodyColumns に合わせる', en:'<span class="m">e.component · surface (terminal | desktop) · requestId · viewport</span>; everything else is on <span class="m">e.props</span> (bodyColumns, placement: dock | inline, …). Size to bodyColumns' }],
+  ['pane', null, { ja:'<span class="m">$.ui.open({ id, title, focus })</span> → { isPlaced } ＋ <span class="m">on("ui.render", { component: "Pane" })</span> で requestId === id を描く。<span class="m">$.ui.close({ id })</span>。置けなければ AbovePrompt に描く', en:'<span class="m">$.ui.open({ id, title, focus })</span> → { isPlaced }, then draw component "Pane" where requestId === id; <span class="m">$.ui.close({ id })</span>. Not placed? draw in AbovePrompt' }],
+  ['redraw', null, { ja:'render 中の <span class="m">$.state.get</span> は購読になり、<span class="m">$.state.set</span> で自動再描画。手動なら <span class="m">$.ui.invalidate("ui.render")</span>。描くものがなければ <span class="m">next(e)</span> を返す', en:'a <span class="m">$.state.get</span> during render subscribes; <span class="m">$.state.set</span> redraws. Manually: <span class="m">$.ui.invalidate("ui.render")</span>. Nothing to draw? return <span class="m">next(e)</span>' }],
+  ['controls', null, { ja:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · <span class="m">action</span> で本体のキーバインドに連動 · <span class="m">Box({ hover })</span> は往復なしで surface が適用', en:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · <span class="m">action</span> ties it to a keybinding · <span class="m">Box({ hover })</span> is applied by the surface, no round trip' }],
+];
+
+/* ════════════════════════ RENDER ════════════════════════ */
+const params = QS;
+let LANG = params.get('lang') === 'en' ? 'en' : 'ja';
+if (params.has('export')) document.documentElement.classList.add('export');
+const L = o => (typeof o === 'string' ? o : o[LANG]);
+const $id = id => document.getElementById(id);
+const escH = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+const KW = new Set(['export','function','async','await','const','return','if','let','yield','import','from','new','true','false','null']);
+function hl(code){
+  let out = '';
+  for (const tok of code.match(/"[^"]*"|\$|[A-Za-z_][A-Za-z0-9_]*|\s+|./g) || []) {
+    const t = escH(tok);
+    if (tok[0] === '"') out += `<span class="c-str">${t}</span>`;
+    else if (tok === '$') out += `<span class="c-d">$</span>`;
+    else if (KW.has(tok)) out += `<span class="c-kw">${t}</span>`;
+    else if (tok === 'e') out += `<span class="c-e">e</span>`;
+    else if (tok === 'next' || tok === 'deny' || tok === 'catch') out += `<span class="c-nx">${t}</span>`;
+    else if (tok === 'on' || tok === 'register') out += `<span class="c-fn">${t}</span>`;
+    else out += t;
+  }
+  return out;
+}
+function code(id, lines, col){
+  const width = col || Math.max(...lines.map(l => l[0].length)) + 2;
+  $id(id).innerHTML = lines.map(([c, cm]) =>
+    hl(c) + (cm ? ' '.repeat(Math.max(1, width - c.length)) + `<span class="c-cm">${escH(cm)}</span>` : '')
+  ).join('\n');
+}
+const kv = (id, rows) => $id(id).innerHTML = rows.map(([k, d]) =>
+  `<div class="k">${k.includes('<span') ? k : escH(k)}</div><div class="d">${L(d)}</div>`).join('');
+
+function render(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-t]').forEach(el => el.innerHTML = L(T[el.dataset.t]));
+  document.querySelectorAll('#lang button').forEach(b => b.classList.toggle('on', b.dataset.l === LANG));
+
+  code('hook-code', HOOK_CODE, 63);
+  kv('hook-legend', HOOK_LEGEND);
+  kv('next-rows', NEXT_ROWS);
+  $id('tiers').innerHTML = TIERS.map(([t, c, s]) =>
+    `<div class="tier" style="border-color:${c}"><div class="t" style="color:${c}">${t}</div><div class="s">${L(s)}</div></div>`).join('');
+  code('chain-code', CHAIN_CODE, 48);
+  kv('rules', RULES);
+
+  $id('api').innerHTML = API.map(([noun, rows], i) =>
+    (i ? '<div class="dash"></div>' : '') +
+    `<div class="grp"><div class="noun" style="--n:${rows.length}"><i>$.</i><b>${noun}</b></div>` +
+    rows.map(([m, d], j) => (j ? '' : '') + `<div class="meth"${j ? ' style="grid-column:2"' : ''}>${escH(m)}</div><div class="d">${L(d)}</div>`).join('') +
+    `</div>`).join('');
+
+  kv('files', FILES); kv('cli', CLI); kv('settings', SETTINGS);
+
+  $id('events').innerHTML = EVENTS.map(([cat, rows]) =>
+    `<div class="cat">${L(cat)}</div><div class="grp">` +
+    rows.map(([n, fx, d]) => `<span class="dia ${fx ? 'fx' : 'px'}"></span><div class="n">${escH(n)}</div><div class="d">${L(d)}</div>`).join('') +
+    `</div>`).join('');
+
+  code('draw-code', DRAW_CODE, 34);
+  const chips = (arr, cls='') => arr.map(x => `<span class="chip ${cls}">${x}</span>`).join('');
+  $id('draw-rows').innerHTML = DRAW_ROWS.map(([k, kind, d]) => {
+    let body = '';
+    if (kind === 'chips:sites') body = `<div class="chips">${chips(SITES_BOTH)}${chips(SITES_TERM,'t')}</div><div style="margin-top:6px">${L(d)}</div>`;
+    else if (kind === 'chips:els') body = `<div class="chips">${chips(EL_BOTH)}${chips(EL_TERM,'t')}${chips(EL_DESK,'d')}</div><div style="margin-top:6px">${L(d)}</div>`;
+    else body = L(d);
+    return `<div class="k">${k}</div><div class="d">${body}</div>`;
+  }).join('');
+
+  fit();
+  requestAnimationFrame(drawBg);
+}
+
+/* ── ORDER IS NESTING: three views (geometry from the 2026-09-09 sheet) ── */
+function drawNest(){
+  const S = [];
+  const dx = -796, dy = -1300;
+  const X = x => (x + dx).toFixed(1), Y = y => (y + dy).toFixed(1);
+  const mono = `font-family="JetBrains Mono, DejaVu Sans Mono, monospace"`;
+  const sans = `font-family="Inter, Noto Sans CJK JP, sans-serif"`;
+  // sequence view
+  ['A','B','C'].forEach((lb, i) => {
+    const y = 1328.5 + 27*i, x = 826.67 + 27*i, w = 212 - 54*i, op = (.27 + .07*i).toFixed(2);
+    S.push(`<text x="${X(812.67)}" y="${Y(y+10)}" ${mono} font-size="11" text-anchor="end" fill="#5e5d59">${lb}</text>`);
+    S.push(`<line x1="${X(818.67)}" y1="${Y(y+6)}" x2="${X(1046.67)}" y2="${Y(y+6)}" stroke="#d6d3c7" stroke-dasharray="1 4"/>`);
+    S.push(`<rect x="${X(x)}" y="${Y(y)}" width="${w}" height="12" rx="1.5" fill="none" stroke="#5e5d59"/>`);
+    S.push(`<rect x="${X(x)}" y="${Y(y)}" width="27" height="12" rx="1.5" fill="#141413" fill-opacity="${op}" stroke="#5e5d59"/>`);
+    S.push(`<rect x="${X(x+w-27)}" y="${Y(y)}" width="27" height="12" rx="1.5" fill="#141413" fill-opacity="${op}" stroke="#5e5d59"/>`);
+    S.push(`<line x1="${X(x+27)}" y1="${Y(y+13)}" x2="${X(x+27)}" y2="${Y(y+23)}" stroke="#3f6f9e" stroke-width="1.2"/><path d="M${X(x+27)},${Y(y+26)} l-3.2,-5.5 h6.4 z" fill="#3f6f9e"/>`);
+    S.push(`<line x1="${X(x+w-27)}" y1="${Y(y+26)}" x2="${X(x+w-27)}" y2="${Y(y+16)}" stroke="#3f6f9e" stroke-width="1.2"/><path d="M${X(x+w-27)},${Y(y+13)} l-3.2,5.5 h6.4 z" fill="#3f6f9e"/>`);
+  });
+  S.push(`<text x="${X(812.67)}" y="${Y(1419.5)}" ${mono} font-size="11" text-anchor="end" fill="#5e5d59">core</text>`);
+  S.push(`<line x1="${X(818.67)}" y1="${Y(1415.5)}" x2="${X(1046.67)}" y2="${Y(1415.5)}" stroke="#d6d3c7" stroke-dasharray="1 4"/>`);
+  S.push(`<rect x="${X(907.67)}" y="${Y(1409.5)}" width="50" height="12" rx="1.5" fill="#d97757" fill-opacity=".9"/>`);
+  S.push(`<text x="${X(859.67)}" y="${Y(1351.5)}" ${mono} font-size="10" fill="#3f6f9e">next(e)</text>`);
+  S.push(`<text x="${X(1005.67)}" y="${Y(1351.5)}" ${mono} font-size="10" text-anchor="end" fill="#3f6f9e">result</text>`);
+  // ring view
+  S.push(`<line x1="${X(1182)}" y1="${Y(1301)}" x2="${X(1182)}" y2="${Y(1432.6)}" stroke="#d6d3c7" stroke-dasharray="2 4"/>`);
+  const ell = (cx, cy, rx, ry) => `M${X(cx-rx)},${Y(cy)} a${rx},${ry} 0 1,0 ${2*rx},0 a${rx},${ry} 0 1,0 ${-2*rx},0 Z`;
+  S.push(`<path d="${ell(1182,1410,22,6.6)}" fill="#d97757" fill-opacity=".9"/>`);
+  [[1381,41,25,.33],[1352,60,44,.26],[1323,80,63,.19]].forEach(([cy,ro,ri,op]) =>
+    S.push(`<path d="${ell(1182,cy,ro,ro*.3)} ${ell(1182,cy,ri,ri*.3)}" fill="#141413" fill-opacity="${op}" fill-rule="evenodd" stroke="#5e5d59"/>`));
+  S.push(`<line x1="${X(1086)}" y1="${Y(1317)}" x2="${X(1086)}" y2="${Y(1411)}" stroke="#3f6f9e" stroke-width="1.2"/><path d="M${X(1086)},${Y(1414)} l-3.2,-5.5 h6.4 z" fill="#3f6f9e"/>`);
+  S.push(`<line x1="${X(1278)}" y1="${Y(1414)}" x2="${X(1278)}" y2="${Y(1320)}" stroke="#3f6f9e" stroke-width="1.2"/><path d="M${X(1278)},${Y(1317)} l-3.2,5.5 h6.4 z" fill="#3f6f9e"/>`);
+  S.push(`<text x="${X(1078)}" y="${Y(1370.5)}" ${mono} font-size="10" text-anchor="end" fill="#3f6f9e">next(e)</text>`);
+  S.push(`<text x="${X(1286)}" y="${Y(1370.5)}" ${mono} font-size="10" fill="#3f6f9e">result</text>`);
+  // onion view
+  const cx = 1439.3, cy = 1375;
+  const circ = r => `M${X(cx-r)},${Y(cy)} a${r},${r} 0 1,0 ${2*r},0 a${r},${r} 0 1,0 ${-2*r},0 Z`;
+  S.push(`<path d="${circ(19)}" fill="#d97757" fill-opacity=".9"/>`);
+  [[37,19,.33],[55,37,.26],[74,55,.19]].forEach(([ro,ri,op]) =>
+    S.push(`<path d="${circ(ro)} ${circ(ri)}" fill="#141413" fill-opacity="${op}" fill-rule="evenodd" stroke="#5e5d59"/>`));
+  [['A',1484.9,1333.4],['B',1471.9,1346.5],['C',1459.1,1359.2]].forEach(([t,x,y]) =>
+    S.push(`<text x="${X(x)}" y="${Y(y)}" ${mono} font-size="11" font-weight="600" text-anchor="middle" fill="#141413">${t}</text>`));
+  S.push(`<text x="${X(cx)}" y="${Y(1378.5)}" ${mono} font-size="9.5" font-weight="600" text-anchor="middle" fill="#faf9f5">core</text>`);
+  // captions
+  [[924.67,'nest.v1a','nest.v1b'],[1182,'nest.v2a','nest.v2b'],[1439.33,'nest.v3a','nest.v3b']].forEach(([x,a,b]) => {
+    S.push(`<text x="${X(x)}" y="${Y(1470)}" ${sans} font-size="11.5" font-weight="500" text-anchor="middle" fill="#5e5d59">${L(T[a])}</text>`);
+    S.push(`<text x="${X(x)}" y="${Y(1486)}" ${sans} font-size="11.5" text-anchor="middle" fill="#87867f">${L(T[b])}</text>`);
+  });
+  $id('nest').innerHTML = S.join('');
+}
+
+
+/* ── fit the columns to the A4 page: find the largest zoom whose height fits ── */
+function fit(){
+  const box = $id('fitbox'), cols = $id('cols');
+  const W = box.clientWidth, H = box.clientHeight;
+  const heightAt = z => { cols.style.width = (W / z) + 'px'; cols.style.height = ''; cols.style.transform = `scale(${z})`; return cols.scrollHeight * z; };
+  let lo = 1, hi = 3;
+  for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; heightAt(m) <= H ? lo = m : hi = m; }
+  heightAt(lo); cols.style.height = (H / lo) + 'px';
+  document.body.dataset.zoom = lo.toFixed(3);
+  document.body.dataset.cols = [...cols.children].map(c => { const l = c.lastElementChild; l.style.flex = 'none'; const h = c.scrollHeight; l.style.flex = ''; return h; }).join(',');
+}
+
+/* ── background: faint flowing lines (seeded, so every export is identical) ── */
+function drawBg(){
+  const sheet = $id('sheet'), W = sheet.offsetWidth, H = sheet.offsetHeight, bg = $id('bg');
+  bg.setAttribute('width', W); bg.setAttribute('height', H); bg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let s = 91870;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const P = [];
+  for (let i = 0; i < 150; i++) {
+    let x = rnd() * W, y = rnd() * H, a = rnd() * Math.PI * 2, turn = (rnd() - .5) * .12;
+    const n = 20 + Math.floor(rnd() * 110), pts = [[x, y]];
+    for (let k = 0; k < n; k++) { turn += (rnd() - .5) * .03; turn = Math.max(-.09, Math.min(.09, turn)); a += turn; x += Math.cos(a) * 5; y += Math.sin(a) * 5; pts.push([x, y]); }
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let k = 1; k < pts.length - 1; k += 2) d += ` Q${pts[k][0].toFixed(1)},${pts[k][1].toFixed(1)} ${pts[k+1][0].toFixed(1)},${pts[k+1][1].toFixed(1)}`;
+    const accent = rnd() < .16, last = pts[pts.length - 1];
+    P.push(`<path d="${d}" fill="none" stroke="${accent ? '#d97757' : '#e3dfd2'}" stroke-width="${accent ? 1.6 : (.9 + rnd() * .6).toFixed(2)}" stroke-linecap="round" opacity="${accent ? .35 : (.55 + rnd() * .45).toFixed(2)}"/>`);
+    if (accent) P.push(`<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3.2" fill="#faf9f5" stroke="#d97757" stroke-width="1.6" opacity=".7"/>`);
+  }
+  bg.innerHTML = P.join('');
+}
+
+document.querySelectorAll('#lang button').forEach(b => b.onclick = () => {
+  LANG = b.dataset.l; history.replaceState(null, '', '?lang=' + LANG); render();
+});
+render();
+document.fonts && document.fonts.ready.then(() => { fit(); drawBg(); document.body.dataset.ready = '1'; });
+</script>
+</body>
+</html>
