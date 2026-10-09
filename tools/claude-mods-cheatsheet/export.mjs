@@ -65,7 +65,6 @@ for (const lang of ["ja", "en"]) {
 }
 
 const ogp = pathToFileURL(path.join(here, "ogp.html"));
-ogp.search = new URLSearchParams({ v: meta.version, date: meta.date }).toString();
 execFileSync(
   chrome,
   [
