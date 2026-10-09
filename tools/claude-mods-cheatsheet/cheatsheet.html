@@ -296,17 +296,17 @@ const API = [
     ['.invalidate', { ja:'キャッシュ済みイベント（ui.render など）を再実行', en:'re-run a cached event such as ui.render' }],
     ['.open · close · panes', { ja:'ペインを開く・閉じる・一覧', en:'open, close and list panes' }],
     ['.focus · scroll', { ja:'フォーカス・スクロール位置を動かす', en:'move focus or a scroll position' }],
-    ['.toast · status · log', { ja:'通知バー · ステータス行の枠 · トランスクリプトに一行', en:'notification bar · status-line slot · transcript line' }],
+    ['.toast · status · log · notify', { ja:'通知バー · ステータス行の枠 · トランスクリプトに一行 · OS のネイティブ通知', en:'notification bar · status-line slot · transcript line · a native notification' }],
     ['.ask · copy · notice', { ja:'AskUserQuestion ダイアログ · コピー · ダイアログ下の一行', en:'AskUserQuestion dialog · clipboard · line under a dialog' }],
     ['.selection · blit', { ja:'マウスで最後に選択したテキスト · 再描画なしで Raster / Image を差し替え', en:'what the person last selected with the mouse · swap a Raster / Image without a redraw' }],
   ]],
   ['command', [['.register · run · list', { ja:'/コマンド追加 · 入力したように実行 · 一覧', en:'add /yourcommand · run as if typed · list' }]]],
   ['tool', [
-    ['.register · list', { ja:'モデルに新しいツールを渡す · 今あるツール', en:'give the model a new tool · tools it has now' }],
+    ['.register · list', { ja:'モデルに新しいツールを渡す（isDeferred: false で最初から提示）· 今あるツール', en:'give the model a new tool (isDeferred: false lists it upfront) · tools it has now' }],
     ['.call · check', { ja:'フックと権限を通して実行 · 許可判定だけ得る', en:'run through hooks and permissions · get the decision only' }],
   ]],
   ['agent', [['.register · spawn · list', { ja:'サブエージェント型を追加 · 起動（完了で resolve）· 一覧（status: running · idle · waiting …）', en:'add a subagent type · start one (resolves when settled) · list (status: running · idle · waiting, …)' }]]],
-  ['model', [['.complete · fork · classify', { ja:'補完 1 回 · この会話を共有するツールなし補完 · ラベル分類', en:'one completion · tool-less completion over this transcript · pick a label' }]]],
+  ['model', [['.complete · fork · classify', { ja:'補完 1 回（cache: true でプロンプトキャッシュ）· この会話を共有するツールなし補完 · ラベル分類', en:'one completion (cache: true caches the prompt) · tool-less completion over this transcript · pick a label' }]]],
   ['prompt', [
     ['.submit', { ja:'mod 名義でプロンプトを送る。{ asUser: true } でユーザーの発言として', en:'queue a prompt as this mod; { asUser: true } sends it as the user\'s words' }],
     ['.read · fill · suggest', { ja:'入力欄を読む · 書く · 薄字で提案', en:'read the prompt box · write it · propose dim text' }],
@@ -375,6 +375,7 @@ const EVENTS = [
   [{ja:'プロンプトと Claude が読むもの', en:'PROMPTS & WHAT CLAUDE READS'}, [
     ['prompt.submit', 1, { ja:'送信されたプロンプト → next({ ...e, text | context }) | { drop }', en:'a prompt is submitted → next({ ...e, text | context }) | { drop }' }],
     ['prompt.fill · suggest', 1, { ja:'入力欄への下書き · 薄字の提案。書き換え可', en:'text going into the box as a draft · a dim suggestion' }],
+    ['prompt.autocomplete', 0, { ja:'入力欄の補完候補を出すとき → { suggestions: [{ text }] } で自分の行を足す', en:'the prompt box builds its autocomplete list → { suggestions: [{ text }] } adds your rows' }],
     ['prompt.compose', 0, { ja:'システムプロンプト全体 → { sections: [{ id, text, scope }] }', en:'a system prompt is rendered → { sections: [{ id, text, scope }] }' }],
     ['prompt.section', 0, { ja:'名前付きセクションごと → { text } | { text: null } で除外', en:'once per named section → { text } | { text: null } to drop it' }],
     ['prompt.context', 0, { ja:'会話ごとに 1 回、最初のメッセージに添える文脈 → { blocks }', en:'once per conversation, the context sent with the first message → { blocks }' }],
@@ -400,7 +401,7 @@ const EVENTS = [
   ]],
   [{ja:'サブエージェント', en:'SUBAGENTS'}, [
     ['agent.offer', 0, { ja:'サブエージェント型を Claude に提示 → { isOffered: false } で隠す', en:'a subagent type is offered → { isOffered: false } withholds it' }],
-    ['agent.spawn', 1, { ja:'サブエージェント / チームメイト（e.isTeammate）起動の直前 → next({ ...e, model }) | { deny }', en:'a subagent or teammate (e.isTeammate) is about to start → next({ ...e, model }) | { deny }' }],
+    ['agent.spawn', 1, { ja:'サブエージェント / チームメイト（e.isTeammate）/ workflow エージェント起動の直前 → next({ ...e, model }) | { deny }', en:'a subagent, teammate (e.isTeammate) or workflow agent is about to start → next({ ...e, model }) | { deny }' }],
   ]],
   [{ja:'インターフェース', en:'INTERFACE'}, [
     ['ui.render', 0, { ja:'描画サイトの描画直前 → 要素ツリー', en:'a render site is about to be drawn → element tree' }],
@@ -440,7 +441,7 @@ const DRAW_ROWS = [
   ['e', null, { ja:'<span class="m">e.component · surface (terminal | desktop) · requestId · viewport</span>。それ以外は <span class="m">e.props</span>（bodyColumns, placement: dock | inline …）。幅は bodyColumns に合わせる', en:'<span class="m">e.component · surface (terminal | desktop) · requestId · viewport</span>; everything else is on <span class="m">e.props</span> (bodyColumns, placement: dock | inline, …). Size to bodyColumns' }],
   ['pane', null, { ja:'<span class="m">$.ui.open({ id, title, focus })</span> → { isPlaced } ＋ <span class="m">on("ui.render", { component: "Pane" })</span> で requestId === id を描く。<span class="m">$.ui.close({ id })</span>。置けなければ AbovePrompt に描く', en:'<span class="m">$.ui.open({ id, title, focus })</span> → { isPlaced }, then draw component "Pane" where requestId === id; <span class="m">$.ui.close({ id })</span>. Not placed? draw in AbovePrompt' }],
   ['redraw', null, { ja:'render 中の <span class="m">$.state.get</span> は購読になり、<span class="m">$.state.set</span> で自動再描画。手動なら <span class="m">$.ui.invalidate("ui.render")</span>。描くものがなければ <span class="m">next(e)</span> を返す', en:'a <span class="m">$.state.get</span> during render subscribes; <span class="m">$.state.set</span> redraws. Manually: <span class="m">$.ui.invalidate("ui.render")</span>. Nothing to draw? return <span class="m">next(e)</span>' }],
-  ['controls', null, { ja:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · <span class="m">action</span> で本体のキーバインドに連動 · <span class="m">Box({ hover })</span> は往復なしで surface が適用', en:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · <span class="m">action</span> ties it to a keybinding · <span class="m">Box({ hover })</span> is applied by the surface, no round trip' }],
+  ['controls', null, { ja:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · children に文字列 / Text を入れて行全体を押せる · <span class="m">action</span> で本体のキーバインドに連動 · <span class="m">Box({ hover })</span> は往復なしで surface が適用', en:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · children (strings / Text) make a whole row pressable · <span class="m">action</span> ties it to a keybinding · <span class="m">Box({ hover })</span> is applied by the surface, no round trip' }],
 ];
 
 /* ════════════════════════ RENDER ════════════════════════ */

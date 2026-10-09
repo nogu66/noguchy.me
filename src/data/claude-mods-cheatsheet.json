@@ -1,12 +1,12 @@
 {
-  "version": "2.1.292",
+  "version": "2.1.295",
   "date": "2026-10-09",
   "history": [
     {
       "date": "2026-10-09",
-      "version": "2.1.292",
-      "ja": "prompt.mention・prompt.context・ui.fault を追加。tool.check の e.agentId / e.ceiling、tool.describe の isDeferred、next.error の re-entry、$.ui.selection / blit、$.session.authorize、管理設定 3 件を反映。",
-      "en": "Added prompt.mention, prompt.context and ui.fault. Covers e.agentId / e.ceiling on tool.check, isDeferred on tool.describe, re-entry on next.error, $.ui.selection / blit, $.session.authorize and three more settings."
+      "version": "2.1.295",
+      "ja": "prompt.mention・prompt.context・prompt.autocomplete・ui.fault を追加。tool.check の e.agentId / e.ceiling、tool.describe と $.tool.register の isDeferred、next.error の re-entry、$.ui.selection / blit / notify、$.session.authorize、$.model.complete のキャッシュ、Button の children、管理設定 4 件を反映。",
+      "en": "Added prompt.mention, prompt.context, prompt.autocomplete and ui.fault. Covers e.agentId / e.ceiling on tool.check, isDeferred on tool.describe and $.tool.register, re-entry on next.error, $.ui.selection / blit / notify, $.session.authorize, caching in $.model.complete, Button children and four more settings."
     },
     {
       "date": "2026-10-02",
