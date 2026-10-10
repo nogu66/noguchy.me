@@ -67,6 +67,13 @@ window.onload = () => {
   document.addEventListener("astro:after-swap", setThemeFeature);
 };
 
+// Let other scripts (the /terminal prompt) set the theme without desyncing themeValue
+document.addEventListener("theme:set", ({ detail }) => {
+  if (detail !== "light" && detail !== "dark") return;
+  themeValue = detail;
+  setPreference();
+});
+
 // Set theme-color value before page transition
 // to avoid navigation bar color flickering in Android dark mode
 document.addEventListener("astro:before-swap", event => {
