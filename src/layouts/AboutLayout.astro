@@ -3,6 +3,7 @@ import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 import Socials from "@/components/Socials.astro";
+import SectionHeading from "@/components/SectionHeading.astro";
 import Layout from "./Layout.astro";
 import { SITE } from "@/config";
 import { SOCIALS } from "@/constants";
@@ -39,13 +40,17 @@ const personStructuredData = {
   <Header />
   <Breadcrumb />
   <main id="main-content">
-    <section id="about" class="app-prose mb-28 max-w-app prose-img:border-0">
-      <h1 class="text-2xl tracking-wider sm:text-3xl">{frontmatter.title}</h1>
-      <slot />
+    <section id="about" class="mb-16">
+      <SectionHeading as="h1" label="わたしについて">
+        {frontmatter.title}
+      </SectionHeading>
+      <div class="app-prose cw-lead mt-10 max-w-read">
+        <slot />
+      </div>
       {
         SOCIALS.length > 0 && (
-          <div class="mt-8 flex flex-col sm:flex-row sm:items-center">
-            <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">Social Links:</div>
+          <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div class="cw-label text-ink-muted">Social Links</div>
             <Socials />
           </div>
         )

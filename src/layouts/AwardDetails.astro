@@ -48,28 +48,28 @@ const layoutProps = {
   <main
     id="main-content"
     class:list={[
-      "mx-auto w-full max-w-app px-4 pb-12",
+      "mx-auto w-full max-w-read px-4 pb-16",
       { "mt-8": !SITE.showBackButton },
     ]}
   >
-    <article class="mx-auto prose prose-lg">
+    <article class="app-prose mx-auto">
       <!-- タイトルと受賞情報 -->
       <div
-        class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
+        class="not-prose mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
       >
-        <h1 class="flex-1 text-2xl font-bold text-accent sm:text-3xl">
+        <h1 class="flex-1 text-2xl leading-snug sm:text-[33.28px]">
           {title}
         </h1>
         <span
-          class="shrink-0 rounded-lg bg-accent px-4 py-2 text-base font-semibold text-background"
+          class="shrink-0 self-start bg-cobalt px-4 py-2 text-sm leading-none font-black text-on-cobalt"
         >
           {awardName}
         </span>
       </div>
 
       <!-- 日付情報 -->
-      <div class="mb-6 text-foreground">
-        <p class="text-sm text-muted">{formatDate(date)}</p>
+      <div class="not-prose mb-6">
+        <p class="cw-ui text-ink-muted">{formatDate(date)}</p>
       </div>
 
       <!-- リンクボタン -->
@@ -80,11 +80,11 @@ const layoutProps = {
               href={projectUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-background shadow-sm transition-all hover:opacity-90"
+              class="cw-btn cw-btn--cobalt"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
+                class="size-3"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -105,11 +105,11 @@ const layoutProps = {
               href={eventUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-lg border-2 border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all hover:border-accent hover:bg-muted"
+              class="cw-btn"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
+                class="size-3"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -131,7 +131,7 @@ const layoutProps = {
       <!-- タグ -->
       {
         tags && tags.length > 0 && (
-          <ul class="not-prose mb-8 flex flex-wrap gap-x-2 gap-y-1">
+          <ul class="not-prose mb-8 flex flex-wrap gap-2">
             {tags.map(tag => (
               <Tag tag={slugifyStr(tag)} tagName={tag} />
             ))}
@@ -140,9 +140,7 @@ const layoutProps = {
       }
 
       <!-- Markdownコンテンツ -->
-      <div
-        class="prose-headings:text-foreground prose-p:text-foreground prose-a:text-accent prose-blockquote:text-foreground prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-ol:text-foreground prose-ul:text-foreground"
-      >
+      <div>
         <Content />
       </div>
 

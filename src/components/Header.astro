@@ -3,10 +3,8 @@ import IconX from "@/assets/icons/IconX.svg";
 import IconMoon from "@/assets/icons/IconMoon.svg";
 import IconSearch from "@/assets/icons/IconSearch.svg";
 import IconRss from "@/assets/icons/IconRss.svg";
-import IconArchive from "@/assets/icons/IconArchive.svg";
 import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
 import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
-import LinkButton from "./LinkButton.astro";
 import SearchModal from "./SearchModal.astro";
 import { SITE } from "@/config";
 import { NEWS } from "@/news.config";
@@ -23,156 +21,122 @@ const isActive = (path: string) => {
 
   return currentPath === path || currentPathArray[0] === pathArray[0];
 };
+
+const navItems = [
+  { href: NEWS.website, label: "News", external: true },
+  { href: "/posts", label: "Posts" },
+  { href: "/tags", label: "Tags" },
+  { href: "/activities", label: "Activities" },
+  { href: "/about", label: "About" },
+  ...(SITE.showArchives ? [{ href: "/archives", label: "Archives" }] : []),
+];
 ---
 
-<header
-  class="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm"
->
+<header class="sticky top-0 z-30 border-b border-line bg-surface">
   <a
     id="skip-to-content"
     href="#main-content"
-    class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4"
+    class="absolute start-16 -top-full z-50 bg-surface px-3 py-2 text-cobalt transition-all focus:top-4"
   >
     Skip to content
   </a>
   <div
     id="nav-container"
-    class="mx-auto flex max-w-app flex-col items-center justify-between sm:flex-row"
+    class="mx-auto flex max-w-app flex-wrap items-center justify-between gap-x-6 px-4 py-3"
   >
-    <div
-      id="top-nav-wrap"
-      class="relative flex w-full items-baseline justify-between p-4 sm:items-center sm:py-4"
+    <a
+      href="/"
+      class="bg-cobalt px-3 py-2 text-sm leading-none font-black tracking-wide text-on-cobalt uppercase"
     >
-      <a
-        href="/"
-        class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap text-foreground-dark sm:static sm:my-auto sm:text-2xl sm:leading-none"
+      {SITE.title}
+    </a>
+    <button
+      id="menu-btn"
+      class="flex size-9 items-center justify-center md:hidden"
+      aria-label="Open Menu"
+      aria-expanded="false"
+      aria-controls="nav-menu"
+    >
+      <IconX id="close-icon" class="hidden" />
+      <IconMenuDeep id="menu-icon" />
+    </button>
+    <nav
+      id="nav-menu"
+      class="hidden w-full flex-col gap-4 pt-4 pb-2 md:flex md:w-auto md:flex-row md:items-center md:gap-6 md:p-0"
+    >
+      <ul
+        class="cw-ui flex flex-col tracking-wider uppercase md:flex-row md:items-center md:gap-5"
       >
-        {SITE.title}
-      </a>
-      <nav
-        id="nav-menu"
-        class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-2 sm:py-0"
-      >
-        <button
-          id="menu-btn"
-          class="focus-outline self-end p-2 sm:hidden"
-          aria-label="Open Menu"
-          aria-expanded="false"
-          aria-controls="menu-items"
-        >
-          <IconX id="close-icon" class="hidden" />
-          <IconMenuDeep id="menu-icon" />
-        </button>
-        <ul
-          id="menu-items"
-          class:list={[
-            "mt-4 grid w-44 grid-cols-2 place-content-center gap-2",
-            "[&>li>a]:block [&>li>a]:px-4 [&>li>a]:py-3 [&>li>a]:text-center [&>li>a]:font-medium [&>li>a]:hover:text-accent sm:[&>li>a]:px-3 sm:[&>li>a]:py-1",
-            "hidden",
-            "sm:mt-0 sm:flex sm:w-auto sm:gap-x-2 sm:gap-y-0 xl:gap-x-4",
-          ]}
-        >
-          <li class="col-span-2">
-            <a href={NEWS.website}> News </a>
-          </li>
-          <li class="col-span-2">
-            <a href="/posts" class:list={{ "active-nav": isActive("/posts") }}>
-              Posts
-            </a>
-          </li>
-          <li class="col-span-2">
-            <a href="/tags" class:list={{ "active-nav": isActive("/tags") }}>
-              Tags
-            </a>
-          </li>
-          <li class="col-span-2">
-            <a href="/about" class:list={{ "active-nav": isActive("/about") }}>
-              About
-            </a>
-          </li>
-          <li class="col-span-2">
-            <a
-              href="/activities"
-              class:list={{ "active-nav": isActive("/activities") }}
-            >
-              Activities
-            </a>
-          </li>
-          {
-            SITE.showArchives && (
-              <li class="col-span-2">
-                <LinkButton
-                  href="/archives"
-                  class:list={[
-                    "focus-outline flex justify-center p-3 sm:p-1",
-                    {
-                      "active-nav": isActive("/archives"),
-                    },
-                  ]}
-                  ariaLabel="archives"
-                  title="Archives"
-                >
-                  <IconArchive class="hidden sm:inline-block" />
-                  <span class="sm:sr-only">Archives</span>
-                </LinkButton>
-              </li>
-            )
-          }
-          <li
-            class="col-span-1 flex items-center justify-center border-l border-border pl-2 sm:ml-2"
+        {
+          navItems.map(item => (
+            <li class="border-b border-line md:border-0">
+              <a
+                href={item.href}
+                class:list={[
+                  "block py-3 hover:text-cobalt md:py-1",
+                  { "active-nav": !item.external && isActive(item.href) },
+                ]}
+                aria-current={
+                  !item.external && isActive(item.href) ? "page" : undefined
+                }
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <ul class="flex items-center gap-1 md:border-l md:border-line md:pl-4">
+        <li>
+          <a
+            href="/rss.xml"
+            target="_blank"
+            class="flex size-9 items-center justify-center text-ink-muted hover:text-cobalt"
+            aria-label="rss feed"
+            title="RSS Feed"
           >
-            <a
-              href="/rss.xml"
-              target="_blank"
-              class="focus-outline flex p-3 text-muted hover:text-accent sm:p-1"
-              aria-label="rss feed"
-              title="RSS Feed"
-            >
-              <IconRss />
-              <span class="sr-only">RSS Feed</span>
-            </a>
-          </li>
-          <li class="col-span-1 flex items-center justify-center">
-            <button
-              data-search-trigger
-              class="focus-outline flex p-3 text-muted hover:text-accent sm:p-1"
-              aria-label="Search"
-              title="Search (Ctrl+K / ⌘K)"
-            >
-              <IconSearch />
-              <span class="sr-only">Search</span>
-            </button>
-          </li>
-          {
-            SITE.lightAndDarkMode && (
-              <li class="col-span-1 flex items-center justify-center">
-                <button
-                  id="theme-btn"
-                  class="focus-outline relative size-12 p-4 text-muted hover:text-accent sm:size-8 hover:[&>svg]:stroke-current"
-                  title="Toggles light & dark"
-                  aria-label="auto"
-                  aria-live="polite"
-                >
-                  <IconMoon class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-                  <IconSunHigh class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-                </button>
-              </li>
-            )
-          }
-        </ul>
-      </nav>
-    </div>
+            <IconRss class="size-5" />
+          </a>
+        </li>
+        <li>
+          <button
+            data-search-trigger
+            class="flex size-9 items-center justify-center text-ink-muted hover:text-cobalt"
+            aria-label="Search"
+            title="Search (Ctrl+K / ⌘K)"
+          >
+            <IconSearch class="size-5" />
+          </button>
+        </li>
+        {
+          SITE.lightAndDarkMode && (
+            <li>
+              <button
+                id="theme-btn"
+                class="relative block size-9 text-ink-muted hover:text-cobalt hover:[&>svg]:stroke-current"
+                title="Toggles light & dark"
+                aria-label="auto"
+                aria-live="polite"
+              >
+                <IconMoon class="absolute top-[50%] left-[50%] size-5 -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+                <IconSunHigh class="absolute top-[50%] left-[50%] size-5 -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+              </button>
+            </li>
+          )
+        }
+      </ul>
+    </nav>
   </div>
 </header>
 
 <script>
   function toggleNav() {
     const menuBtn = document.querySelector("#menu-btn");
-    const menuItems = document.querySelector("#menu-items");
+    const menu = document.querySelector("#nav-menu");
     const menuIcon = document.querySelector("#menu-icon");
     const closeIcon = document.querySelector("#close-icon");
 
-    if (!menuBtn || !menuItems || !menuIcon || !closeIcon) return;
+    if (!menuBtn || !menu || !menuIcon || !closeIcon) return;
 
     menuBtn.addEventListener("click", () => {
       const openMenu = menuBtn.getAttribute("aria-expanded") === "true";
@@ -180,7 +144,8 @@ const isActive = (path: string) => {
       menuBtn.setAttribute("aria-expanded", openMenu ? "false" : "true");
       menuBtn.setAttribute("aria-label", openMenu ? "Open Menu" : "Close Menu");
 
-      menuItems.classList.toggle("hidden");
+      menu.classList.toggle("hidden");
+      menu.classList.toggle("flex");
       menuIcon.classList.toggle("hidden");
       closeIcon.classList.toggle("hidden");
     });

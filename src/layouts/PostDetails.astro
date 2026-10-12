@@ -94,18 +94,18 @@ const nextPost =
   <main
     id="main-content"
     class:list={[
-      "mx-auto w-full max-w-app px-4 pb-12",
+      "mx-auto w-full max-w-read px-4 pb-16",
       { "mt-8": !SITE.showBackButton },
     ]}
     data-pagefind-body
   >
     <h1
       transition:name={slugifyStr(title)}
-      class="inline-block text-2xl font-bold text-foreground-dark sm:text-3xl"
+      class="inline-block text-2xl leading-snug font-black sm:text-[33.28px]"
     >
       {title}
     </h1>
-    <div class="my-2 flex items-center gap-2">
+    <div class="my-4 flex items-center gap-2">
       <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
       <span
         aria-hidden="true"
@@ -118,16 +118,16 @@ const nextPost =
     </div>
     <article
       id="article"
-      class="app-prose mx-auto mt-8 max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"
+      class="app-prose mx-auto mt-10 text-[15px] leading-[1.8] prose-pre:bg-surface-soft dark:prose-pre:bg-(--shiki-dark-bg)"
     >
       <Content />
     </article>
 
-    <hr class="my-8 border-dashed" />
+    <hr class="my-10 border-line" />
 
     <EditPost class="sm:hidden" {hideEditPost} {post} />
 
-    <ul class="mt-4 mb-8 sm:my-8">
+    <ul class="mt-4 mb-8 flex flex-wrap gap-2 sm:my-8">
       {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} />)}
     </ul>
 
@@ -135,7 +135,7 @@ const nextPost =
 
     <ShareLinks {title} />
 
-    <hr class="my-6 border-dashed" />
+    <hr class="my-10 border-line" />
 
     <!-- Previous/Next Post Buttons -->
     <div data-pagefind-ignore class="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -143,12 +143,14 @@ const nextPost =
         prevPost && (
           <a
             href={getPath(prevPost.id, prevPost.filePath)}
-            class="flex w-full gap-1 hover:opacity-75"
+            class="flex w-full items-center gap-2 border-2 border-ink p-4 hover:bg-surface-soft"
           >
             <IconChevronLeft class="inline-block flex-none rtl:rotate-180" />
             <div>
-              <span>Previous Post</span>
-              <div class="text-sm text-accent/85">{prevPost.title}</div>
+              <span class="cw-label text-ink-muted">Previous Post</span>
+              <div class="text-sm leading-snug font-black">
+                {prevPost.title}
+              </div>
             </div>
           </a>
         )
@@ -157,11 +159,13 @@ const nextPost =
         nextPost && (
           <a
             href={getPath(nextPost.id, nextPost.filePath)}
-            class="flex w-full justify-end gap-1 text-end hover:opacity-75 sm:col-start-2"
+            class="flex w-full items-center justify-end gap-2 border-2 border-ink p-4 text-end hover:bg-surface-soft sm:col-start-2"
           >
             <div>
-              <span>Next Post</span>
-              <div class="text-sm text-accent/85">{nextPost.title}</div>
+              <span class="cw-label text-ink-muted">Next Post</span>
+              <div class="text-sm leading-snug font-black">
+                {nextPost.title}
+              </div>
             </div>
             <IconChevronRight class="inline-block flex-none rtl:rotate-180" />
           </a>
@@ -179,7 +183,7 @@ const nextPost =
     // Create the main container div
     const progressContainer = document.createElement("div");
     progressContainer.className =
-      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+      "progress-container fixed top-0 z-40 h-1 w-full";
 
     // Create the progress bar div
     const progressBar = document.createElement("div");
@@ -224,7 +228,7 @@ const nextPost =
       heading.classList.add("group");
       const link = document.createElement("a");
       link.className =
-        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+        "heading-link ms-2 no-underline md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
       link.href = "#" + heading.id;
 
       const span = document.createElement("span");
@@ -261,7 +265,7 @@ const nextPost =
         : "-top-3";
 
       const copyButton = document.createElement("button");
-      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+      copyButton.className = `copy-code cw-btn absolute end-3 ${topClass} bg-surface! h-6!`;
       copyButton.innerHTML = copyButtonLabel;
       codeBlock.setAttribute("tabindex", "0");
       codeBlock.appendChild(copyButton);

@@ -51,20 +51,21 @@ const breadcrumbStructuredData = {
   set:html={JSON.stringify(breadcrumbStructuredData)}
 />
 
-<nav class="mx-auto mt-8 mb-1 w-full max-w-app px-4" aria-label="breadcrumb">
-  <ul
-    class="font-light [&>li]:inline [&>li:not(:last-child)>a]:hover:opacity-100"
-  >
+<nav
+  class="cw-ui mx-auto mt-10 mb-4 w-full max-w-app px-4 text-ink-muted"
+  aria-label="breadcrumb"
+>
+  <ul class="[&>li]:inline [&>li:not(:last-child)>a]:hover:text-cobalt">
     <li>
-      <a href="/" class="opacity-80">Home</a>
-      <span aria-hidden="true" class="opacity-80">&raquo;</span>
+      <a href="/">Home</a>
+      <span aria-hidden="true" class="text-ink-subtle">/</span>
     </li>
     {
       breadcrumbList.map((breadcrumb, index) =>
         index + 1 === breadcrumbList.length ? (
           <li>
             <span
-              class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
+              class:list={["text-ink capitalize", { lowercase: index > 0 }]}
               aria-current="page"
             >
               {/* make the last part lowercase in Home > Tags > some-tag */}
@@ -73,10 +74,12 @@ const breadcrumbStructuredData = {
           </li>
         ) : (
           <li>
-            <a href={`/${breadcrumb}/`} class="capitalize opacity-70">
+            <a href={`/${breadcrumb}/`} class="capitalize">
               {breadcrumb}
             </a>
-            <span aria-hidden="true">&raquo;</span>
+            <span aria-hidden="true" class="text-ink-subtle">
+              /
+            </span>
           </li>
         )
       )

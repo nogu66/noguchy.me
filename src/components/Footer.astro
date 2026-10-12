@@ -1,4 +1,7 @@
 ---
+import Socials from "./Socials.astro";
+import { SITE } from "@/config";
+
 const currentYear = new Date().getFullYear();
 
 export interface Props {
@@ -6,17 +9,46 @@ export interface Props {
 }
 
 const { noMarginTop = false } = Astro.props;
+
+const links = [
+  { href: "/posts", label: "Posts" },
+  { href: "/tags", label: "Tags" },
+  { href: "/activities", label: "Activities" },
+  { href: "/links", label: "Links" },
+  { href: "/rss.xml", label: "RSS" },
+];
 ---
 
 <footer
   class:list={[
-    "w-full border-t border-border bg-background/95 backdrop-blur-sm",
-    { "mt-auto": !noMarginTop },
+    "w-full max-w-none! border-t border-line px-0!",
+    noMarginTop ? "mt-0" : "mt-auto",
   ]}
 >
-  <div class="mx-auto max-w-app px-4 py-6 text-center">
-    <p class="text-sm text-muted">
-      Copyright &#169; {currentYear} nogu. All rights reserved.
-    </p>
+  <div
+    class="mx-auto flex max-w-app flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div>
+      <a href="/" class="text-xl leading-none font-black uppercase">
+        {SITE.title}<span class="text-cobalt">.</span>
+      </a>
+      <p class="cw-ui mt-2 text-ink-muted">
+        Copyright &#169; {currentYear} nogu. All rights reserved.
+      </p>
+    </div>
+    <div class="flex flex-col gap-3 sm:items-end">
+      <ul class="cw-ui flex flex-wrap gap-x-5 gap-y-1 tracking-wider uppercase">
+        {
+          links.map(link => (
+            <li>
+              <a href={link.href} class="hover:text-cobalt">
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <Socials />
+    </div>
   </div>
 </footer>

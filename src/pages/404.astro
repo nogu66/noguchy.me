@@ -2,7 +2,6 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import LinkButton from "@/components/LinkButton.astro";
 import { SITE } from "@/config";
 ---
 
@@ -14,15 +13,11 @@ import { SITE } from "@/config";
     class="mx-auto flex max-w-app flex-1 items-center justify-center"
   >
     <div class="mb-14 flex flex-col items-center justify-center">
-      <h1 class="text-9xl font-bold text-accent">404</h1>
-      <span aria-hidden="true">¯\_(ツ)_/¯</span>
-      <p class="mt-4 text-2xl sm:text-3xl">Page Not Found</p>
-      <LinkButton
-        href="/"
-        class="my-6 text-lg underline decoration-dashed underline-offset-8"
-      >
-        Go back home
-      </LinkButton>
+      <h1 class="text-9xl leading-none font-black">
+        404<span class="text-cobalt">.</span>
+      </h1>
+      <p class="cw-lead mt-4">Page Not Found</p>
+      <a href="/" class="cw-btn cw-btn--cobalt my-6">Go back home</a>
     </div>
   </main>
 
