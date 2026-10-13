@@ -109,6 +109,12 @@ const pageDesc = profile.bio;
     <meta property="og:type" content="website" />
     <meta property="og:url" content={`${SITE.website}links`} />
     <meta name="twitter:card" content="summary" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@600;700;900&family=Roboto:wght@600;700;900&display=swap"
+    />
     <ThemeScript />
 
     {
@@ -145,7 +151,7 @@ const pageDesc = profile.bio;
       <!-- プロフィール -->
       <div class="mb-8 flex flex-col items-center text-center">
         <div
-          class="mb-4 h-24 w-24 overflow-hidden rounded-full bg-accent/10 ring-2 ring-accent/20"
+          class="mb-4 h-24 w-24 overflow-hidden rounded-full border-2 border-cobalt bg-surface-soft"
         >
           {
             profile.avatar ? (
@@ -155,15 +161,25 @@ const pageDesc = profile.bio;
                 class="h-full w-full object-cover"
               />
             ) : (
-              <div class="flex h-full w-full items-center justify-center text-3xl font-bold text-accent">
+              <div class="flex h-full w-full items-center justify-center text-3xl font-black text-cobalt">
                 {profile.name.charAt(0).toUpperCase()}
               </div>
             )
           }
         </div>
-        <h1 class="text-xl font-bold">{profile.name}</h1>
-        {profile.title && <p class="text-sm text-muted">{profile.title}</p>}
-        {profile.bio && <p class="mt-2 text-sm text-muted">{profile.bio}</p>}
+        <h1 class="text-[33.28px] leading-none">
+          {profile.name}<span class="text-cobalt">.</span>
+        </h1>
+        {
+          profile.title && (
+            <p class="cw-label mt-2 text-ink-muted">{profile.title}</p>
+          )
+        }
+        {
+          profile.bio && (
+            <p class="mt-4 text-sm text-ink-muted">{profile.bio}</p>
+          )
+        }
       </div>
 
       <!-- OGPリンクカード -->
@@ -174,22 +190,23 @@ const pageDesc = profile.bio;
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              class="group block overflow-hidden rounded-lg border border-border bg-background transition-all hover:border-accent hover:shadow-md"
+              class="cw-card h-auto!"
             >
               {link.image && (
                 <div
                   class:list={[
                     "w-full overflow-hidden",
+                    "border-b-2 border-ink",
                     link.isGithubChart
                       ? "bg-white p-4"
-                      : "aspect-[1.91/1] bg-foreground/5",
+                      : "aspect-[1.91/1] bg-surface-soft",
                   ]}
                 >
                   <img
                     src={link.image}
                     alt={link.title}
                     class:list={[
-                      "w-full transition-transform group-hover:scale-105",
+                      "w-full",
                       link.isGithubChart ? "h-auto" : "h-full object-cover",
                     ]}
                     loading="lazy"
@@ -197,10 +214,8 @@ const pageDesc = profile.bio;
                 </div>
               )}
               <div class="flex items-center justify-between gap-2 p-3">
-                <div class="line-clamp-1 font-medium transition-colors group-hover:text-accent">
-                  {link.title}
-                </div>
-                <div class="flex shrink-0 items-center gap-1 text-xs text-muted">
+                <div class="line-clamp-1 font-black">{link.title}</div>
+                <div class="cw-ui flex shrink-0 items-center gap-1 text-ink-muted">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-3 w-3"
@@ -226,7 +241,7 @@ const pageDesc = profile.bio;
       <div class="mt-8 flex justify-center">
         <button
           id="theme-btn"
-          class="rounded-full p-2 text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
+          class="rounded-full border-2 border-cobalt p-2 text-cobalt hover:bg-cobalt hover:text-on-cobalt"
           title="テーマ切り替え"
           aria-label="テーマ切り替え"
         >

@@ -4,6 +4,7 @@ import { SITE } from "@/config";
 
 interface StringTitleProp {
   pageTitle: string;
+  pageLabel?: string;
   pageDesc?: string;
   withSidebar?: boolean;
 }
@@ -11,6 +12,7 @@ interface StringTitleProp {
 interface ArrayTitleProp {
   pageTitle: [string, string];
   titleTransition: string;
+  pageLabel?: string;
   pageDesc?: string;
   withSidebar?: boolean;
 }
@@ -24,24 +26,28 @@ const hasSidebar = props.withSidebar ?? false;
 ---
 
 <Breadcrumb />
-<div class="mx-auto w-full max-w-app px-4 pb-4">
+<div class="mx-auto w-full max-w-app px-4 pb-16">
   <div class:list={["layout-container", { "with-sidebar": hasSidebar }]}>
     <main data-backUrl={backUrl} id="main-content" class="main-content">
       {
         "titleTransition" in props ? (
-          <h1 class="text-2xl font-semibold text-foreground-dark sm:text-3xl">
+          <h1 class="cw-heading">
             {props.pageTitle[0]}
             <span transition:name={props.titleTransition}>
               {props.pageTitle[1]}
             </span>
+            <span class="cw-dot">.</span>
+            {props.pageLabel && <small>{props.pageLabel}</small>}
           </h1>
         ) : (
-          <h1 class="text-2xl font-semibold text-foreground-dark sm:text-3xl">
+          <h1 class="cw-heading">
             {props.pageTitle}
+            <span class="cw-dot">.</span>
+            {props.pageLabel && <small>{props.pageLabel}</small>}
           </h1>
         )
       }
-      <p class="mt-2 mb-8 text-muted">{props.pageDesc}</p>
+      <p class="mt-3 mb-10 text-ink-muted">{props.pageDesc}</p>
       <slot />
     </main>
     {

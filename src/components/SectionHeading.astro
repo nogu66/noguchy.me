@@ -1,0 +1,14 @@
+---
+export interface Props {
+  as?: "h1" | "h2";
+  label?: string;
+  class?: string;
+}
+
+const { as: Tag = "h2", label, class: className = "" } = Astro.props;
+---
+
+<Tag class:list={["cw-heading", className]}>
+  <slot /><span class="cw-dot">.</span>
+  {label && <small>{label}</small>}
+</Tag>

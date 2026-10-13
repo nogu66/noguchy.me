@@ -4,16 +4,34 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import Card from "@/components/Card.astro";
-import Hr from "@/components/Hr.astro";
+import Tag from "@/components/Tag.astro";
+import SectionHeading from "@/components/SectionHeading.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
-import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
+import getUniqueTags from "@/utils/getUniqueTags";
 import { SITE } from "@/config";
 
 const posts = await getCollection("blog", ({ data }) => data.published);
 
 const sortedPosts = getSortedPosts(posts);
 const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
-const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+const recentPosts = sortedPosts
+  .filter(({ data }) => !data.featured)
+  .slice(0, SITE.postPerIndex);
+
+const tags = getUniqueTags(posts);
+
+const byDateDesc = <T extends { data: { date: Date } }>(a: T, b: T) =>
+  b.data.date.getTime() - a.data.date.getTime();
+
+const talks = (await getCollection("talks")).sort(byDateDesc).slice(0, 3);
+const awards = (await getCollection("awards")).sort(byDateDesc);
+
+const formatDate = (date: Date) =>
+  date.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
 const websiteStructuredData = {
   "@context": "https://schema.org",
@@ -42,93 +60,125 @@ const websiteStructuredData = {
     />
   </Fragment>
   <Header />
-  <div class="mx-auto w-full max-w-app px-4">
-    <div class="layout-container">
-      <main id="main-content" data-layout="index" class="main-content">
-        <h1 class="sr-only">{SITE.title}</h1>
-        {
-          featuredPosts.length > 0 && (
-            <>
-              <section id="featured" class="pt-16 pb-8">
-                <h2 class="text-2xl font-semibold tracking-wide text-foreground-dark">
-                  Featured
-                </h2>
-                <ul>
-                  {featuredPosts.map(data => (
-                    <Card variant="h3" {...data} />
-                  ))}
-                </ul>
-              </section>
-              {recentPosts.length > 0 && <Hr />}
-            </>
-          )
-        }
+  <main id="main-content" data-layout="index" class="w-full pb-16">
+    <h1 class="sr-only">{SITE.title}</h1>
+    {
+      featuredPosts.length > 0 && (
+        <section id="featured" class="cw-section">
+          <SectionHeading label="注目の記事">Featured</SectionHeading>
+          <ul class="cw-list">
+            {featuredPosts.map(data => (
+              <Card variant="h3" {...data} />
+            ))}
+          </ul>
+        </section>
+      )
+    }
 
-        {
-          recentPosts.length > 0 && (
-            <section id="recent-posts" class="pt-16 pb-8">
-              <h2 class="text-2xl font-semibold tracking-wide text-foreground-dark">
-                Recent Posts
-              </h2>
-              <ul>
-                {recentPosts.map(
-                  (data, index) =>
-                    index < SITE.postPerIndex && <Card variant="h3" {...data} />
+    {
+      recentPosts.length > 0 && (
+        <section id="recent-posts" class="cw-section">
+          <div class="cw-section-head">
+            <SectionHeading label="記事">Posts</SectionHeading>
+            <a href="/posts/" class="cw-btn">
+              View all →
+            </a>
+          </div>
+          <ul class="cw-list">
+            {recentPosts.map(data => (
+              <Card variant="h3" {...data} />
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      tags.length > 0 && (
+        <section id="tags" class="cw-section">
+          <div class="cw-section-head">
+            <SectionHeading label="タグ">Tags</SectionHeading>
+            <a href="/tags/" class="cw-btn">
+              View all →
+            </a>
+          </div>
+          <ul class="flex flex-wrap gap-4">
+            {tags.slice(0, 10).map(({ tag, tagName }) => (
+              <Tag {tag} {tagName} size="lg" />
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      talks.length > 0 && (
+        <section id="talks" class="cw-section">
+          <div class="cw-section-head">
+            <SectionHeading label="登壇">Talks</SectionHeading>
+            <a href="/activities" class="cw-btn">
+              View all →
+            </a>
+          </div>
+          <div class="grid gap-6 sm:grid-cols-3">
+            {talks.map(talk => (
+              <a href={`/talks/${talk.id}`} class="cw-card">
+                {talk.data.ogpImage && (
+                  <img
+                    src={talk.data.ogpImage}
+                    alt=""
+                    class="aspect-video w-full border-b-2 border-ink object-cover"
+                    loading="lazy"
+                  />
                 )}
-              </ul>
-            </section>
-          )
-        }
+                <div class="flex flex-1 flex-col p-6">
+                  <p class="cw-ui text-ink-muted">
+                    {formatDate(talk.data.date)}
+                  </p>
+                  <h3 class="mt-2 line-clamp-3 text-base leading-snug">
+                    {talk.data.title}
+                  </h3>
+                  <p class="cw-ui mt-auto pt-4 text-ink-muted">
+                    {talk.data.event}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
 
-        <div class="my-12 text-center">
-          <a href="/posts/" class="btn btn-outline-primary">
-            All Posts
-            <IconArrowRight class="inline-block rtl:-rotate-180" />
-          </a>
-        </div>
-      </main>
-      <!-- サイドバー（一時的に非表示）
-      <aside class="sidebar-container">
-        <ArchiveSidebar items={archiveItems} />
-      </aside>
-      -->
-    </div>
-  </div>
+    {
+      awards.length > 0 && (
+        <section id="awards" class="cw-section">
+          <SectionHeading label="受賞">Awards</SectionHeading>
+          <ul class="cw-list">
+            {awards.map(award => (
+              <li>
+                <a
+                  href={`/awards/${award.id}`}
+                  class="group flex flex-col gap-2 py-5 sm:flex-row sm:items-baseline sm:gap-6"
+                >
+                  <span class="cw-ui shrink-0 text-ink-muted sm:w-36">
+                    {formatDate(award.data.date)}
+                  </span>
+                  <span class="flex-1 font-black group-hover:text-cobalt">
+                    {award.data.title}
+                  </span>
+                  <span class="cw-label shrink-0 text-cobalt">
+                    {award.data.award}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </main>
   <Footer />
 </Layout>
-
-<style>
-  .layout-container {
-    display: flex;
-    gap: 2rem;
-    align-items: start;
-  }
-
-  .layout-container.with-sidebar {
-    flex-direction: row;
-  }
-
-  .main-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .sidebar-container {
-    width: 280px;
-    flex-shrink: 0;
-  }
-
-  @media (max-width: 1024px) {
-    .layout-container.with-sidebar {
-      flex-direction: column;
-    }
-
-    .sidebar-container {
-      width: 100%;
-      order: -1;
-    }
-  }
-</style>
 
 <script>
   document.addEventListener("astro:page-load", () => {
