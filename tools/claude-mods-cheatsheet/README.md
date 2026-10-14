@@ -12,7 +12,7 @@ Source for https://noguchy.me/claude-mods-cheatsheet/ (ja) and /en/claude-mods-c
 3. `node tools/claude-mods-cheatsheet/export.mjs` writes PNG / SVG / WebP for both
    languages into `public/claude-mods-cheatsheet/`, plus `ogp.png` from `ogp.html`, and
    `public/claude-mods/ogp.png` (the /claude-mods/ overview page's card) from
-   `ogp-overview.html`. Its version is written in that HTML.
+   `ogp-overview.html`.
 
 Open `cheatsheet.html` in a browser to preview (`?lang=en` for English). The text is
 auto-fitted to A4 (2480 × 3508 px), so adding rows shrinks everything.

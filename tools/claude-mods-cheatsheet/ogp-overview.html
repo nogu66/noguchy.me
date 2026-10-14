@@ -1,69 +1,19 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Claude Mods の全体像 — OGP</title>
-<!-- OGP card for /claude-mods/ (1200 × 630 px). Same palette and serif as ogp.html. -->
+<title>Claude Mods Overview — OGP</title>
+<!-- OGP card for /claude-mods/ (1200 × 630 px). Same layout and serif as ogp.html, on the site's cobalt. -->
 <style>
   :root{
     --serif:"Anthropic Serif","Tiempos Text",Georgia,"Noto Serif CJK JP",serif;
-    --sans:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
-    --mono:"SF Mono",Menlo,"Noto Sans Mono CJK JP",monospace;
-    --bg:#141413; --fg:#faf9f5; --dim:#9c9a92; --clay:#d97757; --clay-soft:#f0a58a;
   }
-  html,body{margin:0;background:var(--bg)}
-  .card{box-sizing:border-box;width:1200px;height:630px;padding:72px 72px 64px;display:grid;grid-template-columns:1fr 470px;gap:56px;align-items:center;color:var(--fg)}
-  h1{margin:0;font:500 112px/1 var(--serif);letter-spacing:-2px}
-  h1 small{display:block;margin-top:18px;font:700 64px/1.1 var(--sans);letter-spacing:0}
-  .topics{margin:36px 0 0;font:600 26px/1.5 var(--sans);color:var(--dim)}
-  .meta{margin:40px 0 0;font:500 22px/1 var(--mono);color:var(--clay-soft)}
-
-  .term{border-radius:14px;overflow:hidden;background:#1f1e1c;box-shadow:0 0 0 2px #2c2b28}
-  .bar{display:flex;gap:8px;align-items:center;padding:14px 16px;background:#2a2926}
-  .bar i{width:13px;height:13px;border-radius:50%;background:#ec6a5e}
-  .bar i:nth-child(2){background:#f4bf4f}.bar i:nth-child(3){background:#61c554}
-  .body{display:grid;grid-template-columns:1fr 150px;height:330px}
-  .main{position:relative;display:flex;flex-direction:column;gap:6px;padding:18px 16px 14px;font:500 15px/1.5 var(--mono)}
-  .main .dim{color:#8d8b83}
-  .grow{flex:1}
-  b{font-family:var(--sans);font-weight:800;color:var(--clay-soft)}
-  .toast{position:absolute;top:14px;right:12px;padding:6px 10px;border-radius:7px;background:#c4613f;font:700 14px/1 var(--sans)}
-  .toast b{color:#fff}
-  .band{padding:8px 10px;border-radius:5px;background:#3a2a22;font:600 14px/1.3 var(--sans)}
-  .input{padding:6px 10px;border-radius:5px;background:#292825}
-  .status{font:600 14px/1.3 var(--sans)}
-  .pane{display:flex;flex-direction:column;gap:6px;padding:18px 14px;background:#2a2926;font:500 14px/1.5 var(--mono)}
-  .pane .dim{color:#8d8b83}
+  html,body{margin:0;background:#003894}
+  .card{width:1200px;height:630px;display:flex;align-items:center;justify-content:center}
+  h1{margin:0;font:500 164px/1.04 var(--serif);color:#ffffff;letter-spacing:-2.5px;text-align:center}
 </style>
 </head>
 <body>
-<div class="card">
-  <div>
-    <h1>Claude Mods<small>の全体像</small></h1>
-    <p class="topics">イベント · $ API · 描画 · はじめかた</p>
-    <p class="meta">Claude Code v2.1.299 · noguchy.me</p>
-  </div>
-  <div class="term">
-    <div class="bar"><i></i><i></i><i></i></div>
-    <div class="body">
-      <div class="main">
-        <div class="toast"><b>D トースト</b></div>
-        <span>&gt; バグを直して</span>
-        <span class="dim">● Read(login.ts)</span>
-        <span class="dim">● Bash(npm test)</span>
-        <span class="grow"></span>
-        <div class="band"><b>B 帯</b> 前回 42 秒・ツール 8 回</div>
-        <div class="input">&gt;</div>
-        <div class="status"><b>C ステータスライン</b></div>
-      </div>
-      <div class="pane">
-        <b>A ペイン</b>
-        <span class="dim">done Read</span>
-        <span class="dim">done Bash</span>
-        <span>runs Edit</span>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="card"><h1>Claude Mods<br>Overview</h1></div>
 </body>
 </html>
