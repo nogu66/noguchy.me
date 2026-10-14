@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Export cheatsheet.html to PNG, SVG and a WebP preview, in Japanese and English,
-// and ogp.html to the pages' OGP card.
+// and ogp.html / ogp-overview.html to the OGP cards of the cheat sheet and
+// /claude-mods/ pages.
 //
 // usage: node tools/claude-mods-cheatsheet/export.mjs
 // needs: Google Chrome (set CHROME to override the binary), pdftocairo (brew install
@@ -64,15 +65,20 @@ for (const lang of ["ja", "en"]) {
   process.stdout.write(`${base}.{png,svg,webp}  v${meta.version}  ${meta.date}\n`);
 }
 
-const ogp = pathToFileURL(path.join(here, "ogp.html"));
-execFileSync(
-  chrome,
-  [
-    ...common,
-    "--window-size=1200,630",
-    `--screenshot=${path.join(out, "ogp.png")}`,
-    ogp.href,
-  ],
-  { stdio: "ignore" }
-);
-process.stdout.write(`${path.join(out, "ogp.png")}\n`);
+// OGP cards: the cheat sheet's, and the /claude-mods/ overview page's
+for (const [html, png] of [
+  ["ogp.html", path.join(out, "ogp.png")],
+  ["ogp-overview.html", path.join(root, "public/claude-mods/ogp.png")],
+]) {
+  execFileSync(
+    chrome,
+    [
+      ...common,
+      "--window-size=1200,630",
+      `--screenshot=${png}`,
+      pathToFileURL(path.join(here, html)).href,
+    ],
+    { stdio: "ignore" }
+  );
+  process.stdout.write(`${png}\n`);
+}
