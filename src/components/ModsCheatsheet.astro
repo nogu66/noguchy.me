@@ -26,6 +26,7 @@ const copy = {
     alt: "Claude Mods チートシート",
     note: "API はリリース間で変わることがあります。Claude Code のアップデートに合わせて定期的に更新しています。",
     article: "解説記事: Claude Mods 完全ガイド",
+    overview: "Claude Mods の全体像（最新の仕様をまとめたページ）",
   },
   en: {
     title: "Claude Mods Cheat Sheet",
@@ -41,6 +42,7 @@ const copy = {
     alt: "Claude Mods cheat sheet",
     note: "The API can change between releases. This sheet is updated regularly as Claude Code ships.",
     article: "Article (Japanese): The complete guide to Claude Mods",
+    overview: "Overview (Japanese): Claude Mods at a glance",
   },
 }[lang];
 
@@ -112,6 +114,14 @@ const v = `?v=${sheet.date}`;
         class="underline decoration-dashed underline-offset-4 hover:text-accent"
       >
         {copy.article}
+      </a>
+    </p>
+    <p class="mt-2 text-sm">
+      <a
+        href="/claude-mods/"
+        class="underline decoration-dashed underline-offset-4 hover:text-accent"
+      >
+        {copy.overview}
       </a>
     </p>
 
