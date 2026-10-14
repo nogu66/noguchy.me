@@ -1,0 +1,2253 @@
+---
+import { Code } from "astro:components";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Main from "@/layouts/Main.astro";
+
+const VERSION = "2.1.299";
+const UPDATED = "2026-10-14";
+
+const title = "Claude Mods の全体像";
+const desc =
+  "Claude Code の Mods（function hooks）で何ができて、どう書き、どう始めるのかを 1 ページにまとめました。ハッカソンの補足資料として使えます。";
+
+const codeThemes = { light: "min-light", dark: "night-owl" } as const;
+
+// Escape HTML, then turn `backticks` into <code>
+const md = (s: string) =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+
+const toc = [
+  ["what", "Mods とは"],
+  ["shape", "基本形"],
+  ["chain", "チェーン"],
+  ["events", "イベント"],
+  ["api", "$ API"],
+  ["ui", "描画"],
+  ["patterns", "3 つの型"],
+  ["start", "はじめかた"],
+  ["gotchas", "ハマりどころ"],
+  ["ideas", "アイデア"],
+  ["changes", "最近の変更"],
+  ["links", "リンク"],
+] as const;
+
+const abilities = [
+  {
+    label: "止める・書き換える",
+    body: "ツール実行、プロンプト送信、設定変更などを実行前に受け取り、拒否したり中身を書き換えたりできます。",
+    api: "tool.call · prompt.submit · config.set",
+  },
+  {
+    label: "描く",
+    body: "サイドパネル、プロンプト欄の上の帯、ツール結果の表示などを自分の UI に差し替えられます。",
+    api: "ui.render · $.ui.open · $.ui.toast",
+  },
+  {
+    label: "足す",
+    body: "スラッシュコマンド、モデルが呼べるツール、サブエージェントの型を追加できます。",
+    api: "$.command · $.tool · $.agent",
+  },
+];
+
+const compare = [
+  ["動く場所", "外部のシェルプロセス", "Claude Code のプロセス内の関数"],
+  [
+    "やりとり",
+    "JSON / テキストと allow・deny",
+    "値をそのまま書き換え、UI も返せる",
+  ],
+  ["タイミング", "決まった時点で 1 回", "next() の前後どちらでも介入できる"],
+  ["UI・状態", "持てない", "パネル描画、状態保持、タイマー"],
+  ["複数の組み合わせ", "順番の制御が難しい", "登録順のチェーンで自然に合成"],
+];
+
+const guardCode = `export function register(on) {
+  on("tool.call", { tool: "Bash" }, async ($, e, next) => {
+    if (e.command.includes("git push --force")) {
+      return { deny: "force push は使わないでください" } // 本体の代わりに答える
+    }
+    const r = await next(e) // 後ろのフックと本体を実行
+    $.ui.toast("Bash ran") // 結果を見てから反応する
+    return r
+  }).catch(($, e, next) =>
+    next.called ? next(e) : { deny: "ガードが失敗したので止めました" })
+}`;
+
+const args = [
+  {
+    k: "$",
+    title: "外の世界への唯一の窓口",
+    body: "画面、モデル、ファイル、ストア、タイマー、HTTP など。mod は Node も DOM もない環境で動くので、外に触れるのは必ず $ 経由です。$.ui.toast(…) のように省略せず書きます（読み込み時に静的に棚卸しされるため）。",
+  },
+  {
+    k: "e",
+    title: "イベントの入力",
+    body: "深く freeze されたプレーンなデータ。直接は書き換えられません。変えたいときは next({ ...e, command }) のようにコピーを渡します。",
+  },
+  {
+    k: "next",
+    title: "チェーンの残り",
+    body: "next(e) で後ろのフックと Claude Code 本体を実行し、その結果を受け取ります。呼ばずに return すれば、本体の代わりに答えたことになります。",
+  },
+];
+
+const nextUses = [
+  ["return next(e)", "そのまま通す"],
+  ["return next({ ...e, text })", "入力を書き換えて通す"],
+  ['return { deny: "…" }', "本体を動かさずに答える（拒否など）"],
+  ["const r = await next(e); …", "結果を見てから反応する・結果を書き換える"],
+];
+
+const tiers = [
+  ["prepend", "組織ポリシー", "prependPlugins"],
+  ["user", "あなたが入れた mod", "ハッカソンで作るのはここ"],
+  ["append", "組織ポリシー", "appendPlugins"],
+  ["builtin", "バイナリ同梱の mod", "sec-default, diff など"],
+  ["core", "Claude Code 本体", "既定の答えを出す"],
+] as const;
+
+// ===== Events =====
+const lifecycle = [
+  ["session.start", "起動"],
+  ["prompt.submit", "送信"],
+  ["turn.start", "ターン開始"],
+  ["turn.step", "モデルに問い合わせ"],
+  ["tool.call", "ツール実行前"],
+  ["tool.check", "許可判定"],
+  ["ui.render", "画面に描く"],
+  ["turn.complete", "ターン終了"],
+  ["session.end", "終了"],
+];
+
+type EventRow = { n: string; when: string; can: string; star?: boolean };
+const eventGroups: { cat: string; rows: EventRow[] }[] = [
+  {
+    cat: "ツール",
+    rows: [
+      {
+        n: "tool.call",
+        when: "ツールが実行される直前（許可確認より前）",
+        can: "`next({ ...e, command })` で入力を書き換え · `{ deny }` で拒否 · `{ result }` で結果を差し替え · `await next(e)` の後で結果を加工",
+        star: true,
+      },
+      {
+        n: "tool.check",
+        when: "実行してよいかの判定時（tool.call と PreToolUse の後）",
+        can: '`{ decision: "allow" | "ask" | "deny" }`',
+      },
+      {
+        n: "tool.describe",
+        when: "ツールの説明を初めてモデルに送るとき",
+        can: "`{ description, isDeferred }` で説明を書き換え",
+      },
+    ],
+  },
+  {
+    cat: "プロンプト",
+    rows: [
+      {
+        n: "prompt.submit",
+        when: "プロンプトが送信されたとき（ターン開始前）",
+        can: "`next({ ...e, text })` で書き換え · `context` でモデルだけが読む文脈を追加 · `{ drop }` で破棄",
+        star: true,
+      },
+      {
+        n: "prompt.edit",
+        when: "入力欄が編集されるたび（キー入力・貼り付け）",
+        can: "挿入される文字や入力欄の中身を書き換え",
+      },
+      {
+        n: "prompt.fill",
+        when: "入力欄に下書きが入る直前（$.prompt.fill）",
+        can: "文字列やモードを書き換え · `{ isFilled: false }` で入れない",
+      },
+      {
+        n: "prompt.suggest",
+        when: "入力欄に薄字の提案が出るとき（Tab で採用）",
+        can: "`next({ ...e, text })` で書き換え · `{ isShown: false }` で出さない",
+      },
+      {
+        n: "prompt.autocomplete",
+        when: "入力中、カーソル位置の単語の補完候補を作るとき",
+        can: "`{ suggestions: [{ text }] }` で候補を追加",
+      },
+      {
+        n: "prompt.mention",
+        when: "@ で指定したファイルを読む直前",
+        can: "`context` を追加 · 別の `path` を読ませる · `{ deny }`",
+      },
+      {
+        n: "prompt.compose",
+        when: "システムプロンプトを組み立てるとき",
+        can: "`{ sections }` の追加・置き換え・並べ替え・削除",
+      },
+      {
+        n: "prompt.section",
+        when: "システムプロンプトの名前付きセクションごと",
+        can: "`{ text }` で差し替え · `{ text: null }` で削除",
+      },
+      {
+        n: "prompt.context",
+        when: "会話ごとに 1 回、最初のメッセージに添える文脈を作るとき",
+        can: "`{ blocks }` を追加・削除・書き換え",
+      },
+      {
+        n: "prompt.attachment",
+        when: "リマインダーなど、本体が自動で足すメッセージごと",
+        can: "`{ text }` で差し替え · `{ text: null }` で外す",
+      },
+      {
+        n: "skill.prompt",
+        when: "スキル本文をモデル向けに展開するとき",
+        can: "`{ text }` で差し替え",
+      },
+      {
+        n: "attribution.text",
+        when: "コミット / PR 文に入れる帰属テキストを作るとき",
+        can: "`{ text }` で差し替え",
+      },
+    ],
+  },
+  {
+    cat: "コマンドと設定",
+    rows: [
+      {
+        n: "command.run",
+        when: "スラッシュコマンドの実行直前",
+        can: "`{ text }` で答える（自作コマンドの応答はここ）· `next({ ...e, args })` で引数を書き換え",
+        star: true,
+      },
+      {
+        n: "command.describe",
+        when: "コマンドを補完一覧や /help に出すとき",
+        can: "`{ description, argumentHint, isHidden }`",
+      },
+      {
+        n: "config.set",
+        when: "/config の行が変わる直前",
+        can: "`{ deny }` で変更させない · `next({ ...e, value })` で値を補正",
+      },
+      {
+        n: "config.describe",
+        when: "/config の行を一覧に出すとき",
+        can: "`{ label, description, isHidden }`",
+      },
+    ],
+  },
+  {
+    cat: "ターン",
+    rows: [
+      {
+        n: "turn.start",
+        when: "ターン開始時（サブエージェントも。メインは `e.agentId` なし）",
+        can: "観察のみ",
+      },
+      {
+        n: "turn.step",
+        when: "モデルへのリクエスト 1 回ごと",
+        can: "`model` / `effort` を差し替え · 応答ストリームを加工（async generator で書く）",
+      },
+      {
+        n: "turn.complete",
+        when: "ターンが終わったとき",
+        can: "`{ text }` で回答の下に一行表示（記録は変わらない）",
+        star: true,
+      },
+    ],
+  },
+  {
+    cat: "セッション",
+    rows: [
+      {
+        n: "session.start",
+        when: "最初のプロンプトの前と、mod のリロード後（/clear 後は来ない）",
+        can: "観察のみ。コマンドやツールの登録、タイマー開始はここで行う",
+        star: true,
+      },
+      {
+        n: "session.end",
+        when: "終了・/clear・/resume など（`e.reason`）",
+        can: "観察のみ（全フック合わせて短い時間制限あり）",
+      },
+      {
+        n: "session.compact",
+        when: "会話を圧縮する直前",
+        can: "指示やメッセージを書き換え · `{ skip }` で圧縮しない",
+      },
+      {
+        n: "session.append",
+        when: "会話に行が保存される直前",
+        can: "`next({ ...e, message })` で内容を書き換え（マスキングなど）",
+      },
+      {
+        n: "session.send",
+        when: "他のエージェント / セッションへメッセージを送る直前",
+        can: "本文・宛先を書き換え · `{ isDelivered: false }` で送らない",
+      },
+      {
+        n: "session.receive",
+        when: "外からメッセージが届いたとき",
+        can: "`next({ ...e, text })` で書き換え · `{ consumed }` で受け取って捨てる",
+      },
+      {
+        n: "session.attach · detach",
+        when: "スマホなどリモートの画面が接続・離脱したとき",
+        can: "観察のみ",
+      },
+      {
+        n: "session.measure",
+        when: "ターン後など、使用量の数字が動いたとき",
+        can: "観察のみ（`$.session.usage()` の値が届く）",
+      },
+    ],
+  },
+  {
+    cat: "サブエージェント",
+    rows: [
+      {
+        n: "agent.offer",
+        when: "サブエージェントの型をモデルに見せるとき",
+        can: "`{ isOffered: false }` で隠す",
+      },
+      {
+        n: "agent.spawn",
+        when: "サブエージェントやチームメイトの起動・再開の直前",
+        can: "`next({ ...e, model })` でモデルを変える · `{ deny }`",
+      },
+    ],
+  },
+  {
+    cat: "画面",
+    rows: [
+      {
+        n: "ui.render",
+        when: "各描画箇所を描く直前（→ 描画セクション）",
+        can: "要素ツリーを返す · `await next(e)` の描画を包む · `props` を書き換え · `next(e)` で何もしない",
+        star: true,
+      },
+      {
+        n: "ui.press",
+        when: "自分が描いた Button が押されたとき",
+        can: "`next(e)` で onPress を実行 · 横取りして別の動作",
+      },
+      {
+        n: "ui.input · ui.select",
+        when: "Input の入力・確定 / Select の選択",
+        can: "値を書き換えて onInput・onSubmit / onSelect に渡す",
+      },
+      {
+        n: "ui.focus · ui.scroll",
+        when: "ペインや帯でフォーカス・スクロール位置が動く直前",
+        can: "移動先を変える · `{ deny }` で動かさない",
+      },
+      {
+        n: "ui.close",
+        when: "ペインが閉じる直前（`e.origin.kind`: plugin · person · unload）",
+        can: "閉じる前の後片付け",
+      },
+      {
+        n: "ui.message",
+        when: "自分の Client が `surface.post(data)` したとき",
+        can: "データを受け取る · `{ props }` で再描画なしに渡し返す",
+      },
+      {
+        n: "ui.fault",
+        when: "自分の Client の読み込み・描画・実行が失敗したとき",
+        can: "観察のみ（ログを出してフォールバック）",
+      },
+      {
+        n: "ui.resolve",
+        when: "読み込み時、描画面と描画箇所ごとに 1 回",
+        can: "要素テーブルを差し替え（他の mod の要素のスタイルを変える）",
+      },
+    ],
+  },
+  {
+    cat: "メタ",
+    rows: [
+      {
+        n: "plugin.register",
+        when: "他の mod が読み込まれる直前",
+        can: "`{ refuse }` で読み込ませない（組織の審査用）",
+      },
+      {
+        n: "engine.create",
+        when: "この mod 用の $ を組み立てるとき",
+        can: "$ に名詞を足す（user tier は追加のみ）",
+      },
+      {
+        n: "telemetry.log · mark",
+        when: "テレメトリが記録される直前",
+        can: '中身を書き換え · `{ deny }`。マッチャーで `{ to: "collector" }` を指定',
+      },
+      {
+        n: "classic.<Event>",
+        when: "settings の従来フック（PreToolUse など）が動くとき",
+        can: "e は従来の stdin JSON。返り値も従来と同じ",
+      },
+      {
+        n: "<noun>.<method>",
+        when: "他の mod が $ を呼んだとき（例: `fs.read`）",
+        can: "`{ deny }` · `{ value }` で代わりに答える",
+      },
+      {
+        n: "*",
+        when: "上のすべて（telemetry 以外）",
+        can: '`"tool.*"` のような glob も使える',
+      },
+    ],
+  },
+];
+
+// ===== $ API =====
+type Method = [string, string];
+const apiGroups: {
+  cat: string;
+  nouns: { noun: string; methods: Method[] }[];
+}[] = [
+  {
+    cat: "画面に出す",
+    nouns: [
+      {
+        noun: "$.ui",
+        methods: [
+          ["toast(text)", "画面下の通知バーに数秒表示"],
+          ["status(text)", "ステータス行に表示（`undefined` で消す）"],
+          ["log(text)", "トランスクリプトに一行足す"],
+          ["notify(text, { title })", "OS のネイティブ通知"],
+          ["notice(text)", "ダイアログの下に一行"],
+          ["ask(…)", "AskUserQuestion のダイアログで質問する"],
+          [
+            "open({ id, title }) · close({ id }) · panes()",
+            "ペインを開く・閉じる・一覧",
+          ],
+          ["focus(…) · scroll(…)", "フォーカス・スクロール位置を動かす"],
+          ["copy({ text })", "クリップボードにコピー"],
+          ["selection()", "マウスで最後に選択したテキスト"],
+          ['invalidate("ui.render")', "再描画を依頼（$.state なら不要）"],
+          ["resolve(e)", "その画面の要素（Box, Text …）を得る"],
+          ["blit(…)", "再描画なしで Raster / Image を差し替え"],
+        ],
+      },
+    ],
+  },
+  {
+    cat: "モデルとプロンプト",
+    nouns: [
+      {
+        noun: "$.model",
+        methods: [
+          [
+            "complete({ model, prompt })",
+            "履歴なしの単発補完。結果は `{ isAnswered, text }`",
+          ],
+          ["fork({ prompt })", "この会話の続きとして、ツールなしで 1 回質問"],
+          ["classify(text, labels)", "ラベルを 1 つ選ばせる"],
+        ],
+      },
+      {
+        noun: "$.prompt",
+        methods: [
+          ["submit(…)", "プロンプトを送る（暇になったら新しいターンを始める）"],
+          ["read()", "入力欄の中身を読む"],
+          ["fill({ text, mode })", "入力欄に書く（replace · append · insert）"],
+          ["suggest(…)", "入力欄に薄字で提案"],
+          ["compose()", "システムプロンプトを組み立てて得る"],
+          ["media({ id })", "添付画像・文書の中身（managed の mod のみ）"],
+        ],
+      },
+    ],
+  },
+  {
+    cat: "機能を足す",
+    nouns: [
+      {
+        noun: "$.command",
+        methods: [
+          [
+            "register({ name, description })",
+            "/コマンドを追加。応答は `command.run` で返す",
+          ],
+          ["run(…)", "コマンドを入力したように実行"],
+          ["list()", "コマンドの一覧"],
+        ],
+      },
+      {
+        noun: "$.tool",
+        methods: [
+          [
+            "register({ name, description, inputSchema })",
+            "モデルが呼べるツールを追加（`mcp__<plugin>__<name>`）。応答は `tool.call` で返す",
+          ],
+          ["call(…)", "フックと権限を通してツールを実行"],
+          ["check(…)", "許可判定だけを得る"],
+          ["list()", "今あるツールの一覧"],
+        ],
+      },
+      {
+        noun: "$.agent",
+        methods: [
+          ["register(…)", "サブエージェントの型を追加（`<plugin>:<name>`）"],
+          [
+            "spawn({ subagentType, … })",
+            "サブエージェントを起動し、終わるまで待つ",
+          ],
+          ["list()", "動いているエージェントの一覧"],
+        ],
+      },
+    ],
+  },
+  {
+    cat: "セッションを知る・操作する",
+    nouns: [
+      {
+        noun: "$.session",
+        methods: [
+          ["id() · cwd() · root() · repo()", "セッションの識別子と場所"],
+          [
+            "model() · version() · turns()",
+            "モデル · Claude Code のバージョン · ターン数",
+          ],
+          [
+            "messages()",
+            "会話（1 メッセージ 1 項目の `{ role, text, toolUses }`）",
+          ],
+          ["usage()", "コンテキスト使用率 · レート制限 · コスト"],
+          [
+            "compact() · append({ message }) · send(…)",
+            "今すぐ圧縮 · 会話に行を足す · 他セッションへ送る",
+          ],
+          ["surfaces()", "接続中の画面（ターミナル · デスクトップ · スマホ）"],
+          [
+            "authorize()",
+            "Anthropic 認証のハンドル（`$.http.fetch` の auth 用。秘密は渡らない）",
+          ],
+          ["identity()", "サインイン情報（managed の mod のみ）"],
+        ],
+      },
+      {
+        noun: "$.turn",
+        methods: [["abort()", "実行中のターンを止める"]],
+      },
+    ],
+  },
+  {
+    cat: "データを持つ",
+    nouns: [
+      {
+        noun: "$.state",
+        methods: [
+          [
+            "get(ref) · set(ref, value)",
+            "セッション中の値。リロードしても残り、描画中に get すると set で自動再描画",
+          ],
+          [
+            "atom · read · update · derive",
+            '`"claude-code"` から import する補助関数',
+          ],
+        ],
+      },
+      {
+        noun: "$.store",
+        methods: [
+          [
+            "get(key) · set(key, value) · delete(key) · keys()",
+            "マシン上の全セッションで共有する KV（JSON、合計 4 MiB）",
+          ],
+        ],
+      },
+      {
+        noun: "$.fs",
+        methods: [
+          [
+            "read(path) · write(path, text) · list(path)",
+            "ファイルの読み書き（write は非アトミック）",
+          ],
+          [
+            "exists(path) · stat(path) · ancestors(…)",
+            "存在確認 · 種類やサイズ · 上位フォルダの指示ファイル",
+          ],
+        ],
+      },
+    ],
+  },
+  {
+    cat: "外とつながる",
+    nouns: [
+      {
+        noun: "$.http",
+        methods: [["fetch(url, init)", "ホスト経由の HTTP リクエスト"]],
+      },
+      {
+        noun: "$.process",
+        methods: [
+          [
+            "run({ argv }) · spawn({ argv })",
+            "コマンドを実行（シェルなし）· 出力をストリームで受ける",
+          ],
+        ],
+      },
+      {
+        noun: "$.mcp",
+        methods: [
+          [
+            "call(…) · connect(…)",
+            "接続済み MCP サーバーのツールを呼ぶ · 接続する",
+          ],
+        ],
+      },
+    ],
+  },
+  {
+    cat: "その他",
+    nouns: [
+      {
+        noun: "$.clock",
+        methods: [
+          [
+            "now() · sleep(ms) · after(…) · every(…)",
+            "時刻とキャンセルできるタイマー",
+          ],
+        ],
+      },
+      {
+        noun: "$.audio",
+        methods: [
+          [
+            "play({ asset }) · speak(text)",
+            "mod 内の音声ファイルを再生 · 読み上げ",
+          ],
+        ],
+      },
+      {
+        noun: "$.settings · $.config · $.env",
+        methods: [
+          [
+            "read() · list() / set() · get() / set()",
+            "設定の読み出し · /config の行 · 環境変数",
+          ],
+        ],
+      },
+      {
+        noun: "$.telemetry · $.plugin",
+        methods: [
+          [
+            "log() · mark() · name · root",
+            "テレメトリ記録 · 自分のプラグイン名とフォルダ",
+          ],
+        ],
+      },
+    ],
+  },
+];
+
+const stateVsStore = [
+  ["寿命", "セッションの間（/clear などで初期値）", "セッションをまたいで残る"],
+  ["ホットリロード", "残る", "残る"],
+  ["再描画", "描画中の get が購読し、set で自動再描画", "しない"],
+  ["型の宣言", "types/index.d.ts の PluginState に必要", "不要"],
+  ["向いている値", "画面に出す値", "次回の起動でも使う値"],
+];
+
+// ===== Drawing =====
+const surfaces = [
+  {
+    key: "A",
+    name: "ペイン",
+    api: '$.ui.open({ id, title }) + ui.render { component: "Pane" }',
+    note: "全画面表示では横にドック、それ以外はプロンプト欄の上に開く。タブで複数持てる",
+  },
+  {
+    key: "B",
+    name: "帯",
+    api: 'ui.render { component: "AbovePrompt" }',
+    note: "プロンプト欄の真上の一帯。Button や Input も置ける。全 mod で共有",
+  },
+  {
+    key: "C",
+    name: "ステータスライン",
+    api: "$.ui.status(text)",
+    note: "画面下の行に短い文字列を出す。`undefined` で消す。どのフックからでも呼べる",
+  },
+  {
+    key: "D",
+    name: "トースト",
+    api: "$.ui.toast(text)",
+    note: "通知バーに数秒だけ出す。どのフックからでも呼べる",
+  },
+];
+
+const siteRows = [
+  ["InfoNotice", "ロゴの下の薄い案内行", "ターミナル"],
+  [
+    "UserMessage",
+    "あなたのプロンプト（`> …`）、タスク通知、他エージェントからのメッセージ",
+    "両方",
+  ],
+  ["AssistantMessage", "Claude の回答テキスト", "両方"],
+  ["ToolUse", "ツール呼び出しの行（`Bash(ls -la)`）", "両方"],
+  ["ToolResult", "ツール行の下に出る結果", "両方"],
+  ["ToolGroup", "まとめられた行（`Read 3 files`）", "両方"],
+  ["ToolProgress", "実行中ツールの進捗行", "ターミナル"],
+  [
+    "CommandOutput",
+    "スラッシュコマンドの出力（自作コマンドの `{ text }` も）",
+    "両方",
+  ],
+  ["AskUserQuestion", "質問ダイアログ", "両方"],
+  ["Spinner", "ターン中に動く行（`Sautéing… 12s`）", "両方"],
+  ["TurnDuration", "ターンの終わりの行（`Baked for 3s`）", "ターミナル"],
+  ["AbovePrompt", "プロンプト欄の真上の帯。全 mod で共有", "両方"],
+  ["PromptHint", "プロンプト欄の下のヒント行（`? for shortcuts`）", "両方"],
+  ["SessionMode", "プロンプト欄の下、右端のモード表示", "両方"],
+  ["Pane", "`$.ui.open` で開くパネル。全画面では横にドック", "両方"],
+];
+
+const elementRows = [
+  [
+    "Box",
+    "並べる・囲む（flexbox）",
+    "flexDirection · gap · padding · borderStyle · backgroundColor · hover",
+    "両方",
+  ],
+  [
+    "Text",
+    "文字",
+    "color · dimColor · weight · size · mono · italic · wrap",
+    "両方",
+  ],
+  [
+    "Button",
+    "押せるボタン",
+    "label · hotkey · onPress · variant · plain",
+    "両方",
+  ],
+  ["Link", "リンク", "href · label", "両方"],
+  [
+    "Code",
+    "シンタックスハイライト付きコード / diff",
+    "source · language · path · format: 'diff'",
+    "両方",
+  ],
+  ["Markdown", "回答と同じ見た目の Markdown", "text · onLinkPress", "両方"],
+  [
+    "Input",
+    "テキスト入力欄",
+    "label · placeholder · value · onInput · onSubmit",
+    "両方",
+  ],
+  ["Select", "選択肢", "label · options · value · onSelect", "両方"],
+  [
+    "Client",
+    "別スレッドで動く描画モジュール（ゲームなど）",
+    "module · props · width · height",
+    "両方",
+  ],
+  [
+    "Raster",
+    "色付きセルのグリッド（グラフ・ヒートマップ）",
+    "columns · rows · cells",
+    "ターミナル",
+  ],
+  [
+    "Image",
+    "画像（kitty / Ghostty で表示）",
+    "source · columns · rows · alt",
+    "ターミナル",
+  ],
+  ["Svg", "SVG", "source · alt · width · height", "デスクトップ"],
+];
+
+const drawWays = [
+  [
+    "包む",
+    "`const drawn = await next(e)` を自分の Box の子に入れて、前後に足す",
+  ],
+  ["置き換える", "`next` を呼ばずに自分のツリーを返す"],
+  [
+    "props を変える",
+    "`next({ ...e, props: { ...e.props, … } })` で本体の描画に渡す値だけ変える",
+  ],
+  ["何もしない", "描くものがないときは `return next(e)`"],
+];
+
+const drawCode = `on("ui.render", { component: "ToolResult" }, async ($, e, next) => {
+  const { Box, Text, Button } = $.ui.resolve(e)
+  const drawn = await next(e) // 本体（と内側の mod）が描いたもの
+  return Box({ flexDirection: "column", children: [
+    drawn,
+    Text({ dimColor: true, children: "↳ reviewed" }),
+    Button({ label: "copy", hotkey: "c", onPress: () => $.ui.toast("copied") }),
+  ] })
+})`;
+
+const paneCode = `import { atom, read, update } from "claude-code"
+import type { Register } from "claude-code"
+import type { ToolCall } from "../types"
+
+const PANE = "tool-calls"
+const calls = atom({ plugin: "tool-calls", key: "calls" } as const, [])
+
+export const register: Register = on => {
+  // 1. コマンドを登録し、ペインを開く
+  on("session.start", async ($, e, next) => {
+    await $.command.register({ name: "tool-calls", description: "Show tool calls" })
+    void $.ui.open({ id: PANE, title: "Tool calls" })
+    return next(e)
+  })
+
+  // 2. 自作コマンドに答える
+  on("command.run", { command: "tool-calls" }, async $ => {
+    await $.ui.open({ id: PANE, title: "Tool calls" })
+    return { text: "Tool calls pane opened." }
+  })
+
+  // 3. 値を $.state に書く（読んでいる描画が自動で描き直される）
+  on("tool.call", async ($, e, next) => {
+    await update($, calls, list => [...list, { id: e.tool_use_id, tool: e.tool }].slice(-200))
+    return next(e)
+  })
+
+  // 4. ペインの中身を描く
+  on("ui.render", { component: "Pane", requestId: PANE }, async ($, e) => {
+    const { Box, Text } = $.ui.resolve(e)
+    const list = await read($, calls)
+    return (
+      <Box flexDirection="column">
+        {list.length === 0 && <Text dimColor>No tool calls yet.</Text>}
+        {list.map(call => <Text>{call.tool}</Text>)}
+      </Box>
+    )
+  })
+}`;
+
+const paneTypes = `// types/index.d.ts（plugin.json の "types" で指す）
+export type ToolCall = { id: string; tool: string }
+
+declare module "claude-code" {
+  interface PluginState {
+    "tool-calls": { calls: ToolCall[] }
+  }
+}`;
+
+const drawRules = [
+  "要素は `$.ui.resolve(e)` から取り出す（グローバルにはない）。`.tsx` なら JSX でも書ける",
+  "Pane と AbovePrompt は `e.props.bodyColumns` の幅に合わせて描く",
+  '描画中に `$.state.get` した値は、`$.state.set` されると自動で描き直される。手動なら `$.ui.invalidate("ui.render")`',
+  "描画中に `$.state.set` は呼べない。ボタンの `onPress` や別のイベントから書く",
+  "検証に通らないツリー（その画面にない要素など）は描かれず、本体の描画に戻る。理由はトランスクリプトに薄字で出る",
+  "描画が出るのはターミナルとデスクトップアプリ（Code タブ）。`e.surface` で出し分けられる",
+];
+
+// ===== Patterns =====
+const bandCode = `const turns = { plugin: "turn-counter", key: "turns" }
+
+export function register(on) {
+  on("turn.complete", async ($, e, next) => {
+    const r = await next(e)
+    if (!e.agentId) {
+      const { value = 0 } = await $.state.get(turns)
+      await $.state.set(turns, value + 1)
+    }
+    return r
+  })
+
+  on("ui.render", { component: "AbovePrompt" }, async ($, e, next) => {
+    const { value = 0 } = await $.state.get(turns) // 描画中の get が購読になる
+    if (value === 0) return next(e)
+    const { Text } = $.ui.resolve(e)
+    return Text({ dimColor: true, children: \`このセッション \${value} ターン目\` })
+  })
+}`;
+
+const memoryCode = `export function register(on) {
+  on("prompt.submit", async ($, e, next) => {
+    const notes = await $.store.get("notes").catch(() => undefined)
+    if (typeof notes !== "string") return next(e)
+    // モデルだけが読む文脈を足す（画面には出ない）
+    return next({ ...e, context: [...(e.context ?? []), notes] })
+  })
+}`;
+
+const patterns = [
+  {
+    name: "ガード",
+    shape: "tool.call + { deny }",
+    body: "危険なコマンドや本番への操作を止める。失敗時に素通りしないよう .catch を付けるのが定石です。",
+    code: guardCode,
+  },
+  {
+    name: "常駐 UI",
+    shape: "ui.render + $.state",
+    body: "プロンプト欄の上やサイドパネルに情報を出し続ける。値は $.state に置けば、書き換えるだけで再描画されます。（$.state を使う mod は types/index.d.ts で値の型を宣言します）",
+    code: bandCode,
+  },
+  {
+    name: "記憶",
+    shape: "prompt.submit + $.store",
+    body: "セッションをまたいで覚えておきたいことを、毎回のプロンプトに文脈として添える。",
+    code: memoryCode,
+  },
+];
+
+// ===== Getting started =====
+const tree = `my-mod/
+├── .claude-plugin/
+│   └── plugin.json      { "name": "my-mod", "version": "0.1.0", "description": "…" }
+├── hooks/
+│   ├── hooks.json       { "modules": ["./register.ts"] }
+│   └── register.ts      export function register(on, options) { … }
+├── types/index.d.ts     $.state を使うときだけ（plugin.json の "types" で指す）
+└── tests/*.test.ts      claude plugin test で実行`;
+
+const cliRows = [
+  [
+    "claude --plugin-dir ./my-mod",
+    "その 1 セッションだけ読み込む。保存するとホットリロード",
+  ],
+  [
+    "claude plugin validate ./my-mod",
+    "フックしたイベント、呼んでいる $、拒否される箇所を一覧（--strict --json）",
+  ],
+  ["claude plugin test ./my-mod", "*.test.ts を本物のランタイムで実行"],
+  [
+    "tsc -p ./my-mod",
+    "読み込み後に .claude-plugin/types/ に型が出るので型チェックできる",
+  ],
+  ["/plugin · /reload-plugins", "読み込み中の mod を確認 · 再読み込み"],
+];
+
+const shareCode = `// .claude-plugin/marketplace.json（mod のリポジトリ直下）
+{
+  "name": "my-mods",
+  "owner": { "name": "you" },
+  "plugins": [{ "name": "my-mod", "source": "./" }]
+}`;
+
+const gotchas = [
+  [
+    "読み込まれない",
+    "信頼していないフォルダでは、エラーも出さずに読み込まれません。/plugin で「1 mod active」と出るか確認します。",
+  ],
+  [
+    "$ は省略せず書く",
+    "$.ui.toast(…) のように名詞と動詞をそのまま書きます。const ui = $.ui のような書き方や import() は読み込みで拒否されます。",
+  ],
+  [
+    "状態の置き場所",
+    "保存のたびに register が再実行され、モジュール変数は消えます。画面に出す値は $.state、次回の起動でも使う値は $.store に置きます。",
+  ],
+  [
+    "描画中は書けない",
+    "ui.render の中で $.state.set は使えません。ボタンの onPress や別のイベントから書きます。",
+  ],
+  [
+    "時間の上限",
+    "フック自身の実行は 1 イベント 10 秒まで（next や $ を待つ時間は数えない）。.catch は 1 秒です。",
+  ],
+  [
+    "ガードには .catch",
+    ".catch がないと、フックが例外を投げたときに止めたかった操作がそのまま通ります。",
+  ],
+  [
+    "変数名 h",
+    "JSX はタグを h(…) の呼び出しに変換します。.tsx でローカル変数に h という名前を付けると描画が壊れます。",
+  ],
+  [
+    "$ の reject",
+    "await した $ 呼び出しの reject を放置すると mod 全体が外れます。.catch で受けておきます。",
+  ],
+  ["名前", "plugin.json の name を claude- で始めると validate で弾かれます。"],
+  [
+    "描画が出る場所",
+    "描画が出るのはターミナルとデスクトップアプリ（Code タブ）。VS Code のチャットや claude -p ではフックだけが動きます。",
+  ],
+  [
+    "組織の端末",
+    "Team / Enterprise や管理端末では sec-default が外側に入り、個人の mod が触れない箇所があります。v2.1.299 から /plugin と validate がスキップされたフックを表示します。",
+  ],
+];
+
+const ideas = [
+  {
+    cat: "安全",
+    items: [
+      ["force push・rm -rf・本番 DB 接続を止める", "tool.call + { deny }"],
+      ["コミット前に秘密情報をスキャン", "tool.call + 正規表現"],
+      ["本番デプロイだけ 2 段階承認", "tool.call + $.ui.ask"],
+    ],
+  },
+  {
+    cat: "開発体験",
+    items: [
+      ["コミット前に lint / test を自動で通す", "tool.call + $.process.run"],
+      ["/pr で差分から PR 説明を生成", "$.command.register + $.model.complete"],
+      [
+        "編集したファイルの影響範囲をパネルに出す",
+        "tool.call + ui.render（Pane）",
+      ],
+    ],
+  },
+  {
+    cat: "見える化",
+    items: [
+      ["コスト・コンテキスト残量の HUD", "session.measure + $.ui.status"],
+      [
+        "サブエージェントの進捗ダッシュボード",
+        "$.agent.list + ui.render（Pane）",
+      ],
+      ["CI の状態を常時表示", "$.http.fetch + $.clock.every"],
+    ],
+  },
+  {
+    cat: "体験・遊び",
+    items: [
+      [
+        "長いタスクの終了を読み上げ / 通知",
+        "turn.complete + $.audio.speak / $.ui.notify",
+      ],
+      ["待ち時間のミニゲーム", "ui.render（AbovePrompt）+ Client"],
+      [
+        "ツール結果に「セカンドオピニオン」ボタン",
+        "ui.render + Button + $.model.fork",
+      ],
+    ],
+  },
+  {
+    cat: "記憶・連携",
+    items: [
+      ["過去の失敗パターンを毎回の文脈に添える", "prompt.submit + $.store"],
+      [
+        "社内 API をモデルが呼べるツールにする",
+        "$.tool.register + $.http.fetch",
+      ],
+      ["/ticket で Linear / Jira に起票", "$.command.register + $.http.fetch"],
+    ],
+  },
+];
+
+const changes = [
+  [
+    "2.1.299",
+    "$.prompt.media（添付画像・文書の中身を読む）と $.session.identity() を追加。どちらも managed settings で入れた mod だけが使えます。",
+  ],
+  [
+    "2.1.299",
+    "Text に size · weight · mono · tabular を追加（bold は weight に置き換え予定）。Box の余白に xs〜xl の段階指定。",
+  ],
+  [
+    "2.1.299",
+    "turn.start がサブエージェントとチームメイトのターンでも発火（メインでは e.agentId なし）。agent.spawn が終了したサブエージェントの再開でも発火（e.resume）。",
+  ],
+  [
+    "2.1.299",
+    "skill.prompt の e にフロントマター・ソース・ファイルパス。session.append に queue の経路。",
+  ],
+  [
+    "2.1.299",
+    "止められる操作は、フックに渡せないとき通さずに拒否する（fail-closed）。組織管理でスキップされたフックを /plugin と validate が表示。",
+  ],
+  [
+    "2.1.296",
+    "$.http.fetch の 4 MiB 上限が HEAD を拒否しなくなった（2.1.299 で 204 · 205 · 304 も対象外に）。",
+  ],
+];
+
+const links = [
+  [
+    "公式: Mods の概要",
+    "https://code.claude.com/docs/en/plugins/mods/overview",
+  ],
+  ["公式: Mod を作る", "https://code.claude.com/docs/en/plugins/mods/create"],
+  [
+    "公式: リファレンス",
+    "https://code.claude.com/docs/en/plugins/mods/reference",
+  ],
+  [
+    "組み込み mod のソース（anthropics/claude-code/mods）",
+    "https://github.com/anthropics/claude-code/tree/main/mods",
+  ],
+  ["Claude Mods チートシート（1 枚の早見表）", "/claude-mods-cheatsheet/"],
+  [
+    "解説記事: Claude Mods 完全ガイド",
+    "/posts/claude-code-function-hooks-claude-mods/",
+  ],
+];
+---
+
+<Layout
+  title={`${title} | noguchy.me`}
+  description={desc}
+  ogImage="/claude-mods-cheatsheet/ogp.png"
+>
+  <Header />
+  <Main pageTitle={title} pageDesc={desc}>
+    <div class="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+      <span>
+        <span class="text-muted">対応バージョン</span>
+        <span class="ml-1 font-mono font-semibold">Claude Code v{VERSION}</span>
+      </span>
+      <span>
+        <span class="text-muted">最終更新</span>
+        <time class="ml-1 font-mono font-semibold" datetime={UPDATED}>
+          {UPDATED}
+        </time>
+      </span>
+      <a
+        href="/claude-mods-cheatsheet/"
+        class="ml-auto underline decoration-dashed underline-offset-4 hover:text-accent"
+      >
+        チートシート →
+      </a>
+    </div>
+
+    <nav aria-label="目次" class="mb-4 flex flex-wrap gap-2">
+      {
+        toc.map(([id, label]) => (
+          <a href={`#${id}`} class="cw-chip cw-chip--sm">
+            {label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <section id="what" class="cw-section px-0">
+      <h2 class="cw-heading">Mods とは<span class="cw-dot">.</span></h2>
+      <p class="cw-lead mt-6">
+        Claude Code の振る舞いと見た目を、TypeScript / JavaScript
+        の関数で書き換えるプラグインです。
+      </p>
+      <p class="mt-4 leading-relaxed">
+        土台は <strong>function hook</strong>
+        という仕組みです。イベントごとに async 関数を登録し、Express や Koa のミドルウェアのように重ねて合成します。mod
+        は「hooks/hooks.json がこのモジュールを 1 つ指しているプラグイン」で、配布もインストールも普通のプラグインと同じです。
+      </p>
+
+      <div class="mt-8 grid gap-4 sm:grid-cols-3">
+        {
+          abilities.map(a => (
+            <div class="cw-card p-5">
+              <p class="cw-label text-cobalt">{a.label}</p>
+              <p class="mt-3 text-sm leading-relaxed">{a.body}</p>
+              <p class="mt-auto pt-4 font-mono text-xs text-muted">{a.api}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <h3 class="mt-12 mb-4 text-lg font-bold">従来の hooks との違い</h3>
+      <div class="overflow-x-auto">
+        <table class="mods-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>従来の hooks（settings）</th>
+              <th>Mods（function hooks）</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              compare.map(([k, a, b]) => (
+                <tr>
+                  <th scope="row">{k}</th>
+                  <td class="text-muted">{a}</td>
+                  <td>{b}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="mt-6 space-y-1 text-sm">
+        <li>
+          ・ターミナルは v2.1.287 以降、デスクトップアプリは v2.1.286
+          以降で既定でオン（フラグ不要）
+        </li>
+        <li>
+          ・従来の settings の hooks はそのまま動きます。mod からは <code
+            >classic.PreToolUse</code
+          > などとしてフックできます
+        </li>
+      </ul>
+    </section>
+
+    <section id="shape" class="cw-section px-0">
+      <h2 class="cw-heading">基本形<span class="cw-dot">.</span></h2>
+      <p class="mt-6 leading-relaxed">
+        モジュールは <code>register(on, options)</code> を export し、その中で <code
+          >on(イベント名, マッチャー?, フック)</code
+        >
+        を呼びます。フックはすべて <code>($, e, next)</code> の形です。
+      </p>
+      <div class="mods-code mt-6">
+        <Code code={guardCode} lang="js" themes={codeThemes} />
+      </div>
+
+      <div class="mt-8 grid gap-4 md:grid-cols-3">
+        {
+          args.map(a => (
+            <div class="cw-card p-5">
+              <p class="font-mono text-2xl font-black text-cobalt">{a.k}</p>
+              <p class="mt-2 font-bold">{a.title}</p>
+              <p class="mt-2 text-sm leading-relaxed">{a.body}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <h3 class="mt-12 mb-4 text-lg font-bold">next の 4 つの使い方</h3>
+      <ul class="cw-list">
+        {
+          nextUses.map(([c, d]) => (
+            <li class="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-6">
+              <code class="shrink-0 sm:w-72">{c}</code>
+              <span class="text-sm">{d}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section id="chain" class="cw-section px-0">
+      <h2 class="cw-heading">チェーン<span class="cw-dot">.</span></h2>
+      <p class="mt-6 leading-relaxed">
+        同じイベントにフックした mod は 5 つの tier
+        に並び、外側から順に呼ばれます。下りで各 mod が <code>e</code>
+        を書き換え、最後に Claude Code 本体（core）が既定の答えを出し、上りで各 mod
+        が結果を書き換えます。<strong>外側にいるほど権限が強い</strong>
+        と覚えておけば十分です。
+      </p>
+
+      <ol class="mods-tiers mt-8">
+        {
+          tiers.map(([t, label, note]) => (
+            <li class:list={["mods-tier", { "is-user": t === "user" }]}>
+              <span class="font-mono text-sm font-black">{t}</span>
+              <span class="mt-1 text-sm font-bold">{label}</span>
+              <span class="mt-1 text-xs text-muted">{note}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="mt-4 text-sm text-muted">
+        組織は prepend と append の両端を持てます。個人の端末で作る mod は user
+        tier に入ります。
+      </p>
+    </section>
+
+    <section id="events" class="cw-section px-0">
+      <h2 class="cw-heading">イベント<span class="cw-dot">.</span></h2>
+      <p class="mt-6 leading-relaxed">
+        <code>on("イベント名", マッチャー?, フック)</code>
+        で受け取ります。各イベントについて「<strong>いつ発火するか</strong
+        >」と「<strong>フックで何を返せるか</strong
+        >」をまとめました。マッチャーで対象を絞れます（例: <code
+          >on("tool.call", {"{"} tool: "Bash" {"}"}, …)</code
+        >）。
+      </p>
+
+      <h3 class="mt-10 mb-4 text-lg font-bold">1 ターンの流れ</h3>
+      <ol class="mods-flow">
+        {
+          lifecycle.map(([n, label]) => (
+            <li>
+              <span class="font-mono text-xs font-bold">{n}</span>
+              <span class="text-xs text-muted">{label}</span>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="mods-legend mt-8 text-sm">
+        <span><span class="mods-star">よく使う</span> まずはここから</span>
+        <span
+          ><span class="mods-observe">観察のみ</span> 結果を変えられない（反応するだけ）</span
+        >
+      </div>
+
+      <div class="mt-6 space-y-8">
+        {
+          eventGroups.map(g => (
+            <div>
+              <p class="cw-label mb-2 text-cobalt">{g.cat}</p>
+              <div class="mods-ev">
+                <div class="mods-ev-head" aria-hidden="true">
+                  <span>イベント</span>
+                  <span>いつ発火するか</span>
+                  <span>フックで返せるもの・できること</span>
+                </div>
+                {g.rows.map(r => (
+                  <div class:list={["mods-ev-row", { "is-star": r.star }]}>
+                    <div class="mods-ev-name">
+                      <code>{r.n}</code>
+                      {r.star && <span class="mods-star">よく使う</span>}
+                    </div>
+                    <div class="mods-ev-when">
+                      <span class="mods-ev-label">いつ</span>
+                      <span set:html={md(r.when)} />
+                    </div>
+                    <div class="mods-ev-can">
+                      <span class="mods-ev-label">できること</span>
+                      {r.can.startsWith("観察のみ") ? (
+                        <span>
+                          <span class="mods-observe">観察のみ</span>
+                          <span
+                            set:html={md(r.can.replace(/^観察のみ。?/, " "))}
+                          />
+                        </span>
+                      ) : (
+                        <span set:html={md(r.can)} />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section id="api" class="cw-section px-0">
+      <h2 class="cw-heading">$ API<span class="cw-dot">.</span></h2>
+      <p class="mt-6 leading-relaxed">
+        <code>$</code> はフックの第 1 引数で、mod が外の世界に触れる唯一の手段です。<code
+          >$.名詞.動詞(…)</code
+        >
+        の形で、省略せずに書きます。呼び出しそれぞれもイベントなので、他の mod から横取りできます（<code
+          >on("fs.read", …)</code
+        > など）。
+      </p>
+
+      <div class="mt-8 space-y-10">
+        {
+          apiGroups.map(g => (
+            <div>
+              <p class="cw-label mb-3 text-cobalt">{g.cat}</p>
+              <div class="grid gap-4">
+                {g.nouns.map(n => (
+                  <div class="mods-noun">
+                    <p class="mods-noun-name">
+                      <code>{n.noun}</code>
+                    </p>
+                    <dl>
+                      {n.methods.map(([m, d]) => (
+                        <div class="mods-method">
+                          <dt>
+                            <code>.{m}</code>
+                          </dt>
+                          <dd set:html={md(d)} />
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      <h3 class="mt-12 mb-4 text-lg font-bold">
+        $.state と $.store の使い分け
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="mods-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>$.state</th>
+              <th>$.store</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              stateVsStore.map(([k, a, b]) => (
+                <tr>
+                  <th scope="row">{k}</th>
+                  <td>{a}</td>
+                  <td>{b}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-4 text-sm text-muted">
+        引数と戻り値の正確な形は、mod を読み込むと <code
+          >.claude-plugin/types/claude-code/index.d.ts</code
+        > に書き出される型定義が正です。
+      </p>
+    </section>
+
+    <section id="ui" class="cw-section px-0">
+      <h2 class="cw-heading">描画<span class="cw-dot">.</span></h2>
+      <p class="mt-6 leading-relaxed">
+        <code>on("ui.render", {"{"} component: "描画箇所" {"}"}, …)</code>
+        で、Claude Code の画面の決まった場所を自分の UI にできます。まず「どこに描けるか」を画面の図で見てから、使える要素と書き方を確認します。
+      </p>
+
+      <h3 class="mt-10 mb-4 text-lg font-bold">よく使う 4 つの表示</h3>
+      <div
+        class="mods-term"
+        role="img"
+        aria-label="ターミナル上のペイン・帯・ステータスライン・トーストの位置"
+      >
+        <div class="mods-term-bar">
+          <i></i><i></i><i></i>
+          <span>claude</span>
+        </div>
+        <div class="mods-term-body">
+          <div class="mods-term-main">
+            <div class="mods-term-toast">
+              <b>D トースト</b> 132 秒かかりました
+            </div>
+            <p>&gt; ログイン画面のバグを直して</p>
+            <p><span class="mods-term-dot">●</span> Read(src/login.ts)</p>
+            <p><span class="mods-term-dot">●</span> Bash(npm test)</p>
+            <div class="mods-term-spacer"></div>
+            <div class="mods-term-band">
+              <b>B 帯</b> 前回のターン: 42 秒・ツール 8 回
+            </div>
+            <div class="mods-term-input">&gt;</div>
+            <p class="mods-term-status">
+              <b>C ステータスライン</b>
+              <span>⎇ main · ツール 12 回 · <em>✓ テスト成功</em></span>
+            </p>
+          </div>
+          <div class="mods-term-pane">
+            <b>A ペイン</b>
+            <p class="mods-term-pane-title">Tool calls</p>
+            <p class="dim">done Read</p>
+            <p class="dim">done Bash</p>
+            <p class="dim">done Grep</p>
+            <p>runs Edit</p>
+          </div>
+        </div>
+      </div>
+      <ul class="cw-list mt-6">
+        {
+          surfaces.map(s => (
+            <li class="grid gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] sm:gap-6">
+              <span class="font-bold">
+                <span class="mods-term-key">{s.key}</span>
+                {s.name}
+              </span>
+              <code class="text-sm" set:html={md(s.api)} />
+              <span class="text-sm text-muted" set:html={md(s.note)} />
+            </li>
+          ))
+        }
+      </ul>
+
+      <h3 class="mt-12 mb-4 text-lg font-bold">どこに描けるか</h3>
+      <div
+        class="mods-screen"
+        role="img"
+        aria-label="Claude Code の画面と描画箇所の対応図"
+      >
+        <div class="mods-screen-main">
+          <div class="mods-line">
+            <span class="dim">✻ Claude Code · Opus 5.5</span><b>InfoNotice</b>
+          </div>
+          <div class="mods-line">
+            <span>&gt; テストを直して</span><b>UserMessage</b>
+          </div>
+          <div class="mods-line">
+            <span>テストが落ちている原因を調べます。</span><b
+              >AssistantMessage</b
+            >
+          </div>
+          <div class="mods-line">
+            <span class="dim">Read 3 files</span><b>ToolGroup</b>
+          </div>
+          <div class="mods-line">
+            <span>● Bash(pnpm test)</span><b>ToolUse</b>
+          </div>
+          <div class="mods-line">
+            <span class="dim">&nbsp;&nbsp;⎿ 12 passed, 1 failed</span><b
+              >ToolResult</b
+            >
+          </div>
+          <div class="mods-line">
+            <span class="dim"
+              >&nbsp;&nbsp;&nbsp;&nbsp;running in background…</span
+            ><b>ToolProgress</b>
+          </div>
+          <div class="mods-line">
+            <span class="dim">/cost → $0.42</span><b>CommandOutput</b>
+          </div>
+          <div class="mods-line">
+            <span>どちらの方針で直しますか？ [A] [B]</span><b>AskUserQuestion</b
+            >
+          </div>
+          <div class="mods-line">
+            <span class="dim">✻ Sautéing… (12s · 300 tokens)</span><b>Spinner</b
+            >
+          </div>
+          <div class="mods-line">
+            <span class="dim">Baked for 3s</span><b>TurnDuration</b>
+          </div>
+          <div class="mods-line is-hot">
+            <span>このセッション 3 ターン目 [Hide]</span><b>AbovePrompt</b>
+          </div>
+          <div class="mods-prompt"><span>&gt; _</span><i>プロンプト欄</i></div>
+          <div class="mods-line mods-footer">
+            <span class="dim">? for shortcuts</span><b>PromptHint</b>
+            <span class="dim ml-auto">focus</span><b>SessionMode</b>
+          </div>
+        </div>
+        <div class="mods-screen-pane is-hot">
+          <p class="mods-pane-title"><span>Tool calls</span><b>Pane</b></p>
+          <p class="dim">done Read</p>
+          <p class="dim">done Bash</p>
+          <p>runs Edit</p>
+          <p class="dim mt-auto text-xs">
+            $.ui.open で開く。全画面では横にドック、それ以外はプロンプト欄の上
+          </p>
+        </div>
+      </div>
+      <p class="mt-3 text-xs text-muted">
+        青枠はハッカソンで特に使いやすい 2 か所（AbovePrompt と
+        Pane）です。図はイメージです。
+      </p>
+
+      <div class="mt-6 overflow-x-auto">
+        <table class="mods-table">
+          <thead>
+            <tr>
+              <th>component</th>
+              <th>画面のどこ</th>
+              <th>対応</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              siteRows.map(([n, where, s]) => (
+                <tr>
+                  <th scope="row">
+                    <code>{n}</code>
+                  </th>
+                  <td set:html={md(where)} />
+                  <td class="whitespace-nowrap text-muted">{s}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="mt-12 mb-4 text-lg font-bold">使える要素</h3>
+      <p class="mb-4 text-sm leading-relaxed">
+        <code>const {"{"} Box, Text, Button {"}"} = $.ui.resolve(e)</code>
+        で取り出します。画面（<code>e.surface</code
+        >）ごとに使える要素が違います。
+      </p>
+      <div class="overflow-x-auto">
+        <table class="mods-table">
+          <thead>
+            <tr>
+              <th>要素</th>
+              <th>用途</th>
+              <th>主な props</th>
+              <th>対応</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              elementRows.map(([n, use, props, s]) => (
+                <tr>
+                  <th scope="row">
+                    <code>{n}</code>
+                  </th>
+                  <td>{use}</td>
+                  <td class="font-mono text-xs">{props}</td>
+                  <td class="whitespace-nowrap text-muted">{s}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="mt-12 mb-4 text-lg font-bold">書き方は 4 通り</h3>
+      <ul class="cw-list">
+        {
+          drawWays.map(([k, d]) => (
+            <li class="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-6">
+              <span class="shrink-0 font-bold sm:w-32">{k}</span>
+              <span class="text-sm" set:html={md(d)} />
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-6 mb-3 text-sm">
+        例: ツール結果の下に一行とボタンを足す（包む）
+      </p>
+      <div class="mods-code">
+        <Code code={drawCode} lang="js" themes={codeThemes} />
+      </div>
+
+      <h3 class="mt-12 mb-4 text-lg font-bold">ペインを作る（公式サンプル）</h3>
+      <p class="mb-4 text-sm leading-relaxed">
+        コマンド登録 → ペインを開く → 値を書く → 描く、の 4
+        ステップです。ツール呼び出しを記録してサイドパネルに一覧します。
+      </p>
+      <div class="mods-code">
+        <Code code={paneCode} lang="tsx" themes={codeThemes} />
+      </div>
+      <div class="mods-code mt-4">
+        <Code code={paneTypes} lang="ts" themes={codeThemes} />
+      </div>
+
+      <h3 class="mt-12 mb-4 text-lg font-bold">描画のルール</h3>
+      <ul class="space-y-2 text-sm leading-relaxed">
+        {drawRules.map(r => <li set:html={"・" + md(r)} />)}
+      </ul>
+    </section>
+
+    <section id="patterns" class="cw-section px-0">
+      <h2 class="cw-heading">3 つの型<span class="cw-dot">.</span></h2>
+      <p class="mt-6 leading-relaxed">
+        作りたいもののほとんどは、次の 3 つのどれか、または組み合わせです。
+      </p>
+      <div class="mt-8 space-y-10">
+        {
+          patterns.map((p, i) => (
+            <div>
+              <p class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span class="text-xl font-black">
+                  {i + 1}. {p.name}
+                </span>
+                <code>{p.shape}</code>
+              </p>
+              <p class="mt-2 text-sm leading-relaxed">{p.body}</p>
+              <div class="mods-code mt-4">
+                <Code code={p.code} lang="js" themes={codeThemes} />
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section id="start" class="cw-section px-0">
+      <h2 class="cw-heading">はじめかた<span class="cw-dot">.</span></h2>
+
+      <h3 class="mt-8 mb-3 text-lg font-bold">
+        A. Claude に書いてもらう（最短）
+      </h3>
+      <ol class="mods-steps">
+        <li>
+          Claude Code で <code>/plugin-authoring</code>
+          を実行し、「こういう mod を作って」と頼む
+        </li>
+        <li>
+          「Enable hot reloading for this session?」と聞かれたら <strong
+            >Enable for this session</strong
+          > を選ぶ
+        </li>
+        <li>
+          ターンが終わると読み込まれる。以降は修正を頼むたびにホットリロード
+        </li>
+        <li><code>/plugin</code> で読み込まれているか確認</li>
+      </ol>
+
+      <h3 class="mt-10 mb-3 text-lg font-bold">B. 自分で書く</h3>
+      <div class="mods-code">
+        <Code code={tree} lang="plaintext" themes={codeThemes} />
+      </div>
+      <ul class="cw-list mt-6">
+        {
+          cliRows.map(([c, d]) => (
+            <li class="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:gap-6">
+              <code class="shrink-0 sm:w-80">{c}</code>
+              <span class="text-sm">{d}</span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <h3 class="mt-10 mb-3 text-lg font-bold">C. 配る</h3>
+      <p class="mb-4 text-sm leading-relaxed">
+        mod のリポジトリに marketplace.json を置けば、そのまま配布できます。
+      </p>
+      <div class="mods-code">
+        <Code code={shareCode} lang="jsonc" themes={codeThemes} />
+      </div>
+      <p class="mt-4 mb-2 text-sm">使う側はターミナルの Claude Code で:</p>
+      <div class="mods-code">
+        <Code
+          code="/plugin install my-mod --marketplace <owner>/<repo>"
+          lang="plaintext"
+          themes={codeThemes}
+        />
+      </div>
+    </section>
+
+    <section id="gotchas" class="cw-section px-0">
+      <h2 class="cw-heading">ハマりどころ<span class="cw-dot">.</span></h2>
+      <ul class="cw-list mt-6">
+        {
+          gotchas.map(([k, d]) => (
+            <li class="flex flex-col gap-1 py-3 sm:flex-row sm:gap-6">
+              <span class="shrink-0 font-bold sm:w-40">{k}</span>
+              <span class="text-sm leading-relaxed">{d}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section id="ideas" class="cw-section px-0">
+      <h2 class="cw-heading">アイデア<span class="cw-dot">.</span></h2>
+      <p class="mt-6 leading-relaxed">
+        何を作るか迷ったときのたたき台です。右側は使う API の目安です。
+      </p>
+      <div class="mt-8 grid gap-4 md:grid-cols-2">
+        {
+          ideas.map(g => (
+            <div class="cw-card p-5">
+              <p class="cw-label text-cobalt">{g.cat}</p>
+              <ul class="mt-3 space-y-3">
+                {g.items.map(([idea, api]) => (
+                  <li>
+                    <p class="text-sm font-bold">{idea}</p>
+                    <p class="font-mono text-xs text-muted">{api}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section id="changes" class="cw-section px-0">
+      <h2 class="cw-heading">最近の変更<span class="cw-dot">.</span></h2>
+      <p class="mt-6 text-sm leading-relaxed">
+        チートシート（v2.1.295 時点）以降に入った主な変更です。
+      </p>
+      <ul class="cw-list mt-4">
+        {
+          changes.map(([v, d]) => (
+            <li class="flex flex-col gap-1 py-3 sm:flex-row sm:gap-6">
+              <span class="shrink-0 font-mono text-sm text-muted sm:w-20">
+                v{v}
+              </span>
+              <span class="text-sm leading-relaxed">{d}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-4 text-sm text-muted">
+        API は early access で、リリースごとに変わることがあります。
+      </p>
+    </section>
+
+    <section id="links" class="cw-section px-0">
+      <h2 class="cw-heading">リンク<span class="cw-dot">.</span></h2>
+      <ul class="cw-list mt-6">
+        {
+          links.map(([label, href]) => (
+            <li class="py-3">
+              <a
+                href={href}
+                class="underline decoration-dashed underline-offset-4 hover:text-accent"
+                {...(href.startsWith("http")
+                  ? { target: "_blank", rel: "noopener" }
+                  : {})}
+              >
+                {label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </Main>
+  <Footer />
+</Layout>
+
+<style>
+  .mods-table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .mods-table th,
+  .mods-table td {
+    padding: 12px 16px 12px 0;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+  }
+  .mods-table thead th {
+    border-bottom: 2px solid var(--ink);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .mods-table tbody th {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .mods-code :global(pre) {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    border: 2px solid var(--ink);
+  }
+
+  .mods-tiers {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .mods-tier {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    border: 2px solid var(--ink);
+  }
+  .mods-tier:not(:last-child)::after {
+    content: "→";
+    position: absolute;
+    top: 50%;
+    right: -6px;
+    transform: translate(50%, -50%);
+    color: var(--cobalt);
+    font-weight: 900;
+  }
+  .mods-tier.is-user {
+    border-color: var(--cobalt);
+    background: var(--surface-soft);
+    color: var(--cobalt);
+  }
+
+  /* Turn lifecycle */
+  .mods-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+  }
+  .mods-flow > li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px;
+    border: 2px solid var(--ink);
+  }
+  .mods-flow > li:not(:last-child)::after {
+    content: "→";
+    position: absolute;
+    top: 50%;
+    right: -17px;
+    transform: translateY(-50%);
+    color: var(--cobalt);
+    font-weight: 900;
+  }
+
+  /* Event rows */
+  .mods-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    align-items: center;
+  }
+  .mods-star,
+  .mods-observe {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .mods-star {
+    background: var(--cobalt);
+    color: var(--on-cobalt);
+  }
+  .mods-observe {
+    border: 1px solid var(--line);
+    color: var(--ink-muted);
+  }
+  .mods-ev {
+    border-top: 2px solid var(--ink);
+  }
+  .mods-ev-head,
+  .mods-ev-row {
+    display: grid;
+    grid-template-columns: 15rem 1fr 1.3fr;
+    gap: 16px;
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .mods-ev-head {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-muted);
+  }
+  .mods-ev-row {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .mods-ev-row.is-star {
+    background: var(--surface-soft);
+  }
+  .mods-ev-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .mods-ev-name code {
+    font-weight: 700;
+  }
+  .mods-ev-label {
+    display: none;
+  }
+
+  /* $ API */
+  .mods-noun {
+    display: grid;
+    grid-template-columns: 11rem 1fr;
+    border: 2px solid var(--ink);
+  }
+  .mods-noun-name {
+    padding: 14px 16px;
+    background: var(--ink);
+    color: var(--surface);
+    font-size: 18px;
+    font-weight: 900;
+  }
+  .mods-method {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 16px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .mods-method:last-child {
+    border-bottom: 0;
+  }
+  .mods-method dt code {
+    font-weight: 700;
+    color: var(--cobalt);
+    word-break: break-word;
+  }
+
+  /* Screen map */
+  .mods-screen {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 15rem;
+    gap: 12px;
+    padding: 12px;
+    border: 2px solid var(--ink);
+    background: var(--surface-soft);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+  }
+  .mods-screen .dim {
+    color: var(--ink-muted);
+  }
+  .mods-screen b {
+    flex-shrink: 0;
+    padding: 1px 6px;
+    background: var(--ink);
+    color: var(--surface);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .mods-screen-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .mods-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--surface);
+  }
+  .mods-line > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mods-footer {
+    justify-content: flex-start;
+  }
+  .mods-prompt {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border: 1px solid var(--ink);
+    background: var(--surface);
+  }
+  .mods-prompt i {
+    color: var(--ink-subtle);
+    font-style: normal;
+  }
+  .mods-screen .is-hot {
+    outline: 2px solid var(--cobalt);
+    outline-offset: -2px;
+  }
+  .mods-screen .is-hot b {
+    background: var(--cobalt);
+    color: var(--on-cobalt);
+  }
+  .mods-screen-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    background: var(--surface);
+  }
+  .mods-pane-title {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+  }
+
+  @media (max-width: 767px) {
+    .mods-tiers {
+      grid-template-columns: 1fr;
+    }
+    .mods-tier:not(:last-child)::after {
+      content: "↓";
+      top: auto;
+      right: 50%;
+      bottom: -6px;
+      transform: translate(50%, 50%);
+    }
+    .mods-ev-head {
+      display: none;
+    }
+    .mods-ev-row {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .mods-ev-label {
+      display: inline-block;
+      width: 5.5em;
+      color: var(--ink-subtle);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .mods-ev-when,
+    .mods-ev-can {
+      display: flex;
+    }
+    .mods-ev-when > span:last-child,
+    .mods-ev-can > span:last-child {
+      flex: 1;
+      min-width: 0;
+    }
+    .mods-noun {
+      grid-template-columns: 1fr;
+    }
+    .mods-method {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+    .mods-screen {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .mods-steps {
+    counter-reset: step;
+  }
+  .mods-steps > li {
+    position: relative;
+    padding: 12px 0 12px 44px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .mods-steps > li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    top: 10px;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    background: var(--cobalt);
+    color: var(--on-cobalt);
+    font-weight: 900;
+    font-size: 13px;
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9em;
+  }
+  :global(.mods-ev code),
+  :global(.mods-method code),
+  :global(.mods-table code) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9em;
+  }
+  /* Terminal mock */
+  .mods-term {
+    overflow: hidden;
+    border-radius: 10px;
+    background: #1a1917;
+    color: #eeece6;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .mods-term-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #262522;
+    color: #a8a69d;
+    font-size: 12px;
+  }
+  .mods-term-bar i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #ec6a5e;
+  }
+  .mods-term-bar i:nth-child(2) {
+    background: #f4bf4f;
+  }
+  .mods-term-bar i:nth-child(3) {
+    background: #61c554;
+  }
+  .mods-term-bar span {
+    margin-left: 8px;
+  }
+  .mods-term-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 13rem;
+    min-height: 280px;
+  }
+  .mods-term-main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 14px 14px 10px;
+  }
+  .mods-term b {
+    color: #f0a58a;
+    font-family: var(--font-cw);
+    font-weight: 900;
+  }
+  .mods-term .dim {
+    color: #8d8b83;
+  }
+  .mods-term-dot {
+    color: #8d8b83;
+  }
+  .mods-term-spacer {
+    flex: 1;
+    min-height: 24px;
+  }
+  .mods-term-toast {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #c4613f;
+    color: #fff;
+    font-family: var(--font-cw);
+    font-size: 12px;
+  }
+  .mods-term-toast b {
+    margin-right: 4px;
+    color: #fff;
+  }
+  .mods-term-band {
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: #3a2a22;
+    font-family: var(--font-cw);
+    font-size: 12px;
+  }
+  .mods-term-band b {
+    margin-right: 6px;
+  }
+  .mods-term-input {
+    margin-top: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: #24231f;
+  }
+  .mods-term-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    padding: 6px 4px 0;
+    font-size: 12px;
+  }
+  .mods-term-status em {
+    color: #8fd18f;
+    font-style: normal;
+  }
+  .mods-term-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 14px;
+    background: #262522;
+  }
+  .mods-term-pane-title {
+    margin: 4px 0 6px;
+    font-family: var(--font-cw);
+    font-weight: 700;
+  }
+  .mods-term-key {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    background: #c4613f;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+  }
+  @media (max-width: 639px) {
+    .mods-term-body {
+      grid-template-columns: 1fr;
+    }
+    .mods-term-toast {
+      position: static;
+      align-self: flex-end;
+      margin-bottom: 6px;
+    }
+  }
+</style>
