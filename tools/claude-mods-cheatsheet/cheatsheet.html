@@ -269,7 +269,7 @@ const NEXT_ROWS = [
   ['<span class="c-nx">next</span>.budget', { ja:'このフックの制限時間 { ms, remainingMs }', en:'this hook\'s time limit: { ms, remainingMs }' }],
   ['<span class="c-nx">next</span>.to(e, "append")', { ja:'後段の tier（append · builtin · core）へ飛ぶ。prepend/appendPlugins の mod のみ', en:'skip to a later tier (append · builtin · core); only mods in prepend/appendPlugins' }],
   ['yield* <span class="c-nx">next</span>(e)', { ja:'turn.step と process.spawn のフックは async generator', en:'hooks on turn.step and process.spawn are async generators' }],
-  ['<span class="c-nx">next</span>.error · .called', { ja:'.catch 内のみ：{ kind: throw | timeout | re-entry, message } · next を呼んでいたか', en:'in .catch only: { kind: throw | timeout | re-entry, message } · had it called next?' }],
+  ['<span class="c-nx">next</span>.error · .called', { ja:'.catch 内のみ：{ kind: throw | timeout | re-entry, message, cause?: "lent" } · next を呼んでいたか', en:'in .catch only: { kind: throw | timeout | re-entry, message, cause?: "lent" } · had it called next?' }],
 ];
 const TIERS = [
   ['prepend', '#b5537a', { ja:'組織ポリシー<br>prependPlugins', en:'org policy<br>prependPlugins' }],
@@ -311,6 +311,7 @@ const API = [
     ['.submit', { ja:'mod 名義でプロンプトを送る。{ asUser: true } でユーザーの発言として', en:'queue a prompt as this mod; { asUser: true } sends it as the user\'s words' }],
     ['.read · fill · suggest', { ja:'入力欄を読む · 書く · 薄字で提案', en:'read the prompt box · write it · propose dim text' }],
     ['.compose', { ja:'システムプロンプトを組み立てて得る', en:'render a system prompt' }],
+    ['.media', { ja:'prompt.submit 中に添付画像・文書のバイト列を読む（managed の mod のみ）', en:'read an attached image or document\'s bytes in prompt.submit (managed mods only)' }],
   ]],
   ['turn', [['.abort', { ja:'実行中のターンを中止', en:'cancel the running turn' }]]],
   ['session', [
@@ -319,7 +320,7 @@ const API = [
     ['.messages · surfaces', { ja:'会話（1 メッセージ 1 項目）· 接続中のアプリ', en:'the transcript, one entry per message · attached apps' }],
     ['.usage', { ja:'{ startedAt, context{tokens,window,percent}, rateLimits[], cost }', en:'{ startedAt, context{tokens,window,percent}, rateLimits[], cost }' }],
     ['.compact · send · append', { ja:'今すぐ圧縮 · 他セッションへ送信 · 会話に行を足す', en:'compact now · message another session · add a row' }],
-    ['.authorize', { ja:'Anthropic 認証の不透明ハンドル。http.fetch の { auth } に渡す（秘密は mod に渡らない）', en:'an opaque handle to the Anthropic credential for http.fetch { auth }; the secret never reaches the mod' }],
+    ['.authorize · identity', { ja:'Anthropic 認証の不透明ハンドル（http.fetch の { auth } 用、秘密は渡らない）· サインイン情報（managed の mod のみ）', en:'an opaque handle to the Anthropic credential for http.fetch { auth }, the secret never reaching the mod · how the session is signed in (managed mods only)' }],
   ]],
   ['config', [['.list · set', { ja:'/config の行一覧 · メニューと同じ経路で変更', en:'the /config rows · change one through the menu\'s own door' }]]],
   ['settings', [['.read', { ja:'解決済みの設定、または 1 ソースの層', en:'the resolved settings, or one source\'s layer' }]]],
@@ -338,6 +339,7 @@ const API = [
   ['process', [['.run · spawn', { ja:'argv で実行（shell なし）· ストリームで起動', en:'argv on the host, no shell · streamed' }]]],
   ['mcp', [['.call · connect', { ja:'接続済み MCP のツール · manifest に書いたサーバーへ接続', en:'a tool on a connected server · connect one your manifest lists' }]]],
   ['audio', [['.play · speak', { ja:'音声クリップ · OS の読み上げ', en:'a clip · the platform synthesizer' }]]],
+  ['telemetry', [['.log · mark', { ja:'記録を送る · 機能の利用を 1 回記録', en:'log a record · mark one use of a feature' }]]],
 ];
 
 const NOUN_CODE = [['on("engine.create", async ($, e, next) => ({ ...await next(e), audit: { record } }))']];
@@ -358,6 +360,7 @@ const CLI = [
 const SETTINGS = [
   ['prependPlugins · appendPlugins', { ja:'managed：ユーザー mod の前 / 後に記載順で実行', en:'managed: run before / after user mods, in order' }],
   ['allowManagedModsOnly', { ja:'組織の mod と組み込みだけ読み込む', en:'only the org\'s and built-in mods load' }],
+  ['allowManagedHooksOnly', { ja:'user tier の mod はフックを読み込まない', en:'a user-tier mod loads no hooks' }],
   ['allowModsToOverrideDenyRules', { ja:'ユーザー mod が deny ルールの拒否を承認できるようにする', en:'lets a user\'s mod approve a call a deny rule refuses' }],
   ['disableSideloadFlags', { ja:'managed：--plugin-dir / --plugin-url を起動時に拒否', en:'managed: rejects --plugin-dir / --plugin-url at startup' }],
   ['pluginConfigs', { ja:'mod の userConfig 値。キーは plugin id（--plugin-dir は name@inline）', en:'userConfig values per mod, keyed by plugin id (name@inline for --plugin-dir)' }],
@@ -374,6 +377,7 @@ const EVENTS = [
   ]],
   [{ja:'プロンプトと Claude が読むもの', en:'PROMPTS & WHAT CLAUDE READS'}, [
     ['prompt.submit', 1, { ja:'送信されたプロンプト → next({ ...e, text | context }) | { drop }', en:'a prompt is submitted → next({ ...e, text | context }) | { drop }' }],
+    ['prompt.edit', 1, { ja:'入力欄の編集 1 回ごと（キー入力・貼り付け）→ 挿入文字や入力欄を書き換え', en:'each edit of the prompt box (keys, a paste) → rewrite the splice or the box' }],
     ['prompt.fill · suggest', 1, { ja:'入力欄への下書き · 薄字の提案。書き換え可', en:'text going into the box as a draft · a dim suggestion' }],
     ['prompt.autocomplete', 0, { ja:'入力欄の補完候補を出すとき → { suggestions: [{ text }] } で自分の行を足す', en:'the prompt box builds its autocomplete list → { suggestions: [{ text }] } adds your rows' }],
     ['prompt.compose', 0, { ja:'システムプロンプト全体 → { sections: [{ id, text, scope }] }', en:'a system prompt is rendered → { sections: [{ id, text, scope }] }' }],
@@ -381,14 +385,16 @@ const EVENTS = [
     ['prompt.context', 0, { ja:'会話ごとに 1 回、最初のメッセージに添える文脈 → { blocks }', en:'once per conversation, the context sent with the first message → { blocks }' }],
     ['prompt.attachment', 0, { ja:'リマインダーなど本体が足すメッセージ（e.type · e.detail）→ { text } | null', en:'a message the engine adds, such as a reminder (e.type · e.detail) → { text } | null' }],
     ['prompt.mention', 1, { ja:'@ メンションされたファイルを読む直前 → next({ ...e, path }) | { deny }', en:'a file a prompt @-mentions is about to be read → next({ ...e, path }) | { deny }' }],
-    ['skill.prompt', 0, { ja:'スキル本文の展開 → { text }', en:'a skill\'s text is expanded → { text }' }],
+    ['skill.prompt', 0, { ja:'スキル本文の展開 → { text }。e にフロントマター · source · パス', en:'a skill\'s text is expanded → { text }; e carries frontmatter, source, path' }],
+    ['attribution.text', 0, { ja:'コミット / PR 文の帰属テキスト（e.kind）→ { text }', en:'the attribution text of a commit or PR (e.kind) → { text }' }],
   ]],
   [{ja:'コマンドと設定', en:'COMMANDS & CONFIG'}, [
     ['command.run', 1, { ja:'コマンド実行の直前 → { text } | {} | next(e)', en:'a command is about to run → { text } | {} | next(e)' }],
     ['config.set', 1, { ja:'/config 行の変更 → next({ ...e, value }) | { deny }', en:'a /config row is about to change → next({ ...e, value }) | { deny }' }],
+    ['command · config.describe', 0, { ja:'一覧に出すとき → { description, argumentHint, isHidden } · { label, description, isHidden }', en:'listed → { description, argumentHint, isHidden } · { label, description, isHidden }' }],
   ]],
   [{ja:'ターン', en:'TURNS'}, [
-    ['turn.start', 0, { ja:'ターン開始', en:'a turn begins' }],
+    ['turn.start', 0, { ja:'ターン開始。サブエージェントも（メインは e.agentId なし）', en:'a turn begins, a subagent\'s too (no e.agentId on main)' }],
     ['turn.step', 1, { ja:'モデルへのリクエスト 1 回（generator）→ yield* next(e)、model / effort を差し替え可', en:'one model request (generator) → yield* next(e); swap model / effort' }],
     ['turn.complete', 0, { ja:'ターン終了 → { text } で回答の下に一行', en:'a turn ended → { text } shows a line under the answer' }],
   ]],
@@ -397,22 +403,27 @@ const EVENTS = [
     ['session.end', 0, { ja:'終了・/clear・/resume・/branch。e.reason', en:'session ends, or /clear, /resume, /branch; e.reason' }],
     ['session.compact', 1, { ja:'圧縮の直前 → { skip }', en:'about to compact → { skip }' }],
     ['session.receive · send', 1, { ja:'他エージェント / セッションとのメッセージ → { consumed } · { isDelivered: false }', en:'messages with other agents or sessions → { consumed } · { isDelivered: false }' }],
-    ['session.append', 1, { ja:'保存される会話の各行 → message の content を書き換え', en:'each row before it\'s stored → rewrite its content' }],
+    ['session.append', 1, { ja:'保存される会話の各行 → message の content を書き換え（e.door に queue も）', en:'each row before it\'s stored → rewrite its content (e.door includes queue)' }],
+    ['session.attach · detach', 0, { ja:'スマホなどリモート画面の接続 · 離脱（観察のみ）', en:'a remote surface joins · leaves (observe)' }],
+    ['session.measure', 0, { ja:'ターン後など使用量が動いた（観察のみ、$.session.usage の値が届く）', en:'usage moved, after a turn and the like (observe; $.session.usage pushed)' }],
   ]],
   [{ja:'サブエージェント', en:'SUBAGENTS'}, [
     ['agent.offer', 0, { ja:'サブエージェント型を Claude に提示 → { isOffered: false } で隠す', en:'a subagent type is offered → { isOffered: false } withholds it' }],
-    ['agent.spawn', 1, { ja:'サブエージェント / チームメイト（e.isTeammate）/ workflow エージェント起動の直前 → next({ ...e, model }) | { deny }', en:'a subagent, teammate (e.isTeammate) or workflow agent is about to start → next({ ...e, model }) | { deny }' }],
+    ['agent.spawn', 1, { ja:'サブエージェント / チームメイト（e.isTeammate）/ workflow エージェントの起動・再開（e.resume）の直前 → next({ ...e, model }) | { deny }', en:'a subagent, teammate (e.isTeammate) or workflow agent is about to start or resume (e.resume) → next({ ...e, model }) | { deny }' }],
   ]],
   [{ja:'インターフェース', en:'INTERFACE'}, [
     ['ui.render', 0, { ja:'描画サイトの描画直前 → 要素ツリー', en:'a render site is about to be drawn → element tree' }],
     ['ui.press · input · select', 1, { ja:'自分が描いた Button / Input / Select が使われた', en:'a Button / Input / Select you drew was used' }],
+    ['ui.focus · scroll', 1, { ja:'ペイン / 帯のフォーカス・スクロールが動く直前 → 移動先を変更 | { deny }', en:'focus or scroll is about to move in a pane or the band → move it elsewhere | { deny }' }],
     ['ui.close', 1, { ja:'ペインが閉じる直前（e.origin.kind: plugin | person | unload）', en:'a pane is about to close (e.origin.kind: plugin | person | unload)' }],
+    ['ui.message', 0, { ja:'自分の Client が surface.post(data) した → { props } で再描画なしに渡す', en:'a Client you drew posted (surface.post) → { props } hands it props without a redraw' }],
     ['ui.fault', 0, { ja:'自分の Client 要素が失敗（e.phase: load | render | run · e.reason）', en:'a Client element you drew failed (e.phase: load | render | run · e.reason)' }],
+    ['ui.resolve', 0, { ja:'読み込み時、画面と描画箇所ごとの要素テーブル → 差し替え', en:'at load, each surface and site\'s element table → restyle it' }],
   ]],
   [{ja:'他の mod · その他', en:'OTHER MODS · MORE'}, [
     ['plugin.register', 0, { ja:'モジュール読み込みの直前。e.uses を見て → { refuse }', en:'a hooks module is about to load; read e.uses → { refuse }' }],
     ['engine.create', 0, { ja:'この mod 用の $ を構築 → namespace を足す / 隠す', en:'the $ for this mod is built → add or withhold a namespace' }],
-    ['telemetry.log · mark', 1, { ja:'記録の直前 → { deny }。名前か telemetry.* で指定（* では選ばれない）', en:'a record is about to be logged → { deny }; hook by name or telemetry.*, not *' }],
+    ['telemetry.log · mark', 1, { ja:'記録の直前 → { deny }。名前か telemetry.* で指定（* では選ばれない）、マッチャーに { to: "collector" }', en:'a record is about to be logged → { deny }; hook by name or telemetry.*, not *, matching { to: "collector" }' }],
     ['classic.<Event>', 1, { ja:'設定フック 1:1。e は stdin JSON（classic.PostToolUse など）', en:'settings hooks 1:1, stdin JSON as e (classic.PostToolUse, …)' }],
     ['<ns>.<method>', 1, { ja:'すべての $ 呼び出し（fs.read …）。後続 mod の呼び出しを横取り → { deny } | { value }', en:'every $ call (fs.read, …) from later mods → { deny } | { value }' }],
     ['*', 1, { ja:'上記すべて（telemetry 以外）。"tool.*" のような glob も可', en:'everything above (but telemetry); globs like "tool.*" too' }],
@@ -441,7 +452,7 @@ const DRAW_ROWS = [
   ['e', null, { ja:'<span class="m">e.component · surface (terminal | desktop) · requestId · viewport</span>。それ以外は <span class="m">e.props</span>（bodyColumns, placement: dock | inline …）。幅は bodyColumns に合わせる', en:'<span class="m">e.component · surface (terminal | desktop) · requestId · viewport</span>; everything else is on <span class="m">e.props</span> (bodyColumns, placement: dock | inline, …). Size to bodyColumns' }],
   ['pane', null, { ja:'<span class="m">$.ui.open({ id, title, focus })</span> → { isPlaced } ＋ <span class="m">on("ui.render", { component: "Pane" })</span> で requestId === id を描く。<span class="m">$.ui.close({ id })</span>。置けなければ AbovePrompt に描く', en:'<span class="m">$.ui.open({ id, title, focus })</span> → { isPlaced }, then draw component "Pane" where requestId === id; <span class="m">$.ui.close({ id })</span>. Not placed? draw in AbovePrompt' }],
   ['redraw', null, { ja:'render 中の <span class="m">$.state.get</span> は購読になり、<span class="m">$.state.set</span> で自動再描画。手動なら <span class="m">$.ui.invalidate("ui.render")</span>。描くものがなければ <span class="m">next(e)</span> を返す', en:'a <span class="m">$.state.get</span> during render subscribes; <span class="m">$.state.set</span> redraws. Manually: <span class="m">$.ui.invalidate("ui.render")</span>. Nothing to draw? return <span class="m">next(e)</span>' }],
-  ['controls', null, { ja:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · children に文字列 / Text を入れて行全体を押せる · <span class="m">action</span> で本体のキーバインドに連動 · <span class="m">Box({ hover })</span> は往復なしで surface が適用', en:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · children (strings / Text) make a whole row pressable · <span class="m">action</span> ties it to a keybinding · <span class="m">Box({ hover })</span> is applied by the surface, no round trip' }],
+  ['controls', null, { ja:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · children に文字列 / Text を入れて行全体を押せる · <span class="m">action</span> で本体のキーバインドに連動 · <span class="m">Box({ hover })</span> は往復なしで surface が適用 · <span class="m">Text</span> に size · weight · mono · tabular、Box の余白に xs〜xl', en:'<span class="m">Button({ label, hotkey: "1", onPress })</span> · children (strings / Text) make a whole row pressable · <span class="m">action</span> ties it to a keybinding · <span class="m">Box({ hover })</span> is applied by the surface, no round trip · <span class="m">Text</span> takes size · weight · mono · tabular, Box spacing xs–xl' }],
 ];
 
 /* ════════════════════════ RENDER ════════════════════════ */

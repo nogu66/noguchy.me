@@ -1,7 +1,13 @@
 {
-  "version": "2.1.295",
-  "date": "2026-10-09",
+  "version": "2.1.299",
+  "date": "2026-10-14",
   "history": [
+    {
+      "date": "2026-10-14",
+      "version": "2.1.299",
+      "ja": "prompt.edit・attribution.text・command / config.describe・session.attach / detach / measure・ui.focus / scroll・ui.message・ui.resolve を追加。$.prompt.media・$.session.identity・$.telemetry、next.error の cause、allowManagedHooksOnly、turn.start のサブエージェント対応、agent.spawn の再開、skill.prompt のフロントマター、Text の size / weight / mono / tabular と Box の余白段階を反映。",
+      "en": "Added prompt.edit, attribution.text, command / config.describe, session.attach / detach / measure, ui.focus / scroll, ui.message and ui.resolve. Covers $.prompt.media, $.session.identity, $.telemetry, cause on next.error, allowManagedHooksOnly, turn.start for subagents, agent.spawn on resume, skill.prompt's frontmatter, and Text size / weight / mono / tabular with Box spacing steps."
+    },
     {
       "date": "2026-10-09",
       "version": "2.1.295",
