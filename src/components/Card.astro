@@ -1,14 +1,13 @@
 ---
 import { slugifyStr } from "@/utils/slugify";
-import type { CollectionEntry } from "astro:content";
-import { getPath } from "@/utils/getPath";
+import { getListedPostPath, type ListedPost } from "@/utils/getListedPosts";
 import Datetime from "./Datetime.astro";
 
-export interface Props extends CollectionEntry<"blog"> {
+export type Props = ListedPost & {
   variant?: "h2" | "h3";
-}
+};
 
-const { variant = "h2", data, id, filePath } = Astro.props;
+const { variant = "h2", data } = Astro.props;
 
 const { title, description, pubDatetime, modDatetime, timezone, tags } = data;
 
@@ -21,7 +20,7 @@ const headerProps = {
 <li class="py-6">
   <Datetime {pubDatetime} {modDatetime} {timezone} />
   <a
-    href={getPath(id, filePath)}
+    href={getListedPostPath(Astro.props)}
     class="group mt-2 inline-block focus-visible:no-underline"
   >
     {

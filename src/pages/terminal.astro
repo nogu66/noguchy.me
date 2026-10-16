@@ -1,8 +1,9 @@
 ---
 import { getCollection } from "astro:content";
+import getListedPosts from "@/utils/getListedPosts";
 import Layout from "@/layouts/Layout.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
-import { getPath } from "@/utils/getPath";
+import { getListedPostPath } from "@/utils/getListedPosts";
 import { slugifyStr } from "@/utils/slugify";
 import type { TermPost } from "@/utils/terminalShell";
 import { SITE } from "@/config";
@@ -16,24 +17,20 @@ const dateFormat = new Intl.DateTimeFormat("sv-SE", {
   timeZone: SITE.timezone,
 });
 
-const sortedPosts = getSortedPosts(
-  await getCollection("blog", ({ data }) => data.published)
-);
+const sortedPosts = getSortedPosts(await getListedPosts());
 
-const toTermPost = ({
-  id,
-  filePath,
-  body,
-  data,
-}: (typeof sortedPosts)[number]): TermPost => ({
-  title: data.title,
-  href: getPath(id, filePath),
-  date: dateFormat.format(data.modDatetime ?? data.pubDatetime),
-  tags: data.tags.map(slugifyStr),
-  // Japanese reads at roughly 500 characters per minute
-  mins: Math.max(1, Math.round((body?.length ?? 0) / 500)),
-  desc: data.description,
-});
+const toTermPost = (post: (typeof sortedPosts)[number]): TermPost => {
+  const { body, data } = post;
+  return {
+    title: data.title,
+    href: getListedPostPath(post),
+    date: dateFormat.format(data.modDatetime ?? data.pubDatetime),
+    tags: data.tags.map(slugifyStr),
+    // Japanese reads at roughly 500 characters per minute
+    mins: Math.max(1, Math.round((body?.length ?? 0) / 500)),
+    desc: data.description,
+  };
+};
 
 const featured = sortedPosts.filter(p => p.data.featured).map(toTermPost);
 const posts = sortedPosts.filter(p => !p.data.featured).map(toTermPost);
