@@ -7,18 +7,81 @@ import "@/styles/global.css";
 // プロフィール情報
 const profile = {
   name: "nogu",
-  title: "Software Engineer / AI promoter",
+  title: "Software Engineer",
   bio: "デジタルデータに関するシステム開発、AIエージェント開発・生成AI推進に取り組む。また、個人として、生成AI活用ノウハウの発信を行う。",
   avatar: "/profile.png",
 };
 
-// メインリンク
-const linkUrls = [
-  "https://noguchy.me/",
-  "https://zenn.dev/nogu66",
-  "https://github.com/nogu66",
-  "https://github.com/nogu66/md-prompt",
-  "https://qr.shuhary.com/",
+// リンク一覧（セクションごと、上から新しい順）
+type LinkItem = {
+  url: string;
+  title: string;
+  description?: string;
+  meta?: string;
+  // OGP 画像の代わりに使うサムネイル
+  image?: string;
+  // 正方形のアバターなど、切り抜かずに全体を見せたい画像
+  imageFit?: "contain";
+};
+
+const sections: {
+  label: string;
+  // card: 画像を大きく見せるカード / row: サムネ付きの行（デフォルト）
+  layout?: "card" | "row";
+  items: LinkItem[];
+}[] = [
+  {
+    label: "Site & Writing",
+    layout: "card",
+    items: [
+      {
+        url: "https://noguchy.me/",
+        title: "noguchy.me",
+        description: "個人サイト。ブログ・登壇・ニュース",
+        image: "/ogp.png",
+      },
+      {
+        url: "https://zenn.dev/nogu66",
+        title: "Zenn",
+        imageFit: "contain",
+        description: "技術記事",
+      },
+      {
+        url: "https://github.com/nogu66",
+        title: "GitHub",
+      },
+    ],
+  },
+  {
+    label: "OSS",
+    layout: "card",
+    items: [
+      {
+        url: "https://github.com/nogu66/calmpage",
+        title: "calmpage",
+        description:
+          "静かな macOS 向け LaTeX エディタ。左で書いて右で PDF。Claude Code / Codex の AI パネル付き",
+        meta: "macOS · LaTeX",
+      },
+      {
+        url: "https://github.com/nogu66/md-prompt",
+        title: "md-prompt",
+        description:
+          "Claude Code のプロンプト入力欄を Markdown でリアルタイム描画",
+        meta: "Claude Code",
+      },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      {
+        url: "https://qr.shuhary.com/",
+        title: "2D Code Maker",
+        description: "二次元コードをブラウザで作成",
+      },
+    ],
+  },
 ];
 
 // OGPのHTMLエンティティをデコードする関数
@@ -34,17 +97,13 @@ function decodeEntities(text: string) {
     .replace(/&amp;/g, "&");
 }
 
-// OGP情報を取得する関数
-async function fetchOgp(url: string) {
+// OGP画像を取得する関数（タイトルと説明は sections に手書き）
+async function fetchOgpImage(url: string) {
   // GitHubユーザーページの場合は草グラフを使用
   const githubUserMatch = url.match(/^https?:\/\/github\.com\/([^\/]+)\/?$/);
   if (githubUserMatch) {
-    const username = githubUserMatch[1];
     return {
-      url,
-      title: `${username} - GitHub`,
-      image: `https://ghchart.rshah.org/${username}`,
-      siteName: "github.com",
+      image: `https://ghchart.rshah.org/${githubUserMatch[1]}`,
       isGithubChart: true,
     };
   }
@@ -56,40 +115,35 @@ async function fetchOgp(url: string) {
       },
     });
     const html = await response.text();
-
-    const getMetaContent = (property: string): string | null => {
-      const regex = new RegExp(
-        `<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']*)["']|<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["']${property}["']`,
-        "i"
-      );
-      const match = html.match(regex);
-      return match ? match[1] || match[2] : null;
-    };
-
-    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-
+    const match = html.match(
+      /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']*)["']|<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:image["']/i
+    );
+    const image = match ? match[1] || match[2] : null;
     return {
-      url,
-      title: decodeEntities(
-        getMetaContent("og:title") || titleMatch?.[1] || url
-      ),
-      image: getMetaContent("og:image") || null,
-      siteName: getMetaContent("og:site_name") || new URL(url).hostname,
+      image: image ? decodeEntities(image) : null,
       isGithubChart: false,
     };
   } catch {
-    return {
-      url,
-      title: url,
-      image: null,
-      siteName: new URL(url).hostname,
-      isGithubChart: false,
-    };
+    return { image: null, isGithubChart: false };
   }
 }
 
-// ビルド時にOGP情報を取得
-const links = await Promise.all(linkUrls.map(fetchOgp));
+// ビルド時にOGP画像を取得
+const linkSections = await Promise.all(
+  sections.map(async section => ({
+    label: section.label,
+    layout: section.layout ?? "row",
+    items: await Promise.all(
+      section.items.map(async item => ({
+        ...item,
+        meta: item.meta ?? new URL(item.url).hostname,
+        ...(item.image
+          ? { image: item.image, isGithubChart: false }
+          : await fetchOgpImage(item.url)),
+      }))
+    ),
+  }))
+);
 
 const pageTitle = `${profile.name} | Links`;
 const pageDesc = profile.bio;
@@ -147,7 +201,7 @@ const pageDesc = profile.bio;
   <body
     class="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12"
   >
-    <div class="w-full max-w-md">
+    <div class="w-full max-w-2xl">
       <!-- プロフィール -->
       <div class="mb-8 flex flex-col items-center text-center">
         <div
@@ -182,57 +236,121 @@ const pageDesc = profile.bio;
         }
       </div>
 
-      <!-- OGPリンクカード -->
-      <div class="flex flex-col gap-4">
+      <!-- Link sections -->
+      <div class="flex flex-col gap-10">
         {
-          links.map(link => (
-            <a
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="cw-card h-auto!"
-            >
-              {link.image && (
-                <div
-                  class:list={[
-                    "w-full overflow-hidden",
-                    "border-b-2 border-ink",
-                    link.isGithubChart
-                      ? "bg-white p-4"
-                      : "aspect-[1.91/1] bg-surface-soft",
-                  ]}
-                >
-                  <img
-                    src={link.image}
-                    alt={link.title}
-                    class:list={[
-                      "w-full",
-                      link.isGithubChart ? "h-auto" : "h-full object-cover",
-                    ]}
-                    loading="lazy"
-                  />
-                </div>
+          linkSections.map(section => (
+            <section class="w-full px-0">
+              <h2 class="cw-label mb-3 flex items-center gap-2 text-ink-muted">
+                <span class="text-cobalt">{section.label}</span>
+                <span class="h-0.5 flex-1 bg-line" />
+                <span>{section.items.length}</span>
+              </h2>
+              {section.layout === "card" ? (
+                <ul class="grid gap-4 sm:grid-cols-2">
+                  {section.items.map(link => (
+                    <li class:list={[link.isGithubChart && "sm:col-span-2"]}>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="cw-card"
+                      >
+                        {link.image &&
+                          (link.isGithubChart ? (
+                            <div class="border-b-2 border-ink bg-white p-4 sm:p-6">
+                              <img
+                                src={link.image}
+                                alt={`${link.title} contributions`}
+                                class="h-auto w-full"
+                                loading="lazy"
+                              />
+                            </div>
+                          ) : (
+                            <div class="aspect-[1.91/1] w-full overflow-hidden border-b-2 border-ink bg-surface-soft">
+                              <img
+                                src={link.image}
+                                alt=""
+                                class:list={[
+                                  "h-full w-full",
+                                  link.imageFit === "contain"
+                                    ? "object-contain p-4"
+                                    : "object-cover",
+                                ]}
+                                loading="lazy"
+                              />
+                            </div>
+                          ))}
+                        <div class="flex flex-1 flex-col p-4">
+                          <div class="flex flex-wrap items-baseline justify-between gap-x-2">
+                            <span class="text-lg font-black">{link.title}</span>
+                            <span class="cw-ui shrink-0 text-ink-muted">
+                              {link.meta}
+                            </span>
+                          </div>
+                          {link.description && (
+                            <p class="mt-1 text-sm text-ink-muted">
+                              {link.description}
+                            </p>
+                          )}
+                        </div>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul class="flex flex-col gap-3">
+                  {section.items.map(link => (
+                    <li>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="cw-card h-auto!"
+                      >
+                        <div class="flex items-center gap-4 p-4">
+                          {link.image && !link.isGithubChart && (
+                            <div class="aspect-[1.91/1] w-28 shrink-0 overflow-hidden border-2 border-ink bg-surface-soft sm:w-36">
+                              <img
+                                src={link.image}
+                                alt=""
+                                class="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                          <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-baseline justify-between gap-x-2">
+                              <span class="text-lg font-black">
+                                {link.title}
+                              </span>
+                              <span class="cw-ui shrink-0 text-ink-muted">
+                                {link.meta}
+                              </span>
+                            </div>
+                            {link.description && (
+                              <p class="mt-1 line-clamp-2 text-sm text-ink-muted">
+                                {link.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {link.image && link.isGithubChart && (
+                          <div class="border-t-2 border-ink bg-white p-4">
+                            <img
+                              src={link.image}
+                              alt={`${link.title} contributions`}
+                              class="h-auto w-full"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               )}
-              <div class="flex items-center justify-between gap-2 p-3">
-                <div class="line-clamp-1 font-black">{link.title}</div>
-                <div class="cw-ui flex shrink-0 items-center gap-1 text-ink-muted">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-3 w-3"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                  {link.siteName}
-                </div>
-              </div>
-            </a>
+            </section>
           ))
         }
       </div>
