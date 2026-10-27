@@ -1,4 +1,8 @@
 {
+  "redirects": [
+    { "source": "/commit-quest", "destination": "/git-bakery/", "permanent": true },
+    { "source": "/commit-quest/:path(.*)", "destination": "/git-bakery/:path", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/sandbox", "destination": "https://noguchy-sandbox.vercel.app/" },
     { "source": "/sandbox/:path(.*)", "destination": "https://noguchy-sandbox.vercel.app/:path" }

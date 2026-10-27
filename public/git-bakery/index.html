@@ -6,56 +6,49 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>コミット・クエスト | Git をゲームで覚える</title>
+    <title>Git ベーカリー | パン屋さんで覚える Git</title>
     <meta
       name="description"
-      content="パン屋のホームページ作りを手伝いながら、本物の git コマンドを打って覚える学習ゲーム。コミットグラフと作業台・ステージ・リポジトリの動きが目の前で見える。全 21 レベル、ブラウザでそのまま遊べます。"
+      content="Git は、ファイルの変更を記録しておき、あとから見返したり元に戻したりできる道具。町のパン屋さんのホームページ作りを手伝いながら、その使い方をゲームで覚えます。全 21 レベル、ブラウザでそのまま遊べます。"
     />
-    <link rel="canonical" href="https://noguchy.me/commit-quest/" />
+    <link rel="canonical" href="https://noguchy.me/git-bakery/" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="noguchy.me" />
     <meta property="og:locale" content="ja_JP" />
-    <meta property="og:url" content="https://noguchy.me/commit-quest/" />
+    <meta property="og:url" content="https://noguchy.me/git-bakery/" />
     <meta
       property="og:title"
-      content="コミット・クエスト | Git をゲームで覚える"
+      content="Git ベーカリー | パン屋さんで覚える Git"
     />
     <meta
       property="og:description"
-      content="パン屋のホームページ作りを手伝いながら、本物の git コマンドを打って覚える学習ゲーム。コミットグラフと作業台・ステージ・リポジトリの動きが目の前で見える。全 21 レベル、ブラウザでそのまま遊べます。"
+      content="Git は、ファイルの変更を記録しておき、あとから見返したり元に戻したりできる道具。町のパン屋さんのホームページ作りを手伝いながら、その使い方をゲームで覚えます。全 21 レベル、ブラウザでそのまま遊べます。"
     />
-    <meta
-      property="og:image"
-      content="https://noguchy.me/commit-quest/ogp.png"
-    />
+    <meta property="og:image" content="https://noguchy.me/git-bakery/ogp.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="コミット・クエスト。Git をゲームで覚える、全 21 レベル"
+      content="Git ベーカリー。パン屋さんで覚える Git、全 21 レベル"
     />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@_nogu66" />
     <meta name="twitter:creator" content="@_nogu66" />
     <meta
       name="twitter:title"
-      content="コミット・クエスト | Git をゲームで覚える"
+      content="Git ベーカリー | パン屋さんで覚える Git"
     />
     <meta
       name="twitter:description"
-      content="パン屋のホームページ作りを手伝いながら、本物の git コマンドを打って覚える学習ゲーム。コミットグラフと作業台・ステージ・リポジトリの動きが目の前で見える。全 21 レベル、ブラウザでそのまま遊べます。"
+      content="Git は、ファイルの変更を記録しておき、あとから見返したり元に戻したりできる道具。町のパン屋さんのホームページ作りを手伝いながら、その使い方をゲームで覚えます。全 21 レベル、ブラウザでそのまま遊べます。"
     />
     <meta
       name="twitter:image"
-      content="https://noguchy.me/commit-quest/ogp.png"
+      content="https://noguchy.me/git-bakery/ogp.png"
     />
-    <link
-      rel="preload"
-      as="image"
-      href="/commit-quest/assets/hero-bakery.webp"
-    />
+    <link rel="preload" as="image" href="/git-bakery/assets/hero-bakery.webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -101,7 +94,7 @@
         --font-mono:
           "JetBrains Mono", "Noto Sans JP", ui-monospace, Menlo, monospace;
         --r: 10px;
-        --pattern: url(/commit-quest/assets/pattern-wheat.webp);
+        --pattern: url(/git-bakery/assets/pattern-wheat.webp);
       }
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme="light"]) {
@@ -148,13 +141,22 @@
         display: none !important;
       }
       body {
-        background-color: var(--bg);
-        background-image: var(--pattern);
-        background-size: 420px 420px;
+        background: var(--bg);
         color: var(--ink);
         font-family: var(--font-heading);
-        font-size: 15px;
-        line-height: 1.6;
+        font-size: 16px;
+        line-height: 1.65;
+      }
+      /* wheat texture kept barely visible: it is atmosphere, not decoration */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background-image: var(--pattern);
+        background-size: 620px 620px;
+        opacity: 0.28;
       }
       a {
         color: inherit;
@@ -207,7 +209,7 @@
         align-items: center;
         gap: 6px;
         font-family: var(--font-mono);
-        font-size: 13px;
+        font-size: 14.5px;
         color: var(--muted);
         font-variant-numeric: tabular-nums;
       }
@@ -222,7 +224,7 @@
 
       .eyebrow {
         font-family: var(--font-mono);
-        font-size: 11.5px;
+        font-size: 13px;
         letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--muted);
@@ -239,7 +241,7 @@
         text-decoration: none;
         font-weight: 700;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 16px;
       }
       .btn:hover {
         border-color: var(--ink);
@@ -253,8 +255,8 @@
         filter: brightness(1.05);
       }
       .btn.small {
-        padding: 6px 14px;
-        font-size: 13px;
+        padding: 8px 16px;
+        font-size: 15px;
       }
 
       /* ---------- map ---------- */
@@ -319,7 +321,7 @@
       }
       .hero .lead {
         font-family: var(--font-body);
-        font-size: 16.5px;
+        font-size: 18px;
         line-height: 1.9;
         max-width: 30em;
         margin: 0 0 24px;
@@ -370,7 +372,7 @@
       }
       .bubble .who {
         display: block;
-        font-size: 11.5px;
+        font-size: 13px;
         font-weight: 700;
         letter-spacing: 0.08em;
         color: var(--orange-ink);
@@ -379,7 +381,7 @@
       .bubble p {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 14.5px;
+        font-size: 16px;
         line-height: 1.85;
       }
       .prog {
@@ -400,30 +402,75 @@
       }
       .prog p {
         margin: 8px 0 0;
-        font-size: 13px;
+        font-size: 15px;
         color: var(--muted);
         font-variant-numeric: tabular-nums;
       }
-      .hero-fig {
-        margin: 0;
+      .howto {
         border: 1px solid var(--line);
         border-radius: 14px;
-        background-color: var(--card);
-        background-image: radial-gradient(
-          var(--line-strong) 1px,
-          transparent 1.2px
-        );
-        background-size: 18px 18px;
-        padding: 18px 12px 12px;
+        background: var(--card);
+        padding: 16px 20px 18px;
+        display: grid;
+        gap: 12px;
       }
-      .hero-fig .graph-scroll {
-        overflow-x: auto;
+      .howto h2 {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 900;
+        text-wrap: balance;
       }
-      .hero-fig figcaption {
-        font-size: 12.5px;
+      .howto ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .howto li {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 3px;
+      }
+      .howto li + li::before {
+        content: "→";
+        position: absolute;
+        left: -13px;
+        top: 26px;
+        color: var(--faint);
+        font-weight: 700;
+      }
+      .howto img {
+        width: 72px;
+        height: 72px;
+        object-fit: contain;
+      }
+      .howto b {
+        font-size: 17px;
+      }
+      .howto span {
+        font-size: 14.5px;
         color: var(--muted);
-        padding: 6px 8px 0;
+        line-height: 1.5;
+      }
+      .howto code {
+        font-size: 13px;
+        background: var(--surface);
+        border-radius: 5px;
+        padding: 1px 7px;
+        color: var(--orange-ink);
+        margin-top: 2px;
+      }
+      .howto p {
+        margin: 0;
         font-family: var(--font-body);
+        font-size: 15px;
+        color: var(--muted);
+        line-height: 1.75;
       }
 
       .section-h {
@@ -435,13 +482,13 @@
       }
       .section-h h2 {
         margin: 0;
-        font-size: 22px;
+        font-size: 26px;
         font-weight: 900;
       }
       .section-h p {
         margin: 0;
         color: var(--muted);
-        font-size: 13.5px;
+        font-size: 15px;
       }
 
       .chapters {
@@ -480,19 +527,19 @@
       }
       .chapter .chno {
         font-family: var(--font-mono);
-        font-size: 12px;
+        font-size: 13px;
         color: var(--muted);
         letter-spacing: 0.08em;
       }
       .chapter h3 {
         margin: 2px 0 4px;
-        font-size: 19px;
+        font-size: 22px;
         font-weight: 900;
       }
       .chapter p {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 13.5px;
+        font-size: 15px;
         color: var(--muted);
         line-height: 1.7;
       }
@@ -545,25 +592,25 @@
       .st.next .name::after {
         content: "次はここ";
         display: block;
-        font-size: 10.5px;
         color: var(--orange-ink);
         font-weight: 700;
         letter-spacing: 0.06em;
+        font-size: 13px;
       }
       .st .no {
         font-family: var(--font-mono);
-        font-size: 11.5px;
+        font-size: 13px;
         color: var(--muted);
         margin-top: 4px;
       }
       .st .name {
-        font-size: 13px;
+        font-size: 15px;
         font-weight: 700;
         line-height: 1.35;
         text-wrap: balance;
       }
       .stars {
-        font-size: 12px;
+        font-size: 14px;
         letter-spacing: 1px;
         color: var(--faint);
       }
@@ -576,7 +623,7 @@
       }
       .cards {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
         gap: 10px;
       }
       .cmdcard {
@@ -601,11 +648,11 @@
         font-weight: 600;
         color: var(--orange-ink);
         margin-bottom: 4px;
-        font-size: 13.5px;
+        font-size: 15px;
       }
       .cmdcard p {
         margin: 0;
-        font-size: 12.5px;
+        font-size: 14px;
         line-height: 1.6;
         color: var(--muted);
       }
@@ -620,14 +667,14 @@
         border-top: 1px solid var(--line);
         padding-block: 20px 36px;
         color: var(--muted);
-        font-size: 12.5px;
+        font-size: 14px;
         font-family: var(--font-body);
       }
 
       /* ---------- play ---------- */
       .play {
         display: grid;
-        grid-template-columns: minmax(0, 330px) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 370px) minmax(0, 1fr);
         gap: 20px;
         padding-block: 18px 40px;
         align-items: start;
@@ -642,7 +689,7 @@
         display: flex;
         gap: 10px;
         align-items: center;
-        font-size: 13px;
+        font-size: 15px;
         color: var(--muted);
         flex-wrap: wrap;
       }
@@ -656,14 +703,14 @@
       }
       .mission h1 {
         margin: 0;
-        font-size: 22px;
+        font-size: 27px;
         line-height: 1.35;
         font-weight: 900;
         text-wrap: balance;
       }
       .mission h1 .lvno {
         font-family: var(--font-mono);
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 600;
         color: var(--orange-ink);
         display: block;
@@ -671,7 +718,7 @@
       }
       .story {
         font-family: var(--font-body);
-        font-size: 14.5px;
+        font-size: 16px;
         line-height: 1.85;
         margin: 0;
       }
@@ -694,7 +741,7 @@
         top: 22px;
       }
       .lbl {
-        font-size: 11.5px;
+        font-size: 14px;
         letter-spacing: 0.12em;
         color: var(--muted);
         margin: 0 0 8px;
@@ -712,8 +759,8 @@
         grid-template-columns: 22px minmax(0, 1fr);
         gap: 10px;
         align-items: start;
-        font-size: 14px;
-        line-height: 1.5;
+        font-size: 16px;
+        line-height: 1.55;
       }
       .goal .chk {
         width: 20px;
@@ -743,7 +790,7 @@
       .meter {
         display: flex;
         gap: 16px;
-        font-size: 12.5px;
+        font-size: 14.5px;
         color: var(--muted);
         font-variant-numeric: tabular-nums;
         flex-wrap: wrap;
@@ -757,7 +804,7 @@
         padding-left: 20px;
         display: grid;
         gap: 6px;
-        font-size: 13.5px;
+        font-size: 15.5px;
         font-family: var(--font-body);
         line-height: 1.7;
       }
@@ -774,10 +821,10 @@
       .chip {
         border: 1px solid var(--line-strong);
         background: var(--card);
-        border-radius: 6px;
-        padding: 4px 9px;
+        border-radius: 7px;
+        padding: 7px 12px;
         font-family: var(--font-mono);
-        font-size: 12.5px;
+        font-size: 14px;
         cursor: pointer;
         text-align: left;
       }
@@ -798,7 +845,7 @@
         text-decoration: underline;
         text-underline-offset: 3px;
         cursor: pointer;
-        font-size: 13px;
+        font-size: 15px;
       }
       .linkbtn:hover {
         color: var(--ink);
@@ -820,8 +867,8 @@
         justify-content: space-between;
         align-items: center;
         gap: 10px;
-        padding: 10px 14px 0;
-        font-size: 12px;
+        padding: 12px 16px 0;
+        font-size: 14px;
         font-weight: 700;
         letter-spacing: 0.06em;
         color: var(--muted);
@@ -829,10 +876,10 @@
       }
       .legend {
         display: flex;
-        gap: 12px;
+        gap: 14px;
         font-weight: 500;
         letter-spacing: 0;
-        font-size: 11.5px;
+        font-size: 13px;
         flex-wrap: wrap;
       }
       .legend i {
@@ -866,7 +913,7 @@
         padding: 26px 14px 30px;
         font-family: var(--font-body);
         color: var(--muted);
-        font-size: 13.5px;
+        font-size: 15.5px;
       }
       .remote-part {
         border-top: 1px dashed var(--line-strong);
@@ -891,9 +938,6 @@
         stroke: var(--card);
         stroke-width: 3;
       }
-      .hero-fig .node .dot {
-        stroke: var(--card);
-      }
       .node .hole {
         fill: var(--card);
       }
@@ -905,7 +949,7 @@
       }
       .node .cid {
         font-family: var(--font-mono);
-        font-size: 10px;
+        font-size: 11.5px;
         fill: var(--muted);
         text-anchor: middle;
       }
@@ -926,7 +970,7 @@
       }
       .ref text {
         font-family: var(--font-mono);
-        font-size: 10.5px;
+        font-size: 12.5px;
         text-anchor: middle;
         dominant-baseline: central;
         font-weight: 600;
@@ -990,15 +1034,13 @@
       }
       .zone h3 {
         margin: 0;
-        font-size: 15px;
+        font-size: 18px;
         font-weight: 900;
       }
       .zone header span {
         display: block;
-        font-family: var(--font-mono);
-        font-size: 10.5px;
+        font-size: 13.5px;
         color: var(--muted);
-        letter-spacing: 0.04em;
       }
       .zone header img {
         width: 58px;
@@ -1013,7 +1055,7 @@
         gap: 5px;
       }
       .zone .empty {
-        font-size: 12.5px;
+        font-size: 14.5px;
         color: var(--muted);
         font-family: var(--font-body);
         line-height: 1.6;
@@ -1027,10 +1069,10 @@
         gap: 6px;
         flex-wrap: wrap;
         font-family: var(--font-mono);
-        font-size: 12.5px;
+        font-size: 14.5px;
         border: 1px solid var(--line);
-        border-radius: 6px;
-        padding: 5px 8px;
+        border-radius: 7px;
+        padding: 7px 10px;
         background: var(--bg);
       }
       .file .fn {
@@ -1040,7 +1082,7 @@
       }
       .tag {
         font-family: var(--font-heading);
-        font-size: 10.5px;
+        font-size: 12.5px;
         font-weight: 700;
         padding: 1px 7px;
         border-radius: 999px;
@@ -1067,8 +1109,8 @@
       .fbtn {
         border: 0;
         background: none;
-        padding: 2px 4px;
-        font-size: 11.5px;
+        padding: 4px 6px;
+        font-size: 13.5px;
         color: var(--muted);
         cursor: pointer;
         text-decoration: underline;
@@ -1088,9 +1130,9 @@
         border: 1px solid var(--orange);
         color: var(--orange-ink);
         background: var(--card);
-        border-radius: 5px;
-        font-size: 11.5px;
-        padding: 2px 7px;
+        border-radius: 6px;
+        font-size: 13.5px;
+        padding: 5px 10px;
         cursor: pointer;
         font-family: var(--font-heading);
       }
@@ -1100,7 +1142,7 @@
       }
       .headinfo {
         font-family: var(--font-mono);
-        font-size: 11px;
+        font-size: 13px;
         color: var(--muted);
         overflow-wrap: anywhere;
       }
@@ -1111,7 +1153,7 @@
         justify-content: center;
         gap: 2px;
         font-family: var(--font-mono);
-        font-size: 10.5px;
+        font-size: 12.5px;
         color: var(--muted);
         padding: 0 2px;
       }
@@ -1134,7 +1176,7 @@
         padding: 8px 14px;
         border-bottom: 1px solid var(--term-line);
         font-family: var(--font-mono);
-        font-size: 11.5px;
+        font-size: 13px;
         color: var(--term-dim);
       }
       .term-out {
@@ -1142,8 +1184,8 @@
         overflow-y: auto;
         padding: 12px 14px 6px;
         font-family: var(--font-mono);
-        font-size: 13px;
-        line-height: 1.6;
+        font-size: 14.5px;
+        line-height: 1.65;
       }
       .ln {
         white-space: pre-wrap;
@@ -1175,7 +1217,7 @@
       .ln .note {
         color: var(--t-note);
         font-family: var(--font-heading);
-        font-size: 12.5px;
+        font-size: 14.5px;
       }
       .ln .dim,
       .ln .sys {
@@ -1199,7 +1241,7 @@
       }
       .term label {
         font-family: var(--font-mono);
-        font-size: 13px;
+        font-size: 14.5px;
         color: var(--t-ok);
         white-space: nowrap;
       }
@@ -1210,8 +1252,8 @@
         border: 0;
         color: var(--term-fg);
         font-family: var(--font-mono);
-        font-size: 14px;
-        padding: 6px 0;
+        font-size: 16px;
+        padding: 8px 0;
         caret-color: var(--orange);
       }
       .term input:focus {
@@ -1225,10 +1267,10 @@
         color: #141413;
         border: 0;
         border-radius: 6px;
-        padding: 5px 12px;
+        padding: 8px 16px;
         font-family: var(--font-heading);
         font-weight: 700;
-        font-size: 12.5px;
+        font-size: 15px;
         cursor: pointer;
       }
 
@@ -1272,7 +1314,7 @@
       }
       .dialog .sub {
         margin: -6px 0 0;
-        font-size: 13.5px;
+        font-size: 16px;
         color: var(--muted);
       }
       .bigstars {
@@ -1326,7 +1368,7 @@
         padding: 0;
         display: grid;
         gap: 4px;
-        font-size: 13.5px;
+        font-size: 16px;
       }
       .crit li {
         display: flex;
@@ -1351,14 +1393,14 @@
       }
       .learned h3 {
         margin: 0 0 4px;
-        font-size: 12px;
+        font-size: 14px;
         letter-spacing: 0.1em;
         color: var(--muted);
       }
       .learned p {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 14px;
+        font-size: 16px;
         line-height: 1.8;
       }
       .actions {
@@ -1549,7 +1591,7 @@
   <body>
     <header class="top">
       <div class="wrap">
-        <a class="logo" href="#map" aria-label="コミット・クエスト マップへ">
+        <a class="logo" href="#map" aria-label="Git ベーカリー マップへ">
           <svg width="34" height="22" viewBox="0 0 34 22" aria-hidden="true">
             <path
               d="M5 16H29"
@@ -1569,7 +1611,7 @@
             <circle cx="23" cy="6" r="4" fill="#6a9bcc" />
             <circle cx="29" cy="16" r="4" fill="#d97757" />
           </svg>
-          <span>コミット・クエスト</span>
+          <span>Git ベーカリー</span>
         </a>
         <span class="score" id="score"></span>
       </div>
@@ -1586,7 +1628,7 @@
         <span class="crumbs" id="mCrumbs" aria-hidden="true"></span>
         <img
           class="cheer"
-          src="/commit-quest/assets/mascot-cheer.webp"
+          src="/git-bakery/assets/mascot-cheer.webp"
           alt=""
           width="158"
           height="158"
@@ -4418,7 +4460,7 @@
         [0, 1, 2]
           .map(i => `<span class="${i < n ? "on" : ""}">★</span>`)
           .join("");
-      const A = "/commit-quest/assets/";
+      const A = "/git-bakery/assets/";
       const CH_ART = {
         1: "chapter-1",
         2: "chapter-2",
@@ -4484,16 +4526,16 @@
         refs.forEach(x => chain(x.id));
         [...list].reverse().forEach(chain);
         const hasT = refs.some(x => x.k === "t");
-        const DX = 76,
-          DY = hasT ? 88 : 66,
-          PX = 40,
-          TOP = 40;
+        const DX = 88,
+          DY = hasT ? 102 : 72,
+          PX = 44,
+          TOP = 46;
         const pos = {};
         list.forEach((id, i) => {
           pos[id] = { x: PX + i * DX, y: TOP + lane[id] * DY };
         });
-        const W = PX * 2 + (list.length - 1) * DX + 60,
-          H = TOP + (n - 1) * DY + (hasT ? 62 : 40);
+        const W = PX * 2 + (list.length - 1) * DX + 70,
+          H = TOP + (n - 1) * DY + (hasT ? 68 : 44);
         const hidv = mode === "local" ? headId(r) : null;
         let edges = "",
           nodes = "",
@@ -4526,14 +4568,14 @@
             (c.parents.length > 1
               ? `<circle cx="${x}" cy="${y}" r="3.6" class="hole"/>`
               : "") +
-            `<text x="${x}" y="${y + 27}" class="cid">${id}</text></g>`;
+            `<text x="${x}" y="${y + 29}" class="cid">${id}</text></g>`;
         });
         const by = {};
         refs.forEach(x => (by[x.id] = by[x.id] || []).push(x));
         const place = (rs, cx, cy) => {
           const items = rs.map(q => {
             const t = q.cur ? `HEAD → ${q.n}` : q.n;
-            return { q, t, w: t.length * 6.5 + 16 };
+            return { q, t, w: t.length * 7.7 + 20 };
           });
           const total =
             items.reduce((a, i) => a + i.w, 0) + (items.length - 1) * 4;
@@ -4548,7 +4590,7 @@
                   : q.k === "t"
                     ? "tr"
                     : "rb";
-            labels += `<g class="ref ${cls}"><rect x="${sx}" y="${cy - 9}" width="${w}" height="18" rx="9"/><text x="${sx + w / 2}" y="${cy}">${esc(t)}</text></g>`;
+            labels += `<g class="ref ${cls}"><rect x="${sx}" y="${cy - 11}" width="${w}" height="22" rx="11"/><text x="${sx + w / 2}" y="${cy}">${esc(t)}</text></g>`;
             sx += w + 4;
           });
         };
@@ -4556,8 +4598,8 @@
           const { x, y } = pos[id];
           const top = rs.filter(q => q.k !== "t"),
             bot = rs.filter(q => q.k === "t");
-          if (top.length) place(top, x, y - 25);
-          if (bot.length) place(bot, x, y + 47);
+          if (top.length) place(top, x, y - 29);
+          if (bot.length) place(bot, x, y + 50);
         });
         return {
           svg: `<svg class="graph" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="コミットグラフ">${edges}${nodes}${labels}</svg>`,
@@ -4566,26 +4608,6 @@
       }
 
       /* ---------- map ---------- */
-      function demoGraph() {
-        const r = newRepo(42),
-          s = makeSetup(r);
-        base(s, 2);
-        s.clone();
-        [
-          "git switch -c melon",
-          "touch melon.html",
-          "git add melon.html",
-          'git commit -m "メロンパン"',
-          "edit melon.html",
-          'git commit -am "写真"',
-          "git switch main",
-          "edit news.txt",
-          'git commit -am "お知らせ"',
-          "git merge melon",
-          "git push",
-        ].forEach(c => s.run(c));
-        return graphSVG(r, "local", null).svg;
-      }
       function showMap() {
         G = null;
         closeModal();
@@ -4599,9 +4621,9 @@
       <div class="scene">
         <img class="bg" src="${A}hero-bakery.webp" alt="朝のこむぎ堂の店内。かごに並んだクロワッサンやメロンパン、レンガの窯" width="1600" height="1067" fetchpriority="high">
         <div class="hero-copy">
-          <p class="eyebrow">Commit Quest · Git をゲームで覚える</p>
-          <h1>コミット・クエスト</h1>
-          <p class="lead">町のパン屋「こむぎ堂」のホームページ作りを手伝いながら、Git を手で覚えます。本物と同じコマンドを打つと、記録の枝が目の前で伸びていきます。全 ${LEVELS.length} レベル、1 つ 3 分ほど。</p>
+          <p class="eyebrow">Git Bakery · パン屋さんで覚える Git</p>
+          <h1>Git ベーカリー</h1>
+          <p class="lead">Git（ギット）は、ファイルの変更を 1 つずつ記録しておき、あとから見返したり元に戻したりできる道具です。町のパン屋「こむぎ堂」のホームページ作りを手伝いながら、その使い方を覚えましょう。全 ${LEVELS.length} レベル、1 つ 3 分ほど。</p>
           <div class="cta">
             <a class="btn primary" href="#lv-${next.id}">${started ? `続きから（${next.id} ${esc(next.title)}）` : "はじめる"}</a>
             <a class="btn" href="#sandbox">自由に試す</a>
@@ -4613,8 +4635,15 @@
       <div class="welcome">
         <div class="greet"><img src="${A}mascot-baker.webp" alt="店長のこむぎ。パン職人の帽子とエプロンの猫" width="132" height="132">
           <div class="bubble"><span class="who">店長 こむぎ</span><p>${started ? `おかえり。次は ${next.id}「${esc(next.title)}」を焼こう。` : "いらっしゃい。うちのホームページ作り、手伝ってくれるかな。"}下の生地を 1 つずつ、パンに焼き上げていってね。</p></div></div>
-        <figure class="hero-fig"><div class="graph-scroll">${demoGraph()}</div>
-          <figcaption>melon ブランチで作業し、main に合流させて push した歴史。ゲームでは、これを自分のコマンドで育てます。</figcaption></figure>
+        <section class="howto" aria-labelledby="howtoH">
+          <h2 id="howtoH">Git の記録は、パン作りと同じ 3 段階</h2>
+          <ol>
+            <li><img src="${A}zone-workbench.webp" alt="" width="72" height="72" loading="lazy"><b>作業台</b><span>ファイルを作ったり直したりする</span><code>edit</code></li>
+            <li><img src="${A}zone-tray.webp" alt="" width="72" height="72" loading="lazy"><b>天板</b><span>記録に入れるものを選んで並べる</span><code>git add</code></li>
+            <li><img src="${A}zone-baked.webp" alt="" width="72" height="72" loading="lazy"><b>焼き上がり</b><span>並べたものを 1 つの記録にする</span><code>git commit</code></li>
+          </ol>
+          <p>焼き上がった記録は順につながっていき、いつでも見返したり、前の状態に戻したりできます。</p>
+        </section>
       </div>
     </section>
     <section class="chapters" aria-label="レベル">
@@ -4687,7 +4716,7 @@
     </aside>
     <section class="board">
       <div class="panel">
-        <div class="panel-h"><span>コミットグラフ　あなたの PC</span><span class="legend"><span><i class="lg-dot"></i>コミット</span><span><i class="lg-ref"></i>ブランチ</span>${lv.ch === 4 || lv.id === "sandbox" || lv.id === "3-5" ? '<span><i class="lg-tr"></i>最後に見た origin の位置</span>' : ""}</span></div>
+        <div class="panel-h"><span>コミットグラフ　あなたの PC</span><span class="legend"><span><i class="lg-dot"></i>記録（コミット）</span><span><i class="lg-ref"></i>枝の名前（ブランチ）</span>${lv.ch === 4 || lv.id === "sandbox" || lv.id === "3-5" ? '<span><i class="lg-tr"></i>最後に見た origin の位置</span>' : ""}</span></div>
         <div class="graph-scroll" id="gLocal"></div>
         <div class="remote-part" id="gRemoteWrap" hidden><div class="panel-h"><span>origin（GitHub 上の共有リポジトリ）</span></div><div class="graph-scroll" id="gRemote"></div></div>
       </div>
@@ -5070,13 +5099,13 @@
           ? ""
           : '<p class="empty">git init で使えるようになります。</p>';
         z.innerHTML = `
-    <div class="zone"><header><div><h3>作業台</h3><span>working directory</span></div><img src="${A}zone-workbench.webp" alt="" width="58" height="58"></header>
+    <div class="zone"><header><div><h3>作業台</h3><span>作業中のファイル</span></div><img src="${A}zone-workbench.webp" alt="" width="58" height="58"></header>
       ${work.length ? `<ul>${work.join("")}</ul>` : '<p class="empty">ファイルはありません。</p>'}</div>
     <div class="arrow">${ARROW}<span>git add</span></div>
-    <div class="zone stage"><header><div><h3>天板</h3><span>staging area · 次のコミットに入る</span></div><img src="${A}zone-tray.webp" alt="" width="58" height="58"></header>
+    <div class="zone stage"><header><div><h3>天板</h3><span>次に記録するもの</span></div><img src="${A}zone-tray.webp" alt="" width="58" height="58"></header>
       ${pre || (stage.length ? `<ul>${stage.join("")}</ul>` : '<p class="empty">空です。git add で乗せた変更がここに並びます。</p>')}</div>
     <div class="arrow">${ARROW}<span>git commit</span></div>
-    <div class="zone"><header><div><h3>焼き上がり</h3><span>repository · HEAD のコミット</span></div><img src="${A}zone-baked.webp" alt="" width="58" height="58"></header>
+    <div class="zone"><header><div><h3>焼き上がり</h3><span>記録ずみ</span></div><img src="${A}zone-baked.webp" alt="" width="58" height="58"></header>
       ${pre || (hidv ? `<p class="headinfo">${hidv} ${esc(r.store[hidv].msg)}</p><ul>${repo.join("")}</ul>` : '<p class="empty">まだコミットがありません。</p>')}</div>`;
         z.querySelectorAll("[data-run]").forEach(b =>
           b.addEventListener("click", () => exec(b.dataset.run))
