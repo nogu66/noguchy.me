@@ -54,8 +54,9 @@ const html = `<!doctype html>
 <title>${title} | パン屋さんで覚える Git</title>
 <meta name="description" content="${desc}">
 <link rel="canonical" href="${url}">
-<link rel="icon" type="image/png" href="/favicon.png">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/git-bakery/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/git-bakery/assets/favicon-192.png">
+<link rel="apple-touch-icon" href="/git-bakery/assets/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="noguchy.me">
 <meta property="og:locale" content="ja_JP">
@@ -83,10 +84,12 @@ ${pin(body)}
 
 mkdirSync(out, { recursive: true });
 writeFileSync(path.join(out, "index.html"), html);
-// copy the webp illustrations (the raw PNGs stay in the game folder)
+// copy the webp illustrations and the cat favicons (the raw PNGs stay in the game folder)
 const assets = path.join(path.dirname(src), "assets");
 mkdirSync(path.join(out, "assets"), { recursive: true });
-for (const f of readdirSync(assets).filter(f => f.endsWith(".webp")))
+for (const f of readdirSync(assets).filter(
+  f => f.endsWith(".webp") || /^(favicon-|apple-touch-icon)/.test(f)
+))
   copyFileSync(path.join(assets, f), path.join(out, "assets", f));
 execFileSync(
   chrome,
