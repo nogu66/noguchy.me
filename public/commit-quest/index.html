@@ -1,0 +1,5168 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>コミット・クエスト | Git をゲームで覚える</title>
+    <meta
+      name="description"
+      content="パン屋のホームページ作りを手伝いながら、本物の git コマンドを打って覚える学習ゲーム。コミットグラフと作業台・ステージ・リポジトリの動きが目の前で見える。全 21 レベル、ブラウザでそのまま遊べます。"
+    />
+    <link rel="canonical" href="https://noguchy.me/commit-quest/" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="noguchy.me" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:url" content="https://noguchy.me/commit-quest/" />
+    <meta
+      property="og:title"
+      content="コミット・クエスト | Git をゲームで覚える"
+    />
+    <meta
+      property="og:description"
+      content="パン屋のホームページ作りを手伝いながら、本物の git コマンドを打って覚える学習ゲーム。コミットグラフと作業台・ステージ・リポジトリの動きが目の前で見える。全 21 レベル、ブラウザでそのまま遊べます。"
+    />
+    <meta
+      property="og:image"
+      content="https://noguchy.me/commit-quest/ogp.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="コミット・クエスト。Git をゲームで覚える、全 21 レベル"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@_nogu66" />
+    <meta name="twitter:creator" content="@_nogu66" />
+    <meta
+      name="twitter:title"
+      content="コミット・クエスト | Git をゲームで覚える"
+    />
+    <meta
+      name="twitter:description"
+      content="パン屋のホームページ作りを手伝いながら、本物の git コマンドを打って覚える学習ゲーム。コミットグラフと作業台・ステージ・リポジトリの動きが目の前で見える。全 21 レベル、ブラウザでそのまま遊べます。"
+    />
+    <meta
+      name="twitter:image"
+      content="https://noguchy.me/commit-quest/ogp.png"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="/commit-quest/assets/hero-bakery.webp"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Lora:wght@400;600&family=Noto+Sans+JP:wght@500;700;900&family=Noto+Serif+JP:wght@400;600&family=Poppins:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+      }
+      img {
+        max-width: 100%;
+      }
+      /* Layout: the map is itself a commit graph (chapters = lines, levels = stations); play = mission rail + board (graph / three trays / terminal) */
+      :root {
+        --bg: #faf9f5;
+        --card: #fdfcf8;
+        --surface: #f1efe7;
+        --line: #e8e6dc;
+        --line-strong: #d4d1c4;
+        --ink: #141413;
+        --muted: #6c6a62;
+        --faint: #b0aea5;
+        --orange: #d97757;
+        --blue: #6a9bcc;
+        --green: #788c5d;
+        --orange-ink: #b65b3d;
+        --blue-ink: #3f6c99;
+        --green-ink: #56683f;
+        --on-accent: #faf9f5;
+        --term-bg: #141413;
+        --term-fg: #ebe8de;
+        --term-dim: #8e8b81;
+        --term-line: #2b2a27;
+        --t-ok: #a9bd8c;
+        --t-warn: #eb9675;
+        --t-note: #93bbe2;
+        --t-hash: #e9b07f;
+        --font-heading:
+          "Poppins", "Noto Sans JP", "Hiragino Sans", Arial, sans-serif;
+        --font-body:
+          "Lora", "Noto Serif JP", "Hiragino Mincho ProN", Georgia, serif;
+        --font-mono:
+          "JetBrains Mono", "Noto Sans JP", ui-monospace, Menlo, monospace;
+        --r: 10px;
+        --pattern: url(/commit-quest/assets/pattern-wheat.webp);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #141413;
+          --card: #1a1a18;
+          --surface: #201f1d;
+          --line: #2d2c28;
+          --line-strong: #3d3b36;
+          --ink: #f0eee6;
+          --muted: #a3a097;
+          --faint: #5f5d56;
+          --orange-ink: #ec9a7b;
+          --blue-ink: #94bce4;
+          --green-ink: #a5b98a;
+          --on-accent: #141413;
+          --term-bg: #0f0f0e;
+          --term-line: #262522;
+          --pattern: none;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #141413;
+        --card: #1a1a18;
+        --surface: #201f1d;
+        --line: #2d2c28;
+        --line-strong: #3d3b36;
+        --ink: #f0eee6;
+        --muted: #a3a097;
+        --faint: #5f5d56;
+        --orange-ink: #ec9a7b;
+        --blue-ink: #94bce4;
+        --green-ink: #a5b98a;
+        --on-accent: #141413;
+        --term-bg: #0f0f0e;
+        --term-line: #262522;
+        --pattern: none;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        background-color: var(--bg);
+        background-image: var(--pattern);
+        background-size: 420px 420px;
+        color: var(--ink);
+        font-family: var(--font-heading);
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      a {
+        color: inherit;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
+      code,
+      kbd {
+        font-family: var(--font-mono);
+        font-size: 0.92em;
+      }
+
+      .wrap {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      .top {
+        border-bottom: 1px solid var(--line);
+        background: var(--bg);
+      }
+      .top .wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-block: 12px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+      .logo svg {
+        flex: none;
+      }
+      .score {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .score img {
+        width: 22px;
+        height: 22px;
+      }
+      .score b {
+        color: var(--orange-ink);
+        font-weight: 600;
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line-strong);
+        background: var(--card);
+        border-radius: 999px;
+        padding: 10px 20px;
+        text-decoration: none;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .btn:hover {
+        border-color: var(--ink);
+      }
+      .btn.primary {
+        background: var(--orange);
+        border-color: var(--orange);
+        color: var(--on-accent);
+      }
+      .btn.primary:hover {
+        filter: brightness(1.05);
+      }
+      .btn.small {
+        padding: 6px 14px;
+        font-size: 13px;
+      }
+
+      /* ---------- map ---------- */
+      .hero {
+        padding-block: 24px 8px;
+        display: grid;
+        gap: 18px;
+      }
+      /* the shop scene stays a lit morning room in both themes, so it pins its own light tokens */
+      .scene {
+        --ink: #141413;
+        --muted: #5d5b54;
+        --card: #fdfcf8;
+        --line: #e8e6dc;
+        --line-strong: #d4d1c4;
+        --orange-ink: #b65b3d;
+        --on-accent: #faf9f5;
+        position: relative;
+        border-radius: 22px;
+        overflow: hidden;
+        min-height: clamp(440px, 44vw, 560px);
+        display: grid;
+        align-items: center;
+        background: #f6efe0;
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+      .scene > .bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: right center;
+      }
+      .scene::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: linear-gradient(
+          90deg,
+          rgba(250, 249, 245, 0.95) 0%,
+          rgba(250, 249, 245, 0.86) 36%,
+          rgba(250, 249, 245, 0.25) 58%,
+          rgba(250, 249, 245, 0) 70%
+        );
+      }
+      .hero-copy {
+        position: relative;
+        z-index: 2;
+        padding: 40px clamp(24px, 4.5vw, 60px);
+        max-width: 700px;
+      }
+      .hero h1 {
+        font-size: clamp(2.2rem, 4.4vw, 3.7rem);
+        font-weight: 900;
+        line-height: 1.1;
+        margin: 10px 0 16px;
+        letter-spacing: -0.01em;
+        text-wrap: balance;
+      }
+      .hero .lead {
+        font-family: var(--font-body);
+        font-size: 16.5px;
+        line-height: 1.9;
+        max-width: 30em;
+        margin: 0 0 24px;
+        color: var(--ink);
+      }
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .welcome {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+      .greet {
+        display: grid;
+        grid-template-columns: 132px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+      }
+      .greet img {
+        width: 132px;
+        height: 132px;
+        object-fit: contain;
+        animation: sway 4s ease-in-out infinite;
+        transform-origin: 50% 90%;
+      }
+      .bubble {
+        position: relative;
+        background: var(--card);
+        border: 1px solid var(--line-strong);
+        border-radius: 16px;
+        padding: 12px 16px;
+      }
+      .bubble::before {
+        content: "";
+        position: absolute;
+        left: -8px;
+        top: 26px;
+        width: 14px;
+        height: 14px;
+        background: var(--card);
+        border-left: 1px solid var(--line-strong);
+        border-bottom: 1px solid var(--line-strong);
+        transform: rotate(45deg);
+      }
+      .bubble .who {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--orange-ink);
+        margin-bottom: 2px;
+      }
+      .bubble p {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 14.5px;
+        line-height: 1.85;
+      }
+      .prog {
+        margin-top: 26px;
+        max-width: 420px;
+      }
+      .prog .bar {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+        overflow: hidden;
+      }
+      .prog .bar i {
+        display: block;
+        height: 100%;
+        background: var(--orange);
+        border-radius: 3px;
+      }
+      .prog p {
+        margin: 8px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .hero-fig {
+        margin: 0;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background-color: var(--card);
+        background-image: radial-gradient(
+          var(--line-strong) 1px,
+          transparent 1.2px
+        );
+        background-size: 18px 18px;
+        padding: 18px 12px 12px;
+      }
+      .hero-fig .graph-scroll {
+        overflow-x: auto;
+      }
+      .hero-fig figcaption {
+        font-size: 12.5px;
+        color: var(--muted);
+        padding: 6px 8px 0;
+        font-family: var(--font-body);
+      }
+
+      .section-h {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 0 0 18px;
+      }
+      .section-h h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 900;
+      }
+      .section-h p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+
+      .chapters {
+        display: grid;
+        gap: 14px;
+        padding-bottom: 40px;
+      }
+      .chapter {
+        --lane: var(--orange);
+        display: grid;
+        grid-template-columns: 270px minmax(0, 1fr);
+        gap: 24px;
+        align-items: center;
+        border-top: 1px solid var(--line);
+        padding-top: 22px;
+      }
+      .chapter header {
+        display: grid;
+        grid-template-columns: 78px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+      }
+      .ch-art {
+        width: 78px;
+        height: 78px;
+        object-fit: contain;
+      }
+      .chapter[data-ch="2"] {
+        --lane: var(--blue);
+      }
+      .chapter[data-ch="3"] {
+        --lane: var(--green);
+      }
+      .chapter[data-ch="4"] {
+        --lane: var(--ink);
+      }
+      .chapter .chno {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+      .chapter h3 {
+        margin: 2px 0 4px;
+        font-size: 19px;
+        font-weight: 900;
+      }
+      .chapter p {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 13.5px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .stations {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
+        position: relative;
+      }
+      .stations::before {
+        content: "";
+        position: absolute;
+        left: calc(100% / var(--n) / 2);
+        right: calc(100% / var(--n) / 2);
+        top: 26px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--lane);
+      }
+      .st {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+        padding: 0 4px 6px;
+        border-radius: 8px;
+        position: relative;
+        text-align: center;
+      }
+      .st .bread {
+        width: 54px;
+        height: 54px;
+        object-fit: contain;
+        transition: transform 0.2s;
+        filter: drop-shadow(0 3px 2px rgba(80, 50, 20, 0.18));
+      }
+      .st:not(.cleared) .bread {
+        opacity: 0.9;
+      }
+      .st.next .bread {
+        animation: bob 1.6s ease-in-out infinite;
+      }
+      .st:hover .bread {
+        transform: scale(1.14) rotate(-6deg);
+      }
+      .st.next .name::after {
+        content: "次はここ";
+        display: block;
+        font-size: 10.5px;
+        color: var(--orange-ink);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      .st .no {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .st .name {
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.35;
+        text-wrap: balance;
+      }
+      .stars {
+        font-size: 12px;
+        letter-spacing: 1px;
+        color: var(--faint);
+      }
+      .stars .on {
+        color: var(--orange);
+      }
+
+      .zukan {
+        padding-block: 12px 56px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 10px;
+      }
+      .cmdcard {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 12px 14px;
+        background: var(--card);
+      }
+      .cmdcard img {
+        width: 34px;
+        height: 34px;
+      }
+      .cmdcard.locked img {
+        opacity: 0.7;
+      }
+      .cmdcard code {
+        display: block;
+        font-weight: 600;
+        color: var(--orange-ink);
+        margin-bottom: 4px;
+        font-size: 13.5px;
+      }
+      .cmdcard p {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .cmdcard.locked {
+        background: transparent;
+        border-style: dashed;
+      }
+      .cmdcard.locked code {
+        color: var(--faint);
+      }
+      .foot {
+        border-top: 1px solid var(--line);
+        padding-block: 20px 36px;
+        color: var(--muted);
+        font-size: 12.5px;
+        font-family: var(--font-body);
+      }
+
+      /* ---------- play ---------- */
+      .play {
+        display: grid;
+        grid-template-columns: minmax(0, 330px) minmax(0, 1fr);
+        gap: 20px;
+        padding-block: 18px 40px;
+        align-items: start;
+      }
+      .mission {
+        display: grid;
+        gap: 16px;
+        position: sticky;
+        top: 12px;
+      }
+      .crumb {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 13px;
+        color: var(--muted);
+        flex-wrap: wrap;
+      }
+      .crumb a {
+        text-decoration: none;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .crumb a:hover {
+        color: var(--orange-ink);
+      }
+      .mission h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.35;
+        font-weight: 900;
+        text-wrap: balance;
+      }
+      .mission h1 .lvno {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--orange-ink);
+        display: block;
+        margin-bottom: 2px;
+      }
+      .story {
+        font-family: var(--font-body);
+        font-size: 14.5px;
+        line-height: 1.85;
+        margin: 0;
+      }
+      .boss {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+      }
+      .boss > img {
+        width: 72px;
+        height: 72px;
+        object-fit: contain;
+        margin-top: 4px;
+      }
+      .boss .bubble {
+        padding: 10px 14px;
+      }
+      .boss .bubble::before {
+        top: 22px;
+      }
+      .lbl {
+        font-size: 11.5px;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        margin: 0 0 8px;
+        font-weight: 700;
+      }
+      .goals {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+      }
+      .goal {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .goal .chk {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--line-strong);
+        margin-top: 1px;
+        display: grid;
+        place-items: center;
+      }
+      .goal .chk svg {
+        opacity: 0;
+      }
+      .goal.done .chk {
+        background: var(--green);
+        border-color: var(--green);
+      }
+      .goal.done .chk svg {
+        opacity: 1;
+      }
+      .goal.done span:last-child {
+        color: var(--muted);
+      }
+      .goal.just .chk {
+        animation: pop 0.45s ease;
+      }
+      .meter {
+        display: flex;
+        gap: 16px;
+        font-size: 12.5px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        flex-wrap: wrap;
+      }
+      .meter b {
+        color: var(--ink);
+        font-family: var(--font-mono);
+      }
+      .hints {
+        margin: 8px 0 0;
+        padding-left: 20px;
+        display: grid;
+        gap: 6px;
+        font-size: 13.5px;
+        font-family: var(--font-body);
+        line-height: 1.7;
+      }
+      .hints code {
+        background: var(--surface);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      .tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chip {
+        border: 1px solid var(--line-strong);
+        background: var(--card);
+        border-radius: 6px;
+        padding: 4px 9px;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        cursor: pointer;
+        text-align: left;
+      }
+      .chip:hover {
+        border-color: var(--orange);
+        color: var(--orange-ink);
+      }
+      .side-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .linkbtn {
+        background: none;
+        border: 0;
+        padding: 0;
+        color: var(--muted);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .linkbtn:hover {
+        color: var(--ink);
+      }
+
+      .board {
+        display: grid;
+        gap: 14px;
+        min-width: 0;
+      }
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--card);
+        min-width: 0;
+      }
+      .panel-h {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px 0;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        flex-wrap: wrap;
+      }
+      .legend {
+        display: flex;
+        gap: 12px;
+        font-weight: 500;
+        letter-spacing: 0;
+        font-size: 11.5px;
+        flex-wrap: wrap;
+      }
+      .legend i {
+        display: inline-block;
+        vertical-align: -1px;
+        margin-right: 4px;
+      }
+      .lg-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--orange);
+      }
+      .lg-ref {
+        width: 18px;
+        height: 10px;
+        border-radius: 5px;
+        border: 1.5px solid var(--ink);
+      }
+      .lg-tr {
+        width: 18px;
+        height: 10px;
+        border-radius: 5px;
+        border: 1.5px dashed var(--muted);
+      }
+      .graph-scroll {
+        overflow-x: auto;
+        padding: 4px 6px 8px;
+      }
+      .graph-empty {
+        padding: 26px 14px 30px;
+        font-family: var(--font-body);
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      .remote-part {
+        border-top: 1px dashed var(--line-strong);
+        margin-top: 4px;
+      }
+
+      svg.graph {
+        display: block;
+        overflow: visible;
+      }
+      .edge {
+        fill: none;
+        stroke-width: 3.5;
+        stroke-linecap: round;
+      }
+      .edge.fresh {
+        stroke-dasharray: 240;
+        stroke-dashoffset: 240;
+        animation: draw 0.6s ease forwards;
+      }
+      .node .dot {
+        stroke: var(--card);
+        stroke-width: 3;
+      }
+      .hero-fig .node .dot {
+        stroke: var(--card);
+      }
+      .node .hole {
+        fill: var(--card);
+      }
+      .node .head-ring {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 2;
+        stroke-dasharray: 4 3;
+      }
+      .node .cid {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        fill: var(--muted);
+        text-anchor: middle;
+      }
+      .node {
+        cursor: pointer;
+      }
+      .node:hover .dot {
+        stroke: var(--ink);
+      }
+      .node.fresh {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: pop 0.45s ease backwards;
+        animation-delay: calc(var(--i, 0) * 35ms);
+      }
+      .ref rect {
+        stroke-width: 1.5;
+      }
+      .ref text {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        text-anchor: middle;
+        dominant-baseline: central;
+        font-weight: 600;
+      }
+      .ref.br rect {
+        fill: var(--card);
+        stroke: var(--ink);
+      }
+      .ref.br text {
+        fill: var(--ink);
+      }
+      .ref.cur rect,
+      .ref.head rect {
+        fill: var(--orange);
+        stroke: var(--orange);
+      }
+      .ref.cur text,
+      .ref.head text {
+        fill: var(--on-accent);
+      }
+      .ref.tr rect {
+        fill: var(--card);
+        stroke: var(--muted);
+        stroke-dasharray: 3 2;
+      }
+      .ref.tr text {
+        fill: var(--muted);
+      }
+      .ref.rb rect {
+        fill: var(--blue);
+        stroke: var(--blue);
+      }
+      .ref.rb text {
+        fill: var(--on-accent);
+      }
+
+      .zones {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(
+            0,
+            1fr
+          );
+        gap: 8px;
+        align-items: stretch;
+      }
+      .zone {
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--card);
+        padding: 12px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .zone header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 58px;
+        gap: 6px;
+        align-items: center;
+      }
+      .zone h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 900;
+      }
+      .zone header span {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      .zone header img {
+        width: 58px;
+        height: 58px;
+        object-fit: contain;
+      }
+      .zone ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 5px;
+      }
+      .zone .empty {
+        font-size: 12.5px;
+        color: var(--muted);
+        font-family: var(--font-body);
+        line-height: 1.6;
+      }
+      .zone.stage {
+        background: var(--surface);
+      }
+      .file {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 5px 8px;
+        background: var(--bg);
+      }
+      .file .fn {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .tag {
+        font-family: var(--font-heading);
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 999px;
+        border: 1px solid currentColor;
+        white-space: nowrap;
+      }
+      .tag.new {
+        color: var(--blue-ink);
+      }
+      .tag.mod {
+        color: var(--orange-ink);
+      }
+      .tag.del {
+        color: var(--muted);
+      }
+      .tag.cf {
+        color: var(--on-accent);
+        background: var(--orange);
+        border-color: var(--orange);
+      }
+      .tag.ok {
+        color: var(--green-ink);
+      }
+      .fbtn {
+        border: 0;
+        background: none;
+        padding: 2px 4px;
+        font-size: 11.5px;
+        color: var(--muted);
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        font-family: var(--font-heading);
+      }
+      .fbtn:hover {
+        color: var(--orange-ink);
+      }
+      .cfbox {
+        flex-basis: 100%;
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      .cfbox button {
+        border: 1px solid var(--orange);
+        color: var(--orange-ink);
+        background: var(--card);
+        border-radius: 5px;
+        font-size: 11.5px;
+        padding: 2px 7px;
+        cursor: pointer;
+        font-family: var(--font-heading);
+      }
+      .cfbox button:hover {
+        background: var(--orange);
+        color: var(--on-accent);
+      }
+      .headinfo {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+      .arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        padding: 0 2px;
+      }
+      .arrow svg {
+        color: var(--faint);
+      }
+
+      .term {
+        border-radius: var(--r);
+        background: var(--term-bg);
+        color: var(--term-fg);
+        border: 1px solid var(--term-line);
+        overflow: hidden;
+        min-width: 0;
+      }
+      .term-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--term-line);
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--term-dim);
+      }
+      .term-out {
+        height: clamp(220px, 36vh, 380px);
+        overflow-y: auto;
+        padding: 12px 14px 6px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .ln {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        min-height: 1.6em;
+      }
+      .ln .cmd {
+        color: var(--term-fg);
+        font-weight: 600;
+      }
+      .ln .pr {
+        color: var(--t-ok);
+      }
+      .ln .err {
+        color: var(--t-warn);
+      }
+      .ln .warn {
+        color: var(--t-warn);
+      }
+      .ln .ok {
+        color: var(--t-ok);
+      }
+      .ln .add {
+        color: var(--t-ok);
+      }
+      .ln .del {
+        color: var(--t-warn);
+      }
+      .ln .note {
+        color: var(--t-note);
+        font-family: var(--font-heading);
+        font-size: 12.5px;
+      }
+      .ln .dim,
+      .ln .sys {
+        color: var(--term-dim);
+      }
+      .ln .hash {
+        color: var(--t-hash);
+      }
+      .ln .ref {
+        color: var(--t-note);
+      }
+      .ln .bold {
+        font-weight: 600;
+      }
+      .term form {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px 12px;
+        border-top: 1px solid var(--term-line);
+      }
+      .term label {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--t-ok);
+        white-space: nowrap;
+      }
+      .term input {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: 0;
+        color: var(--term-fg);
+        font-family: var(--font-mono);
+        font-size: 14px;
+        padding: 6px 0;
+        caret-color: var(--orange);
+      }
+      .term input:focus {
+        outline: none;
+      }
+      .term form:focus-within {
+        box-shadow: inset 0 2px 0 var(--orange);
+      }
+      .runbtn {
+        background: var(--orange);
+        color: #141413;
+        border: 0;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 12.5px;
+        cursor: pointer;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: color-mix(in srgb, var(--ink) 45%, transparent);
+        display: grid;
+        place-items: center;
+        z-index: 50;
+        padding: 16px;
+      }
+      .dialog {
+        position: relative;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        max-width: 460px;
+        width: 100%;
+        margin-top: 70px;
+        padding: 84px 26px 22px;
+        display: grid;
+        gap: 12px;
+        box-shadow: 0 24px 60px rgba(20, 20, 19, 0.25);
+        animation: rise 0.35s ease;
+        text-align: center;
+      }
+      .dialog .cheer {
+        position: absolute;
+        left: 50%;
+        top: -78px;
+        width: 158px;
+        height: 158px;
+        margin-left: -79px;
+        animation: hop 0.9s ease 0.1s backwards;
+      }
+      .dialog h2 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 900;
+      }
+      .dialog .sub {
+        margin: -6px 0 0;
+        font-size: 13.5px;
+        color: var(--muted);
+      }
+      .bigstars {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+      }
+      .bigstars img {
+        width: 62px;
+        height: 62px;
+      }
+      .bigstars img.off {
+        opacity: 0.55;
+        filter: grayscale(0.5);
+      }
+      .bigstars img.on {
+        animation: pop 0.5s ease backwards;
+      }
+      .bigstars img:nth-child(2) {
+        animation-delay: 0.18s;
+      }
+      .bigstars img:nth-child(3) {
+        animation-delay: 0.36s;
+      }
+      .crit {
+        justify-items: center;
+      }
+      .crumbs {
+        position: absolute;
+        left: 50%;
+        top: 10px;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+      }
+      .crumbs i {
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--c);
+        animation: burst 0.9s ease-out 0.15s backwards;
+        opacity: 0;
+      }
+      .actions {
+        justify-content: center;
+      }
+      .crit {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 4px;
+        font-size: 13.5px;
+      }
+      .crit li {
+        display: flex;
+        gap: 8px;
+        color: var(--muted);
+      }
+      .crit li::before {
+        content: "○";
+        color: var(--faint);
+      }
+      .crit li.on {
+        color: var(--ink);
+      }
+      .crit li.on::before {
+        content: "●";
+        color: var(--orange);
+      }
+      .learned {
+        background: var(--surface);
+        border-radius: var(--r);
+        padding: 12px 14px;
+      }
+      .learned h3 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+      .learned p {
+        margin: 0;
+        font-family: var(--font-body);
+        font-size: 14px;
+        line-height: 1.8;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      @keyframes pop {
+        0% {
+          transform: scale(0.3);
+          opacity: 0;
+        }
+        70% {
+          transform: scale(1.15);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      @keyframes draw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      @keyframes rise {
+        from {
+          transform: translateY(12px);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+      @keyframes bob {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+      @keyframes sway {
+        0%,
+        100% {
+          transform: rotate(-2deg);
+        }
+        50% {
+          transform: rotate(2deg);
+        }
+      }
+      @keyframes hop {
+        0% {
+          transform: translateY(40px) scale(0.6);
+          opacity: 0;
+        }
+        55% {
+          transform: translateY(-12px) scale(1.05);
+          opacity: 1;
+        }
+        100% {
+          transform: none;
+        }
+      }
+      @keyframes burst {
+        0% {
+          transform: translate(0, 0) scale(0.4);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(var(--x), var(--y)) scale(1);
+          opacity: 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .edge.fresh {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @media (max-width: 960px) {
+        .play {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .mission {
+          position: static;
+        }
+        .welcome {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      @media (max-width: 700px) {
+        .scene {
+          display: block;
+          min-height: 0;
+        }
+        .scene > .bg {
+          position: static;
+          height: 210px;
+        }
+        .scene::before {
+          display: none;
+        }
+        .hero-copy {
+          padding: 22px 20px 26px;
+          max-width: none;
+        }
+        .greet {
+          grid-template-columns: 96px minmax(0, 1fr);
+        }
+        .greet img {
+          width: 96px;
+          height: 96px;
+        }
+      }
+      @media (max-width: 760px) {
+        .zones {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .arrow {
+          flex-direction: row;
+          gap: 6px;
+          padding: 0;
+        }
+        .arrow svg {
+          transform: rotate(90deg);
+        }
+        .chapter {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 14px;
+        }
+        .stations {
+          grid-auto-flow: row;
+          grid-auto-columns: auto;
+          gap: 2px;
+        }
+        .chapter header {
+          grid-template-columns: 64px minmax(0, 1fr);
+        }
+        .ch-art {
+          width: 64px;
+          height: 64px;
+        }
+        .stations::before {
+          left: 27px;
+          right: auto;
+          top: 26px;
+          bottom: 26px;
+          width: 4px;
+          height: auto;
+        }
+        .st {
+          flex-direction: row;
+          align-items: center;
+          gap: 12px;
+          text-align: left;
+          padding: 4px;
+        }
+        .st .bread {
+          width: 48px;
+          height: 48px;
+          flex: none;
+        }
+        .st .no {
+          margin: 0;
+          min-width: 28px;
+        }
+        .st .name {
+          flex: 1;
+        }
+        .sc-clear,
+        .term-bar .keys {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="logo" href="#map" aria-label="コミット・クエスト マップへ">
+          <svg width="34" height="22" viewBox="0 0 34 22" aria-hidden="true">
+            <path
+              d="M5 16H29"
+              stroke="#d97757"
+              stroke-width="3"
+              stroke-linecap="round"
+            />
+            <path
+              d="M11 16C15 16 14 6 19 6H23"
+              stroke="#6a9bcc"
+              stroke-width="3"
+              fill="none"
+              stroke-linecap="round"
+            />
+            <circle cx="5" cy="16" r="4" fill="#d97757" />
+            <circle cx="17" cy="16" r="4" fill="#d97757" />
+            <circle cx="23" cy="6" r="4" fill="#6a9bcc" />
+            <circle cx="29" cy="16" r="4" fill="#d97757" />
+          </svg>
+          <span>コミット・クエスト</span>
+        </a>
+        <span class="score" id="score"></span>
+      </div>
+    </header>
+    <main id="view"></main>
+
+    <div class="modal" id="modal" hidden>
+      <div
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mTitle"
+      >
+        <span class="crumbs" id="mCrumbs" aria-hidden="true"></span>
+        <img
+          class="cheer"
+          src="/commit-quest/assets/mascot-cheer.webp"
+          alt=""
+          width="158"
+          height="158"
+        />
+        <p class="eyebrow">Level clear</p>
+        <h2 id="mTitle">焼き上がり！</h2>
+        <p class="sub" id="mSub"></p>
+        <div class="bigstars" id="mStars"></div>
+        <ul class="crit" id="mCrit"></ul>
+        <div class="learned">
+          <h3>今回のポイント</h3>
+          <p id="mLearn"></p>
+        </div>
+        <div class="actions">
+          <button class="btn small" id="mRetry" type="button">もう一度</button>
+          <a class="btn small" href="#map" id="mMap">マップへ</a>
+          <button class="btn small primary" id="mNext" type="button">
+            次のレベルへ
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script id="engine">
+      "use strict";
+      /* ================= Git simulator ================= */
+      const C = {
+        index: "見出し「こむぎ堂へようこそ」",
+        style: "背景はクリーム色、文字はこげ茶",
+        news: "お知らせ: 10月の定休日は火曜日",
+        menu: "メニュー: 食パン / クロワッサン / あんパン",
+      };
+      const TOUCH = {
+        "menu.html": C.menu,
+        "melon.html": "メロンパン: 外はさっくり、中はふんわり",
+        "croissant.html": "クロワッサン特集: バターたっぷりの 3 種",
+        "order.html": "予約フォーム: お名前 / 受け取り日 / 個数",
+        "about.html": "店主あいさつ: 毎朝 4 時から生地を仕込んでいます",
+        "banner.html": "季節限定バナー: 栗あんパン",
+      };
+      const ORIGIN = "github.com:komugido/site.git";
+      const NOCOUNT =
+        /^(help|hint|clear|ls|pwd|cat\b|git\s+(status|log|diff|show|remote|stash\s+list|--version|version|branch(\s+-[ar])?\s*$))/;
+
+      function newRepo(salt) {
+        return {
+          salt: salt || 1,
+          seq: 0,
+          store: {},
+          inited: false,
+          work: {},
+          index: {},
+          branches: {},
+          branchOrder: [],
+          head: null,
+          upstream: {},
+          tracking: {},
+          merging: null,
+          stash: [],
+          remote: null,
+          known: new Set(),
+          ran: [],
+          editCount: {},
+          prevBranch: null,
+        };
+      }
+      function hid(r) {
+        r.seq++;
+        let x = (Math.imul(r.seq, 2654435761) ^ Math.imul(r.salt, 40503)) >>> 0;
+        x ^= x >>> 15;
+        x = Math.imul(x, 0x2c1b3c6d) >>> 0;
+        x ^= x >>> 12;
+        x = Math.imul(x, 0x297a2d39) >>> 0;
+        x ^= x >>> 15;
+        return (x >>> 0).toString(16).padStart(8, "0").slice(0, 7);
+      }
+      function mkCommit(r, parents, tree, msg, local = true) {
+        let id;
+        do {
+          id = hid(r);
+        } while (r.store[id]);
+        r.store[id] = {
+          id,
+          parents: parents.slice(),
+          tree: { ...tree },
+          msg,
+          seq: r.seq,
+        };
+        if (local) r.known.add(id);
+        return id;
+      }
+      const headId = r =>
+        !r.head
+          ? null
+          : r.head.b !== undefined
+            ? r.branches[r.head.b] || null
+            : r.head.d;
+      const treeOf = (r, id) => (id ? r.store[id].tree : {});
+      const headTree = r => treeOf(r, headId(r));
+      const files = (...objs) =>
+        [...new Set(objs.flatMap(o => Object.keys(o || {})))].sort();
+      const isCf = v => !!v && typeof v === "object";
+      const showV = v => (isCf(v) ? "<<<<<<< 衝突中 >>>>>>>" : v);
+      function ancestors(r, id) {
+        const s = new Set(),
+          st = id ? [id] : [];
+        while (st.length) {
+          const c = st.pop();
+          if (s.has(c)) continue;
+          s.add(c);
+          st.push(...r.store[c].parents);
+        }
+        return s;
+      }
+      const isAnc = (r, a, b) => !!a && !!b && ancestors(r, b).has(a);
+      function mergeBase(r, a, b) {
+        const A = ancestors(r, a);
+        let best = null;
+        for (const c of ancestors(r, b))
+          if (A.has(c) && (!best || r.store[c].seq > r.store[best].seq))
+            best = c;
+        return best;
+      }
+      function resolve(r, ref) {
+        const m = String(ref).match(/^(.*?)((?:[~^]\d*)*)$/);
+        const base = m[1];
+        let id = null;
+        if (base === "HEAD" || base === "@") id = headId(r);
+        else if (r.branches[base]) id = r.branches[base];
+        else if (r.tracking[base]) id = r.tracking[base];
+        else if (
+          r.tracking["origin/" + base.replace(/^remotes\/origin\//, "")] &&
+          base.startsWith("remotes/")
+        )
+          id = r.tracking["origin/" + base.slice(15)];
+        else if (/^[0-9a-f]{4,40}$/.test(base)) {
+          const hits = [...r.known].filter(k => k.startsWith(base));
+          if (hits.length === 1) id = hits[0];
+        }
+        if (!id) return null;
+        for (const s of m[2].match(/[~^]\d*/g) || []) {
+          const n = s.length > 1 ? parseInt(s.slice(1), 10) : 1;
+          if (s[0] === "~") {
+            for (let i = 0; i < n; i++) {
+              id = r.store[id].parents[0];
+              if (!id) return null;
+            }
+          } else if (n > 0) {
+            id = r.store[id].parents[n - 1];
+            if (!id) return null;
+          }
+        }
+        return id;
+      }
+      function fileStates(r) {
+        const H = headTree(r),
+          out = [],
+          cf = r.merging ? r.merging.conflicts : [];
+        for (const f of files(r.work, r.index, H)) {
+          if (cf.includes(f)) {
+            out.push({ f, conflict: true });
+            continue;
+          }
+          const w = r.work[f],
+            i = r.index[f],
+            h = H[f];
+          let staged = null,
+            unstaged = null;
+          if (i !== h)
+            staged =
+              h === undefined
+                ? "new"
+                : i === undefined
+                  ? "deleted"
+                  : "modified";
+          if (i === undefined) {
+            if (w !== undefined) unstaged = "untracked";
+          } else if (w !== i)
+            unstaged = w === undefined ? "deleted" : "modified";
+          out.push({ f, staged, unstaged });
+        }
+        return out;
+      }
+      const trackedDirty = r =>
+        fileStates(r)
+          .filter(
+            s =>
+              s.conflict ||
+              s.staged ||
+              (s.unstaged && s.unstaged !== "untracked")
+          )
+          .map(s => s.f);
+      const isClean = r =>
+        fileStates(r).every(s => !s.conflict && !s.staged && !s.unstaged);
+      function untrackedMap(r) {
+        const H = headTree(r),
+          m = {};
+        for (const f in r.work)
+          if (r.index[f] === undefined && H[f] === undefined) m[f] = r.work[f];
+        return m;
+      }
+      function resetTo(r, T, unt) {
+        r.work = { ...T };
+        r.index = { ...T };
+        for (const f in unt) if (!(f in T)) r.work[f] = unt[f];
+      }
+      function moveHead(r, id) {
+        if (r.head.b !== undefined) {
+          r.branches[r.head.b] = id;
+          if (!r.branchOrder.includes(r.head.b)) r.branchOrder.push(r.head.b);
+        } else r.head.d = id;
+      }
+      const sameTree = (a, b) => files(a, b).every(f => a[f] === b[f]);
+
+      function tokenize(s) {
+        const out = [],
+          re = /"([^"]*)"|'([^']*)'|“([^”]*)”|「([^」]*)」|(\S+)/g;
+        let m;
+        while ((m = re.exec(s))) out.push(m[1] ?? m[2] ?? m[3] ?? m[4] ?? m[5]);
+        return out;
+      }
+      function newOut() {
+        const lines = [];
+        return {
+          lines,
+          failed: false,
+          line(t = "", c = "") {
+            String(t)
+              .split("\n")
+              .forEach(x => lines.push([[x, c]]));
+          },
+          seg(parts) {
+            lines.push(parts.filter(Boolean));
+          },
+          err(t) {
+            this.failed = true;
+            String(t)
+              .split("\n")
+              .forEach(x => lines.push([[x, "err"]]));
+          },
+          note(t) {
+            lines.push([[t, "note"]]);
+          },
+        };
+      }
+      function diffStat(A, B, o) {
+        const ch = files(A, B).filter(f => A[f] !== B[f]);
+        ch.forEach(f =>
+          o.line(
+            ` ${f} | ${A[f] === undefined ? "new" : B[f] === undefined ? "deleted" : "changed"}`
+          )
+        );
+        o.line(` ${ch.length} file${ch.length === 1 ? "" : "s"} changed`);
+      }
+      function moveTo(r, target, newHead, o) {
+        const H = headTree(r),
+          T = treeOf(r, target),
+          dirty = trackedDirty(r);
+        const bad = dirty.filter(f => T[f] !== H[f]);
+        const unt = Object.keys(r.work).filter(
+          f => r.index[f] === undefined && H[f] === undefined
+        );
+        const badU = unt.filter(f => T[f] !== undefined && T[f] !== r.work[f]);
+        if (bad.length || badU.length) {
+          if (bad.length) {
+            o.err(
+              "error: Your local changes to the following files would be overwritten by checkout:"
+            );
+            bad.forEach(f => o.err("\t" + f));
+            o.err(
+              "Please commit your changes or stash them before you switch branches."
+            );
+          } else {
+            o.err(
+              "error: The following untracked working tree files would be overwritten by checkout:"
+            );
+            badU.forEach(f => o.err("\t" + f));
+            o.err("Please move or remove them before you switch branches.");
+          }
+          o.err("Aborting");
+          o.note(
+            "→ 編集途中の変更が上書きされて消えてしまうため、Git が止めました。commit するか、git stash でしまってから切り替えます。"
+          );
+          return false;
+        }
+        const nw = {},
+          ni = {};
+        for (const f of files(T, r.work, r.index, H)) {
+          if (dirty.includes(f)) {
+            if (r.work[f] !== undefined) nw[f] = r.work[f];
+            if (r.index[f] !== undefined) ni[f] = r.index[f];
+            continue;
+          }
+          if (T[f] !== undefined) {
+            nw[f] = T[f];
+            ni[f] = T[f];
+            continue;
+          }
+          if (unt.includes(f)) nw[f] = r.work[f];
+        }
+        r.work = nw;
+        r.index = ni;
+        r.head = newHead;
+        return true;
+      }
+      function merge3(base, ours, theirs, label) {
+        const tree = {},
+          conflicts = [];
+        for (const f of files(base, ours, theirs)) {
+          const b = base[f],
+            o = ours[f],
+            t = theirs[f];
+          let v;
+          if (o === t) v = o;
+          else if (o === b) v = t;
+          else if (t === b) v = o;
+          else {
+            conflicts.push(f);
+            v = { ours: o ?? "(削除)", theirs: t ?? "(削除)", label };
+          }
+          if (v !== undefined) tree[f] = v;
+        }
+        return { tree, conflicts };
+      }
+      function doMerge(r, theirs, label, o, opt = {}) {
+        const ours = headId(r),
+          unt = untrackedMap(r);
+        if (!ours) {
+          moveHead(r, theirs);
+          resetTo(r, treeOf(r, theirs), unt);
+          o.line("Fast-forward");
+          return true;
+        }
+        if (ours === theirs || isAnc(r, theirs, ours)) {
+          o.line("Already up to date.");
+          o.note("→ 取り込む新しいコミットはありませんでした。");
+          return true;
+        }
+        if (isAnc(r, ours, theirs) && !opt.noff) {
+          o.line(`Updating ${ours}..${theirs}`);
+          o.line("Fast-forward");
+          diffStat(treeOf(r, ours), treeOf(r, theirs), o);
+          moveHead(r, theirs);
+          resetTo(r, treeOf(r, theirs), unt);
+          o.note(
+            `→ 早送り（Fast-forward）でした。${r.head.b || "HEAD"} の付箋が ${label} の位置まで進んだだけで、新しいコミットは作られていません。`
+          );
+          return true;
+        }
+        const base = mergeBase(r, ours, theirs);
+        const { tree, conflicts } = merge3(
+          treeOf(r, base),
+          treeOf(r, ours),
+          treeOf(r, theirs),
+          label
+        );
+        const msg =
+          opt.msg ||
+          `Merge branch '${label}'${r.head.b && r.head.b !== "main" ? " into " + r.head.b : ""}`;
+        if (conflicts.length) {
+          const O = treeOf(r, ours);
+          r.work = { ...tree };
+          for (const f in unt) if (!(f in tree)) r.work[f] = unt[f];
+          r.index = {};
+          for (const f in tree)
+            r.index[f] = conflicts.includes(f) ? O[f] : tree[f];
+          for (const f of conflicts) if (O[f] === undefined) delete r.index[f];
+          r.merging = { head: theirs, conflicts: [...conflicts], msg, label };
+          conflicts.forEach(f => {
+            o.line("Auto-merging " + f);
+            o.err(`CONFLICT (content): Merge conflict in ${f}`);
+          });
+          o.err(
+            "Automatic merge failed; fix conflicts and then commit the result."
+          );
+          o.note(
+            "→ 同じファイルの同じ場所が、両方で別々に書き換えられていました（衝突）。どちらを残すかは人間が決めます。作業台の衝突ファイルで残す内容を選び（edit）、git add → git commit で合流を終えます。"
+          );
+          return false;
+        }
+        const id = mkCommit(r, [ours, theirs], tree, msg);
+        moveHead(r, id);
+        resetTo(r, tree, unt);
+        o.line("Merge made by the 'ort' strategy.");
+        diffStat(treeOf(r, ours), tree, o);
+        o.note(
+          "→ 2 つの歴史を合流させる「マージコミット」を作りました。親が 2 つあるコミットです（グラフの白抜きの点）。"
+        );
+        return true;
+      }
+      function setupRemote(r) {
+        r.remote = { branches: { ...r.branches } };
+        for (const b in r.branches) {
+          r.tracking["origin/" + b] = r.branches[b];
+          r.upstream[b] = true;
+        }
+      }
+      function fetchAll(r, o) {
+        let any = false;
+        for (const [b, id] of Object.entries(r.remote.branches)) {
+          const k = "origin/" + b,
+            old = r.tracking[k];
+          if (old === id) continue;
+          if (!any) o.line("From " + ORIGIN.replace(".git", ""));
+          any = true;
+          o.line(
+            old
+              ? `   ${old}..${id}  ${b} -> ${k}`
+              : ` * [new branch]      ${b} -> ${k}`
+          );
+          r.tracking[k] = id;
+          ancestors(r, id).forEach(x => r.known.add(x));
+        }
+        return any;
+      }
+      function trackingInfo(r, o) {
+        const b = r.head && r.head.b;
+        if (!b || !r.upstream[b]) return;
+        const t = r.tracking["origin/" + b],
+          l = r.branches[b];
+        if (!t || !l) return;
+        const A = ancestors(r, l),
+          B = ancestors(r, t);
+        let ah = 0,
+          bh = 0;
+        A.forEach(x => {
+          if (!B.has(x)) ah++;
+        });
+        B.forEach(x => {
+          if (!A.has(x)) bh++;
+        });
+        const s = n => (n === 1 ? "" : "s");
+        if (!ah && !bh) o.line(`Your branch is up to date with 'origin/${b}'.`);
+        else if (ah && !bh) {
+          o.line(
+            `Your branch is ahead of 'origin/${b}' by ${ah} commit${s(ah)}.`
+          );
+          o.line('  (use "git push" to publish your local commits)');
+        } else if (!ah && bh) {
+          o.line(
+            `Your branch is behind 'origin/${b}' by ${bh} commit${s(bh)}, and can be fast-forwarded.`
+          );
+          o.line('  (use "git pull" to update your local branch)');
+        } else {
+          o.line(`Your branch and 'origin/${b}' have diverged,`);
+          o.line(
+            `and have ${ah} and ${bh} different commits each, respectively.`
+          );
+          o.line('  (use "git pull" to merge the remote branch into yours)');
+        }
+      }
+      function decor(r, id) {
+        const p = [];
+        if (r.head.d === id) p.push("HEAD");
+        for (const b of r.branchOrder)
+          if (r.branches[b] === id) p.push(r.head.b === b ? `HEAD -> ${b}` : b);
+        for (const k of Object.keys(r.tracking).sort())
+          if (r.tracking[k] === id) p.push(k);
+        return p
+          .sort(
+            (a, b) =>
+              (b.startsWith("HEAD") ? 1 : 0) - (a.startsWith("HEAD") ? 1 : 0)
+          )
+          .join(", ");
+      }
+
+      /* ---------- git subcommands ---------- */
+      function gInit(r, a, o) {
+        if (r.inited) {
+          o.line(
+            "Reinitialized existing Git repository in /Users/you/komugido/.git/"
+          );
+          return;
+        }
+        r.inited = true;
+        r.head = { b: "main" };
+        r.branchOrder = ["main"];
+        o.line("Initialized empty Git repository in /Users/you/komugido/.git/");
+        o.note(
+          "→ このフォルダに .git という「記録帳」ができました。ここから先の変更を Git が見守ります。"
+        );
+      }
+      function gStatus(r, a, o) {
+        if (r.head.b !== undefined) o.line(`On branch ${r.head.b}`);
+        else o.line(`HEAD detached at ${r.head.d}`);
+        trackingInfo(r, o);
+        if (!headId(r)) {
+          o.line("");
+          o.line("No commits yet");
+        }
+        const st = fileStates(r);
+        const staged = st.filter(s => s.staged),
+          uns = st.filter(s => s.unstaged && s.unstaged !== "untracked"),
+          unt = st.filter(s => s.unstaged === "untracked"),
+          cf = st.filter(s => s.conflict);
+        const L = {
+          new: "new file:   ",
+          modified: "modified:   ",
+          deleted: "deleted:    ",
+        };
+        if (r.merging) {
+          o.line("");
+          if (cf.length) {
+            o.line("You have unmerged paths.");
+            o.line('  (fix conflicts and run "git commit")');
+          } else {
+            o.line("All conflicts fixed but you are still merging.");
+            o.line('  (use "git commit" to conclude merge)');
+          }
+        }
+        if (staged.length) {
+          o.line("");
+          o.line("Changes to be committed:");
+          staged.forEach(s => o.line("\t" + L[s.staged] + s.f, "ok"));
+        }
+        if (cf.length) {
+          o.line("");
+          o.line("Unmerged paths:");
+          cf.forEach(s => o.line("\tboth modified:   " + s.f, "err"));
+        }
+        if (uns.length) {
+          o.line("");
+          o.line("Changes not staged for commit:");
+          uns.forEach(s => o.line("\t" + L[s.unstaged] + s.f, "warn"));
+        }
+        if (unt.length) {
+          o.line("");
+          o.line("Untracked files:");
+          unt.forEach(s => o.line("\t" + s.f, "warn"));
+        }
+        if (!staged.length && !uns.length && !cf.length && !r.merging) {
+          o.line("");
+          o.line(
+            unt.length
+              ? 'nothing added to commit but untracked files present (use "git add" to track)'
+              : "nothing to commit, working tree clean"
+          );
+        }
+        const parts = [];
+        if (unt.length) parts.push(`未追跡 ${unt.length}`);
+        if (uns.length) parts.push(`未ステージの変更 ${uns.length}`);
+        if (staged.length) parts.push(`ステージ済み ${staged.length}`);
+        if (cf.length) parts.push(`衝突 ${cf.length}`);
+        o.note(
+          parts.length
+            ? `→ ${parts.join(" / ")}。緑は天板（ステージ）に乗っていて次のコミットに入るもの、オレンジはまだ乗っていないもの。`
+            : "→ 変更はありません。すべて記録済みです。"
+        );
+        const b = r.head.b;
+        if (
+          r.remote &&
+          b &&
+          r.upstream[b] &&
+          r.remote.branches[b] !== r.tracking["origin/" + b]
+        )
+          o.note(
+            `→ ここでの origin/${b} は、最後に origin と通信した時点の記録です。origin の最新を確かめるには git fetch。`
+          );
+      }
+      function gAdd(r, a, o) {
+        if (!a.length) {
+          o.err("Nothing specified, nothing added.");
+          o.note(
+            "→ git add ファイル名、または git add . で全部まとめて乗せます。"
+          );
+          return;
+        }
+        const all = a.some(x => x === "." || x === "-A" || x === "--all");
+        const targets = all
+          ? files(r.work, r.index)
+          : a.filter(x => !x.startsWith("-"));
+        for (const f of targets) {
+          if (!(f in r.work) && !(f in r.index)) {
+            o.err(`fatal: pathspec '${f}' did not match any files`);
+            return;
+          }
+          if (isCf(r.work[f])) {
+            o.err(
+              `error: ${f} にはまだ衝突マーカー（<<<<<<<）が残っています。`
+            );
+            o.note(
+              `→ 先に edit ${f} --ours / --theirs / --both で中身を決めます（作業台のボタンでも選べます）。`
+            );
+            return;
+          }
+        }
+        const done = [];
+        for (const f of targets) {
+          const inConflict = r.merging && r.merging.conflicts.includes(f);
+          if (r.work[f] === r.index[f] && !inConflict) continue;
+          if (f in r.work) r.index[f] = r.work[f];
+          else delete r.index[f];
+          if (inConflict)
+            r.merging.conflicts = r.merging.conflicts.filter(x => x !== f);
+          done.push(f);
+        }
+        o.note(
+          done.length
+            ? `→ 天板（ステージ）に乗せました: ${done.join(", ")}`
+            : "→ 新しく乗せる変更はありませんでした。"
+        );
+      }
+      function gCommit(r, a, o) {
+        let msg = null,
+          all = false,
+          amend = false;
+        for (let i = 0; i < a.length; i++) {
+          const x = a[i];
+          if (x === "--amend") amend = true;
+          else if (x === "--all") all = true;
+          else if (x === "--no-edit") continue;
+          else if (x === "-m" || x === "--message") {
+            msg = a.slice(i + 1).join(" ");
+            if (i + 1 >= a.length) {
+              o.err("error: switch `m' requires a value");
+              return;
+            }
+            break;
+          } else if (/^-[a-z]+$/.test(x)) {
+            if (x.includes("a")) all = true;
+            if (x.includes("m")) {
+              if (i + 1 >= a.length) {
+                o.err("error: switch `m' requires a value");
+                return;
+              }
+              msg = a.slice(i + 1).join(" ");
+              break;
+            }
+          }
+        }
+        if (msg === "") {
+          o.err("Aborting commit due to empty commit message.");
+          return;
+        }
+        if (msg === null && !amend && !r.merging) {
+          o.err(
+            'このゲームでは git commit -m "メッセージ" の形で打ってください。'
+          );
+          o.note(
+            "→ 本物の git では -m を付けないとエディタが開き、そこでメッセージを書きます。"
+          );
+          return;
+        }
+        if (r.merging && r.merging.conflicts.length) {
+          o.err(
+            "error: Committing is not possible because you have unmerged files."
+          );
+          o.err(
+            "hint: Fix them up in the work tree, and then use 'git add/rm <file>'"
+          );
+          o.note(
+            "→ 衝突ファイルの中身を決めて（edit）、git add で解決済みにしてからコミットします。"
+          );
+          return;
+        }
+        if (all) {
+          for (const f of Object.keys(r.index)) {
+            if (r.work[f] === undefined) delete r.index[f];
+            else r.index[f] = r.work[f];
+          }
+        }
+        const cur = headId(r),
+          H = headTree(r),
+          br = r.head.b !== undefined ? r.head.b : "detached HEAD";
+        if (amend) {
+          if (!cur) {
+            o.err("fatal: You have nothing to amend.");
+            return;
+          }
+          const c = r.store[cur],
+            m = msg ?? c.msg;
+          const id = mkCommit(r, c.parents, r.index, m);
+          moveHead(r, id);
+          o.line(`[${br} ${id}] ${m}`);
+          o.note(
+            `→ 直前のコミットを作り直しました。ID が ${cur} から ${id} に変わっています。中身が変わると、別のコミットとして扱われるからです。`
+          );
+          return;
+        }
+        if (!r.merging && sameTree(r.index, H)) {
+          const st = fileStates(r);
+          const mod = st.some(s => s.unstaged && s.unstaged !== "untracked"),
+            unt = st.some(s => s.unstaged === "untracked");
+          o.err(
+            mod
+              ? 'no changes added to commit (use "git add" and/or "git commit -a")'
+              : unt
+                ? 'nothing added to commit but untracked files present (use "git add" to track)'
+                : "nothing to commit, working tree clean"
+          );
+          o.note(
+            "→ 天板（ステージ）に新しい変更が乗っていません。先に git add で乗せます。"
+          );
+          return;
+        }
+        const parents = cur ? [cur] : [];
+        if (r.merging) parents.push(r.merging.head);
+        const m = msg ?? r.merging.msg;
+        const id = mkCommit(
+          r,
+          r.merging ? [cur, r.merging.head] : parents,
+          r.index,
+          m
+        );
+        moveHead(r, id);
+        o.line(`[${br}${cur ? "" : " (root-commit)"} ${id}] ${m}`);
+        const ch = files(H, r.index).filter(f => H[f] !== r.index[f]);
+        o.line(` ${ch.length} file${ch.length === 1 ? "" : "s"} changed`);
+        ch.filter(f => H[f] === undefined).forEach(f =>
+          o.line(` create mode 100644 ${f}`)
+        );
+        ch.filter(f => r.index[f] === undefined).forEach(f =>
+          o.line(` delete mode 100644 ${f}`)
+        );
+        if (r.merging) {
+          r.merging = null;
+          o.note("→ 合流（マージ）が完了しました。");
+        } else
+          o.note(
+            "→ 天板の内容を 1 つの記録（コミット）として焼き上げました。グラフに点が 1 つ増えています。"
+          );
+      }
+      function gLog(r, a, o) {
+        const one = a.includes("--oneline"),
+          all = a.includes("--all");
+        const ref = a.find(x => !x.startsWith("-"));
+        let starts;
+        if (ref) {
+          const id = resolve(r, ref);
+          if (!id) {
+            o.err(
+              `fatal: ambiguous argument '${ref}': unknown revision or path not in the working tree.`
+            );
+            return;
+          }
+          starts = [id];
+        } else if (all)
+          starts = [
+            headId(r),
+            ...Object.values(r.branches),
+            ...Object.values(r.tracking),
+          ];
+        else starts = [headId(r)];
+        if (!headId(r) && !ref && !all) {
+          o.err(
+            `fatal: your current branch '${r.head.b}' does not have any commits yet`
+          );
+          return;
+        }
+        const set = new Set();
+        starts
+          .filter(Boolean)
+          .forEach(s => ancestors(r, s).forEach(x => set.add(x)));
+        const list = [...set].sort((x, y) => r.store[y].seq - r.store[x].seq);
+        for (const id of list) {
+          const c = r.store[id],
+            d = decor(r, id);
+          if (one)
+            o.seg([
+              [id, "hash"],
+              d ? [" (" + d + ")", "ref"] : null,
+              [" " + c.msg, ""],
+            ]);
+          else {
+            o.seg([
+              ["commit " + id, "hash"],
+              d ? [" (" + d + ")", "ref"] : null,
+            ]);
+            if (c.parents.length > 1) o.line("Merge: " + c.parents.join(" "));
+            o.line("Author: You <you@komugido.example>", "dim");
+            o.line("    " + c.msg);
+            o.line("");
+          }
+        }
+        o.note(
+          one
+            ? "→ 新しい順に並んでいます。"
+            : "→ 新しい順に並んでいます。git log --oneline なら 1 行ずつの短い表示です。"
+        );
+      }
+      function gDiff(r, a, o) {
+        const staged = a.includes("--staged") || a.includes("--cached");
+        const A = staged ? headTree(r) : r.index,
+          B = staged ? r.index : r.work;
+        let fs = files(A, B).filter(f => A[f] !== B[f]);
+        if (!staged) fs = fs.filter(f => A[f] !== undefined);
+        const only = a.filter(x => !x.startsWith("-"));
+        if (only.length) fs = fs.filter(f => only.includes(f));
+        if (!fs.length) {
+          o.note(
+            staged
+              ? "→ 天板（ステージ）に乗っている変更はありません。"
+              : "→ 作業台と天板の間に差分はありません。天板に乗せ済みの差分を見るなら git diff --staged。"
+          );
+          return;
+        }
+        for (const f of fs) {
+          o.seg([[`diff --git a/${f} b/${f}`, "bold"]]);
+          if (A[f] === undefined) o.line("new file", "dim");
+          if (B[f] === undefined) o.line("deleted file", "dim");
+          if (A[f] !== undefined) o.line("- " + showV(A[f]), "del");
+          if (B[f] !== undefined) o.line("+ " + showV(B[f]), "add");
+        }
+        o.note(
+          staged
+            ? "→ 次のコミットに入る変更です。「-」が前、「+」が後。"
+            : "→ まだ天板に乗せていない変更です。「-」が前の内容、「+」が新しい内容。"
+        );
+      }
+      function gShow(r, a, o) {
+        const ref = a.find(x => !x.startsWith("-")) || "HEAD",
+          id = resolve(r, ref);
+        if (!id) {
+          o.err(
+            `fatal: ambiguous argument '${ref}': unknown revision or path not in the working tree.`
+          );
+          return;
+        }
+        const c = r.store[id],
+          P = treeOf(r, c.parents[0]);
+        o.seg([["commit " + id, "hash"]]);
+        o.line("    " + c.msg);
+        o.line("");
+        for (const f of files(P, c.tree).filter(f => P[f] !== c.tree[f])) {
+          o.seg([[`diff --git a/${f} b/${f}`, "bold"]]);
+          if (P[f] !== undefined) o.line("- " + showV(P[f]), "del");
+          if (c.tree[f] !== undefined) o.line("+ " + showV(c.tree[f]), "add");
+        }
+      }
+      function gBranch(r, a, o) {
+        const flags = a.filter(x => x.startsWith("-")),
+          names = a.filter(x => !x.startsWith("-"));
+        if (flags.some(f => f === "-d" || f === "-D" || f === "--delete")) {
+          if (!names.length) {
+            o.err("fatal: branch name required");
+            return;
+          }
+          for (const n of names) {
+            if (!r.branches[n]) {
+              o.err(`error: branch '${n}' not found.`);
+              return;
+            }
+            if (r.head.b === n) {
+              o.err(
+                `error: Cannot delete branch '${n}' checked out at '/Users/you/komugido'`
+              );
+              o.note(
+                "→ 今いるブランチは消せません。先に別のブランチへ移動します。"
+              );
+              return;
+            }
+            if (!flags.includes("-D") && !isAnc(r, r.branches[n], headId(r))) {
+              o.err(`error: The branch '${n}' is not fully merged.`);
+              o.line(
+                `hint: If you are sure you want to delete it, run 'git branch -D ${n}'`
+              );
+              o.note(
+                "→ まだ合流していない作業が残っています。消すとそのコミットが迷子になるので、Git が止めました。"
+              );
+              return;
+            }
+          }
+          for (const n of names) {
+            const id = r.branches[n];
+            delete r.branches[n];
+            delete r.upstream[n];
+            r.branchOrder = r.branchOrder.filter(x => x !== n);
+            o.line(`Deleted branch ${n} (was ${id}).`);
+          }
+          o.note(
+            "→ ブランチ（付箋）を外しました。合流済みなので、コミット自体は main から辿れます。"
+          );
+          return;
+        }
+        if (!names.length) {
+          const ls = [...r.branchOrder].filter(b => r.branches[b]).sort();
+          if (!ls.length && r.head.b) {
+            o.note("→ まだコミットがないので、ブランチは表示されません。");
+            return;
+          }
+          ls.forEach(b =>
+            o.line(
+              (r.head.b === b ? "* " : "  ") + b,
+              r.head.b === b ? "ok" : ""
+            )
+          );
+          if (flags.includes("-a") || flags.includes("-r"))
+            Object.keys(r.tracking)
+              .sort()
+              .forEach(k => o.line("  remotes/" + k, "warn"));
+          o.note("→ * が付いているのが今いるブランチです。");
+          return;
+        }
+        const n = names[0];
+        if (
+          !/^[A-Za-z0-9._\/-]+$/.test(n) ||
+          n.startsWith("-") ||
+          n.endsWith("/")
+        ) {
+          o.err(`fatal: '${n}' is not a valid branch name`);
+          o.note("→ ブランチ名は半角英数字と - _ / . で付けます。");
+          return;
+        }
+        if (r.branches[n]) {
+          o.err(`fatal: a branch named '${n}' already exists`);
+          return;
+        }
+        const start = names[1] ? resolve(r, names[1]) : headId(r);
+        if (!start) {
+          o.err(`fatal: not a valid object name: '${names[1] || r.head.b}'`);
+          o.note(
+            "→ ブランチはコミットに貼る付箋です。最初のコミットを作ってから使えます。"
+          );
+          return;
+        }
+        r.branches[n] = start;
+        r.branchOrder.push(n);
+        o.note(
+          `→ ${n} という付箋（ブランチ）を貼りました。まだ移動はしていません。移動するには git switch ${n}。`
+        );
+      }
+      function switchBranch(r, n, o, cmd) {
+        if (n === "-") {
+          if (!r.prevBranch) {
+            o.err("fatal: invalid reference: @{-1}");
+            return false;
+          }
+          n = r.prevBranch;
+        }
+        if (!(n in r.branches)) {
+          if (r.tracking["origin/" + n]) {
+            r.branches[n] = r.tracking["origin/" + n];
+            r.branchOrder.push(n);
+            r.upstream[n] = true;
+            const from = r.head.b;
+            if (!moveTo(r, r.branches[n], { b: n }, o)) {
+              delete r.branches[n];
+              r.branchOrder.pop();
+              delete r.upstream[n];
+              return false;
+            }
+            r.prevBranch = from;
+            o.line(`branch '${n}' set up to track 'origin/${n}'.`);
+            o.line(`Switched to a new branch '${n}'`);
+            return true;
+          }
+          if (cmd === "switch") {
+            o.err(`fatal: invalid reference: ${n}`);
+            o.note(
+              `→ ${n} というブランチはありません。作って移動するなら git switch -c ${n}。`
+            );
+          }
+          return null;
+        }
+        if (r.head.b === n) {
+          o.line(`Already on '${n}'`);
+          return true;
+        }
+        if (r.merging) {
+          o.err("error: you need to resolve your current index first");
+          return false;
+        }
+        const from = r.head.b;
+        if (!moveTo(r, r.branches[n], { b: n }, o)) return false;
+        if (from) r.prevBranch = from;
+        o.line(`Switched to branch '${n}'`);
+        trackingInfo(r, o);
+        o.note(
+          `→ ${n} に移動しました。作業台の中身が ${n} の最新コミットの状態に入れ替わります。`
+        );
+        return true;
+      }
+      function createAndSwitch(r, n, startRef, o) {
+        if (!/^[A-Za-z0-9._\/-]+$/.test(n || "")) {
+          o.err(`fatal: '${n || ""}' is not a valid branch name`);
+          return;
+        }
+        if (r.branches[n]) {
+          o.err(`fatal: a branch named '${n}' already exists`);
+          return;
+        }
+        const start = startRef ? resolve(r, startRef) : headId(r);
+        if (startRef && !start) {
+          o.err(`fatal: invalid reference: ${startRef}`);
+          return;
+        }
+        const from = r.head.b;
+        if (!start) {
+          r.head = { b: n };
+          r.branchOrder = r.branchOrder.filter(b => r.branches[b]);
+          r.branchOrder.push(n);
+          o.line(`Switched to a new branch '${n}'`);
+          return;
+        }
+        r.branches[n] = start;
+        r.branchOrder.push(n);
+        if (!moveTo(r, start, { b: n }, o)) {
+          delete r.branches[n];
+          r.branchOrder.pop();
+          return;
+        }
+        if (from) r.prevBranch = from;
+        o.line(`Switched to a new branch '${n}'`);
+        o.note(
+          `→ ${n} ブランチを作って移動しました。ここでのコミットは ${n} だけを進めます。`
+        );
+      }
+      function detachTo(r, id, o) {
+        const from = r.head.b;
+        if (!moveTo(r, id, { d: id }, o)) return;
+        if (from) r.prevBranch = from;
+        o.line(`Note: switching to '${id}'.`);
+        o.line("");
+        o.line(
+          "You are in 'detached HEAD' state. You can look around, make experimental"
+        );
+        o.line(
+          "changes and commit them, and you can discard any commits you make in this"
+        );
+        o.line(
+          "state without impacting any branches by switching back to a branch."
+        );
+        o.line("");
+        o.line(`HEAD is now at ${id} ${r.store[id].msg}`);
+        o.note(
+          "→ ブランチから外れて、過去のコミットを直接見ている状態です。見終わったら git switch main で戻ります。"
+        );
+      }
+      function gSwitch(r, a, o) {
+        let create = false,
+          detach = false;
+        const names = [];
+        for (const x of a) {
+          if (x === "-c" || x === "--create" || x === "-C") create = true;
+          else if (x === "--detach" || x === "-d") detach = true;
+          else names.push(x);
+        }
+        if (!names.length) {
+          o.err("fatal: missing branch or commit argument");
+          return;
+        }
+        if (create) return createAndSwitch(r, names[0], names[1], o);
+        if (detach) {
+          const id = resolve(r, names[0]);
+          if (!id) {
+            o.err(`fatal: invalid reference: ${names[0]}`);
+            return;
+          }
+          return detachTo(r, id, o);
+        }
+        const res = switchBranch(r, names[0], o, "switch");
+        if (res === null) return;
+        if (res === false && !o.failed) o.failed = true;
+      }
+      function gCheckout(r, a, o) {
+        if (a[0] === "-b" || a[0] === "-B")
+          return createAndSwitch(r, a[1], a[2], o);
+        const dd = a.indexOf("--");
+        if (dd >= 0) return restoreFiles(r, a.slice(dd + 1), false, o);
+        const n = a[0];
+        if (!n) {
+          o.err("error: you must specify a branch or path");
+          return;
+        }
+        const res = switchBranch(r, n, o, "checkout");
+        if (res !== null) return;
+        const id = resolve(r, n);
+        if (id) return detachTo(r, id, o);
+        if (n in r.index || n in r.work) return restoreFiles(r, a, false, o);
+        o.err(`error: pathspec '${n}' did not match any file(s) known to git`);
+      }
+      function restoreFiles(r, fs, staged, o) {
+        if (!fs.length) {
+          o.err("fatal: you must specify path(s) to restore");
+          return;
+        }
+        const H = headTree(r),
+          dot = fs.includes(".");
+        const list = dot ? files(r.work, r.index, H) : fs;
+        for (const f of list)
+          if (!(f in r.work) && !(f in r.index) && !(f in H)) {
+            o.err(
+              `error: pathspec '${f}' did not match any file(s) known to git`
+            );
+            return;
+          }
+        if (staged) {
+          for (const f of list) {
+            if (H[f] === undefined) delete r.index[f];
+            else r.index[f] = H[f];
+          }
+          o.note(
+            `→ 天板（ステージ）から降ろしました: ${list.join(", ")}。作業台の変更はそのまま残っています。`
+          );
+          return;
+        }
+        for (const f of list) {
+          if (r.index[f] === undefined) {
+            if (dot) continue;
+            o.err(
+              `error: pathspec '${f}' did not match any file(s) known to git`
+            );
+            return;
+          }
+          if (r.merging && r.merging.conflicts.includes(f)) continue;
+          r.work[f] = r.index[f];
+        }
+        o.note(
+          "→ 作業台の変更を捨てて、天板（なければ最後のコミット）の内容に戻しました。捨てた変更は戻せないので注意。"
+        );
+      }
+      function gRestore(r, a, o) {
+        const staged = a.includes("--staged") || a.includes("-S");
+        restoreFiles(
+          r,
+          a.filter(x => !x.startsWith("-")),
+          staged,
+          o
+        );
+      }
+      function gReset(r, a, o) {
+        let mode = "mixed";
+        const rest = [];
+        for (const x of a) {
+          if (x === "--soft" || x === "--mixed" || x === "--hard")
+            mode = x.slice(2);
+          else if (x !== "--") rest.push(x);
+        }
+        let target = headId(r),
+          paths = [];
+        if (rest.length) {
+          const id = resolve(r, rest[0]);
+          if (id) {
+            target = id;
+            paths = rest.slice(1);
+          } else paths = rest;
+        }
+        if (paths.length) {
+          const H = headTree(r);
+          for (const f of paths)
+            if (!(f in r.index) && !(f in H) && !(f in r.work)) {
+              o.err(
+                `fatal: ambiguous argument '${f}': unknown revision or path not in the working tree.`
+              );
+              return;
+            }
+          for (const f of paths) {
+            if (H[f] === undefined) delete r.index[f];
+            else r.index[f] = H[f];
+          }
+          o.note(
+            `→ 天板から降ろしました: ${paths.join(", ")}（git restore --staged と同じ働き）。`
+          );
+          return;
+        }
+        if (!target) {
+          o.err(
+            "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
+          );
+          return;
+        }
+        const unt = untrackedMap(r),
+          T = treeOf(r, target),
+          old = headId(r);
+        moveHead(r, target);
+        if (mode === "hard") {
+          resetTo(r, T, unt);
+          r.merging = null;
+          o.line(`HEAD is now at ${target} ${r.store[target].msg}`);
+          o.note(
+            "→ 付箋を戻し、天板と作業台もその時点の内容に揃えました（--hard）。消したコミットはグラフから見えなくなります。共有済みの歴史には使いません。"
+          );
+        } else if (mode === "mixed") {
+          r.index = { ...T };
+          r.merging = null;
+          const ch = fileStates(r).filter(
+            s => s.unstaged && s.unstaged !== "untracked"
+          );
+          if (ch.length) {
+            o.line("Unstaged changes after reset:");
+            ch.forEach(s =>
+              o.line(`${s.unstaged === "deleted" ? "D" : "M"}\t${s.f}`)
+            );
+          }
+          o.note(
+            "→ 付箋を戻しました（--mixed）。取り消したコミットの変更は、作業台に残っています。"
+          );
+        } else {
+          o.note(
+            "→ 付箋だけ戻しました（--soft）。取り消したコミットの変更は、天板に乗ったままです。"
+          );
+        }
+        if (old === target) return;
+      }
+      function gRevert(r, a, o) {
+        const n = a.find(x => !x.startsWith("-"));
+        if (!n) {
+          o.err("usage: git revert <commit>");
+          return;
+        }
+        const id = resolve(r, n);
+        if (!id) {
+          o.err(`fatal: bad revision '${n}'`);
+          return;
+        }
+        if (trackedDirty(r).length) {
+          o.err("error: your local changes would be overwritten by revert.");
+          o.err("hint: commit your changes or stash them to proceed.");
+          return;
+        }
+        const c = r.store[id];
+        if (c.parents.length > 1) {
+          o.err(`error: commit ${id} is a merge but no -m option was given.`);
+          o.note("→ マージコミットの打ち消しは、このゲームでは扱いません。");
+          return;
+        }
+        if (!c.parents.length) {
+          o.err("error: このゲームでは最初のコミットは打ち消せません。");
+          return;
+        }
+        const P = treeOf(r, c.parents[0]),
+          cur = { ...headTree(r) };
+        for (const f of files(P, c.tree)) {
+          if (P[f] === c.tree[f]) continue;
+          if (cur[f] !== c.tree[f]) {
+            o.err(`error: could not revert ${id}... ${c.msg}`);
+            o.note(
+              "→ その後の変更とぶつかります。衝突する revert は、このゲームでは扱いません。"
+            );
+            return;
+          }
+          if (P[f] === undefined) delete cur[f];
+          else cur[f] = P[f];
+        }
+        const unt = untrackedMap(r),
+          m = `Revert "${c.msg}"`;
+        const nid = mkCommit(r, [headId(r)], cur, m);
+        moveHead(r, nid);
+        resetTo(r, cur, unt);
+        o.line(`[${r.head.b || "detached HEAD"} ${nid}] ${m}`);
+        o.line(" 1 file changed");
+        o.note(
+          "→ 指定したコミットと逆向きの変更を、新しいコミットとして積みました。歴史は消えないので、共有済みでも安全です。"
+        );
+      }
+      function gRebase(r, a, o) {
+        const n = a.find(x => !x.startsWith("-"));
+        if (!n) {
+          o.err(
+            "fatal: このゲームでは git rebase <ブランチ名> の形で使います。"
+          );
+          return;
+        }
+        if (r.head.b === undefined) {
+          o.err(
+            "fatal: このゲームでは、ブランチの上にいるときだけ rebase できます。"
+          );
+          return;
+        }
+        if (r.merging) {
+          o.err("error: マージの途中です。先に終わらせてください。");
+          return;
+        }
+        const onto = resolve(r, n);
+        if (!onto) {
+          o.err(`fatal: invalid upstream '${n}'`);
+          return;
+        }
+        if (trackedDirty(r).length) {
+          o.err("error: cannot rebase: You have unstaged changes.");
+          o.err("error: Please commit or stash them.");
+          return;
+        }
+        const cur = headId(r),
+          b = r.head.b,
+          unt = untrackedMap(r);
+        if (isAnc(r, onto, cur)) {
+          o.line(`Current branch ${b} is up to date.`);
+          return;
+        }
+        if (isAnc(r, cur, onto)) {
+          moveHead(r, onto);
+          resetTo(r, treeOf(r, onto), unt);
+          o.line(`Successfully rebased and updated refs/heads/${b}.`);
+          o.note(
+            `→ ${b} は ${n} の後ろにいただけなので、そのまま前に進めました。`
+          );
+          return;
+        }
+        const A = ancestors(r, onto),
+          list = [];
+        let c = cur;
+        while (c && !A.has(c)) {
+          if (r.store[c].parents.length > 1) {
+            o.err(
+              "error: このゲームでは、マージコミットを含む rebase は扱いません。"
+            );
+            return;
+          }
+          list.unshift(c);
+          c = r.store[c].parents[0];
+        }
+        let tip = onto;
+        const tree = { ...treeOf(r, onto) };
+        for (const x of list) {
+          const P = treeOf(r, r.store[x].parents[0]),
+            X = r.store[x].tree;
+          for (const f of files(P, X)) {
+            if (P[f] === X[f]) continue;
+            if (tree[f] !== P[f] && tree[f] !== X[f]) {
+              o.err(`error: could not apply ${x}... ${r.store[x].msg}`);
+              o.note(
+                "→ 付け替え先とぶつかります。衝突する rebase は、このゲームでは扱いません（rebase は取り消しました）。"
+              );
+              return;
+            }
+            if (X[f] === undefined) delete tree[f];
+            else tree[f] = X[f];
+          }
+          tip = mkCommit(r, [tip], tree, r.store[x].msg);
+        }
+        moveHead(r, tip);
+        resetTo(r, tree, unt);
+        o.line(`Successfully rebased and updated refs/heads/${b}.`);
+        o.note(
+          `→ ${b} の ${list.length} 個のコミットを、${n} の先頭に積み直しました。ID が新しくなっている点に注目（作り直したコミットだからです）。`
+        );
+      }
+      function gStash(r, a, o) {
+        const sub = a[0] && !a[0].startsWith("-") ? a[0] : "push";
+        if (sub === "push" || sub === "save") {
+          const d = trackedDirty(r);
+          if (!d.length) {
+            o.line("No local changes to save");
+            o.note(
+              "→ しまう変更がありません（未追跡のファイルは stash の対象外です）。"
+            );
+            return;
+          }
+          if (r.merging) {
+            o.err("error: マージの途中は stash できません。");
+            return;
+          }
+          const H = headTree(r),
+            hidv = headId(r);
+          const e = {
+            work: {},
+            index: {},
+            base: { ...H },
+            label: `WIP on ${r.head.b || "(no branch)"}: ${hidv} ${r.store[hidv].msg}`,
+          };
+          for (const f of d) {
+            e.work[f] = r.work[f];
+            e.index[f] = r.index[f];
+          }
+          r.stash.unshift(e);
+          for (const f of d) {
+            if (H[f] === undefined) {
+              delete r.work[f];
+              delete r.index[f];
+            } else {
+              r.work[f] = H[f];
+              r.index[f] = H[f];
+            }
+          }
+          o.line(`Saved working directory and index state ${e.label}`);
+          o.note(
+            "→ 編集途中の変更を棚（stash）にしまいました。作業台は最後のコミットの状態に戻っています。"
+          );
+          return;
+        }
+        if (sub === "list") {
+          r.stash.forEach((e, i) => o.line(`stash@{${i}}: ${e.label}`));
+          if (!r.stash.length) o.note("→ 棚は空です。");
+          return;
+        }
+        if (sub === "pop" || sub === "apply") {
+          if (!r.stash.length) {
+            o.err("No stash entries found.");
+            return;
+          }
+          const e = r.stash[0],
+            dirty = trackedDirty(r);
+          const clash = Object.keys(e.work).filter(
+            f => dirty.includes(f) && r.work[f] !== e.work[f]
+          );
+          if (clash.length) {
+            o.err(
+              "error: Your local changes to the following files would be overwritten by merge:"
+            );
+            clash.forEach(f => o.err("\t" + f));
+            o.err("Aborting");
+            return;
+          }
+          const H = headTree(r);
+          for (const f in e.work) {
+            if (e.work[f] === undefined) delete r.work[f];
+            else r.work[f] = e.work[f];
+            if (H[f] === undefined && e.index[f] !== undefined)
+              r.index[f] = e.index[f];
+          }
+          o.line(`On branch ${r.head.b || "(detached)"}`);
+          o.line("Changes not staged for commit:");
+          Object.keys(e.work).forEach(f =>
+            o.line("\tmodified:   " + f, "warn")
+          );
+          if (sub === "pop") {
+            r.stash.shift();
+            o.line("Dropped refs/stash@{0}");
+          }
+          o.note(
+            sub === "pop"
+              ? "→ しまっていた変更を作業台に戻し、棚から消しました。"
+              : "→ しまっていた変更を作業台に戻しました（棚にも残っています）。"
+          );
+          return;
+        }
+        if (sub === "drop") {
+          if (!r.stash.length) {
+            o.err("No stash entries found.");
+            return;
+          }
+          r.stash.shift();
+          o.line("Dropped refs/stash@{0}");
+          return;
+        }
+        o.err(`error: unknown subcommand: ${sub}`);
+      }
+      function noRemote(r, o) {
+        if (r.remote) return false;
+        o.err("fatal: 'origin' does not appear to be a git repository");
+        o.err("fatal: Could not read from remote repository.");
+        o.note("→ このレベルには共有先（origin）がありません。");
+        return true;
+      }
+      function gFetch(r, a, o) {
+        if (noRemote(r, o)) return;
+        const any = fetchAll(r, o);
+        o.note(
+          any
+            ? "→ origin の最新を取ってきて、origin/… の付箋を更新しました。自分のブランチはまだ動いていません。取り込むには git merge origin/main（または git pull）。"
+            : "→ origin に新しい変更はありませんでした。"
+        );
+      }
+      function gPull(r, a, o) {
+        if (noRemote(r, o)) return;
+        const rebase = a.includes("--rebase") || a.includes("-r");
+        const rest = a.filter(x => !x.startsWith("-"));
+        const b = r.head.b;
+        if (b === undefined) {
+          o.err("You are not currently on a branch.");
+          return;
+        }
+        const rb = rest[1] || b;
+        if (!rest.length && !r.upstream[b]) {
+          o.err("There is no tracking information for the current branch.");
+          o.err(`    git branch --set-upstream-to=origin/${b} ${b}`);
+          o.note(
+            `→ ${b} はまだ origin と結びついていません。先に git push -u origin ${b} で送ると結びつきます。`
+          );
+          return;
+        }
+        if (r.merging) {
+          o.err(
+            "error: Pulling is not possible because you have unmerged files."
+          );
+          return;
+        }
+        if (trackedDirty(r).length) {
+          o.err("error: cannot pull with uncommitted changes.");
+          o.err("Please commit or stash them.");
+          o.note(
+            "→ 編集途中の変更があります。commit するか git stash でしまってから pull します。"
+          );
+          return;
+        }
+        fetchAll(r, o);
+        const t = r.tracking["origin/" + rb];
+        if (!t) {
+          o.err(`fatal: couldn't find remote ref ${rb}`);
+          return;
+        }
+        if (rebase) {
+          gRebase(r, ["origin/" + rb], o);
+          return;
+        }
+        const ok = doMerge(r, t, "origin/" + rb, o, {
+          msg: `Merge branch '${rb}' of ${ORIGIN.replace(".git", "")}`,
+        });
+        if (ok)
+          o.note(
+            "→ pull は fetch（取ってくる）と merge（合流させる）を続けて行うコマンドです。"
+          );
+      }
+      function gPush(r, a, o) {
+        if (noRemote(r, o)) return;
+        let u = false,
+          force = false;
+        const rest = [];
+        for (const x of a) {
+          if (x === "-u" || x === "--set-upstream") u = true;
+          else if (x === "-f" || x === "--force" || x === "--force-with-lease")
+            force = true;
+          else rest.push(x);
+        }
+        if (rest[0] && rest[0] !== "origin") {
+          o.err(`fatal: '${rest[0]}' does not appear to be a git repository`);
+          return;
+        }
+        let b = rest[1];
+        if (!b) {
+          if (r.head.b === undefined) {
+            o.err("fatal: You are not currently on a branch.");
+            return;
+          }
+          b = r.head.b;
+          if (!r.upstream[b] && !u) {
+            o.err(`fatal: The current branch ${b} has no upstream branch.`);
+            o.err(
+              "To push the current branch and set the remote as upstream, use"
+            );
+            o.err("");
+            o.err(`    git push --set-upstream origin ${b}`);
+            o.note(
+              `→ ${b} は origin 側にまだありません。git push -u origin ${b} で、送り先も一緒に登録します（-u は --set-upstream の短縮形）。`
+            );
+            return;
+          }
+        }
+        const L = r.branches[b];
+        if (!L) {
+          o.err(`error: src refspec ${b} does not match any`);
+          return;
+        }
+        const R = r.remote.branches[b];
+        if (R === L) {
+          o.line("Everything up-to-date");
+          o.note("→ origin はすでに同じ状態です。");
+          if (u) r.upstream[b] = true;
+          return;
+        }
+        o.line("To " + ORIGIN);
+        if (R && !isAnc(r, R, L)) {
+          if (!force) {
+            o.err(` ! [rejected]        ${b} -> ${b} (fetch first)`);
+            o.err(`error: failed to push some refs to '${ORIGIN}'`);
+            o.err(
+              "hint: Updates were rejected because the remote contains work that you do not"
+            );
+            o.err(
+              "hint: have locally. Integrate the remote changes (e.g. 'git pull ...') before pushing again."
+            );
+            o.note(
+              "→ origin には、あなたの持っていないコミットがあります（誰かが先に push した）。先に git pull で取り込んでから push します。"
+            );
+            return;
+          }
+          o.line(` + ${R}...${L} ${b} -> ${b} (forced update)`, "warn");
+          o.note(
+            "→ 強制 push で origin の歴史を上書きしました。仲間のコミットが消えることがあるので、普段は使いません。"
+          );
+        } else if (!R) o.line(` * [new branch]      ${b} -> ${b}`);
+        else o.line(`   ${R}..${L}  ${b} -> ${b}`);
+        r.remote.branches[b] = L;
+        r.tracking["origin/" + b] = L;
+        if (u) {
+          r.upstream[b] = true;
+          o.line(`branch '${b}' set up to track 'origin/${b}'.`);
+        }
+        if (!force)
+          o.note(
+            R
+              ? `→ origin の ${b} にあなたのコミットを届けました。下の origin のグラフも進んでいます。`
+              : `→ origin に ${b} ブランチができました。ここからプルリクエストを作ってレビューしてもらいます。`
+          );
+      }
+      function gRemote(r, a, o) {
+        if (!r.remote) return;
+        if (a.includes("-v")) {
+          o.line(`origin\t${ORIGIN} (fetch)`);
+          o.line(`origin\t${ORIGIN} (push)`);
+        } else o.line("origin");
+      }
+      function gRm(r, a, o) {
+        const cached = a.includes("--cached"),
+          fs = a.filter(x => !x.startsWith("-"));
+        if (!fs.length) {
+          o.err("usage: git rm [--cached] <file>");
+          return;
+        }
+        for (const f of fs)
+          if (!(f in r.index)) {
+            o.err(`fatal: pathspec '${f}' did not match any files`);
+            return;
+          }
+        for (const f of fs) {
+          delete r.index[f];
+          if (!cached) delete r.work[f];
+          o.line(`rm '${f}'`);
+        }
+        o.note(
+          cached
+            ? "→ Git の管理から外しました（ファイルは作業台に残っています）。"
+            : "→ ファイルを消して、その削除を天板に乗せました。"
+        );
+      }
+      const GIT = {
+        init: gInit,
+        status: gStatus,
+        add: gAdd,
+        commit: gCommit,
+        log: gLog,
+        diff: gDiff,
+        show: gShow,
+        branch: gBranch,
+        switch: gSwitch,
+        checkout: gCheckout,
+        merge: null,
+        rebase: gRebase,
+        restore: gRestore,
+        reset: gReset,
+        revert: gRevert,
+        stash: gStash,
+        fetch: gFetch,
+        pull: gPull,
+        push: gPush,
+        remote: gRemote,
+        rm: gRm,
+      };
+      GIT.merge = function gMerge(r, a, o) {
+        if (a[0] === "--abort") {
+          if (!r.merging) {
+            o.err("fatal: There is no merge to abort (MERGE_HEAD missing).");
+            return;
+          }
+          resetTo(r, headTree(r), untrackedMap(r));
+          r.merging = null;
+          o.note("→ マージを取りやめて、マージ前の状態に戻しました。");
+          return;
+        }
+        if (r.merging) {
+          o.err(
+            "error: Merging is not possible because you have unmerged files."
+          );
+          return;
+        }
+        const n = a.find(x => !x.startsWith("-"));
+        if (!n) {
+          o.err("fatal: No remote for the current branch.");
+          o.note("→ git merge <ブランチ名> の形で使います。");
+          return;
+        }
+        const id = resolve(r, n);
+        if (!id) {
+          o.err(`merge: ${n} - not something we can merge`);
+          return;
+        }
+        const d = trackedDirty(r);
+        if (d.length) {
+          o.err(
+            "error: Your local changes to the following files would be overwritten by merge:"
+          );
+          d.forEach(f => o.err("\t" + f));
+          o.err("Please commit your changes or stash them before you merge.");
+          o.err("Aborting");
+          return;
+        }
+        doMerge(r, id, n, o, { noff: a.includes("--no-ff") });
+      };
+      const GIT_SUBS = Object.keys(GIT);
+      function git(r, a, o) {
+        const sub = a[0],
+          args = a.slice(1);
+        if (!sub) {
+          o.line("usage: git <command> [<args>]");
+          o.note("→ help と打つと、使えるコマンドの一覧が出ます。");
+          return;
+        }
+        if (sub === "--version" || sub === "version") {
+          o.line("git version 2.47.0 (commit-quest)");
+          return;
+        }
+        if (sub === "init") return gInit(r, args, o);
+        if (sub === "clone") {
+          o.err(
+            "fatal: このゲームでは、clone 済みの状態からレベルが始まります。"
+          );
+          return;
+        }
+        if (!GIT[sub]) {
+          o.err(`git: '${sub}' is not a git command. See 'git --help'.`);
+          return;
+        }
+        if (!r.inited) {
+          o.err(
+            "fatal: not a git repository (or any of the parent directories): .git"
+          );
+          o.note("→ まだ Git の管理下にありません。先に git init を打ちます。");
+          return;
+        }
+        GIT[sub](r, args, o);
+      }
+
+      /* ---------- shell commands (game helpers) ---------- */
+      function shTouch(r, a, o) {
+        if (!a.length) {
+          o.err("usage: touch <ファイル名>");
+          return;
+        }
+        for (const f of a) {
+          if (f in r.work) {
+            o.note(`→ ${f} はすでにあります（中身は変わりません）。`);
+            continue;
+          }
+          r.work[f] = TOUCH[f] || `${f} の中身`;
+          o.note(
+            `→ ${f} を作りました。中身:「${r.work[f]}」。まだ Git は記録していません（未追跡）。`
+          );
+        }
+      }
+      function conflictLines(v) {
+        return [
+          [`<<<<<<< HEAD`, "warn"],
+          [v.ours, ""],
+          ["=======", "warn"],
+          [v.theirs, ""],
+          [`>>>>>>> ${v.label || "theirs"}`, "warn"],
+        ];
+      }
+      function shEdit(r, a, o) {
+        const f = a[0];
+        if (!f) {
+          o.err('usage: edit <ファイル名> ["新しい中身"]');
+          return;
+        }
+        if (!(f in r.work)) {
+          o.err(`edit: ${f}: そのファイルはありません`);
+          o.note(`→ 新しく作るなら touch ${f}`);
+          return;
+        }
+        const cur = r.work[f],
+          flag = a.find(x => /^--(ours|theirs|both)$/.test(x)),
+          text = a
+            .slice(1)
+            .filter(x => !/^--(ours|theirs|both)$/.test(x))
+            .join(" ");
+        if (isCf(cur)) {
+          if (!flag && !text) {
+            o.line(`# ${f}`, "dim");
+            conflictLines(cur).forEach(([t, c]) => o.line(t, c));
+            o.note(
+              `→ <<<<<<< と ======= の間が自分、======= と >>>>>>> の間が相手の変更です。残し方を選びます: edit ${f} --ours（自分）/ --theirs（相手）/ --both（両方）。作業台のボタンでも選べます。`
+            );
+            return;
+          }
+          const v =
+            flag === "--ours"
+              ? cur.ours
+              : flag === "--theirs"
+                ? cur.theirs
+                : flag === "--both"
+                  ? `${cur.ours} ＋ ${String(cur.theirs).replace(/^見出し/, "")}`
+                  : text;
+          r.work[f] = v;
+          o.line(`(${f} を編集して保存しました)`, "dim");
+          o.line("  " + v, "dim");
+          o.note(
+            `→ 衝突マーカーを消して中身を決めました。次は git add ${f} で「解決済み」と Git に伝えます。`
+          );
+          return;
+        }
+        if (flag) {
+          o.err(`edit: ${f} は衝突していません`);
+          return;
+        }
+        let v = text;
+        if (!v) {
+          const n = (r.editCount[f] || 0) + 1;
+          r.editCount[f] = n;
+          v = String(cur).replace(/ \(編集\d+\)$/, "") + ` (編集${n})`;
+        }
+        r.work[f] = v;
+        o.line(`(${f} を編集して保存しました)`, "dim");
+        o.line("  " + v, "dim");
+        o.note(
+          "→ 作業台のファイルが変わりました。Git にはまだ記録されていません。"
+        );
+      }
+      function shCat(r, a, o) {
+        if (!a.length) {
+          o.err("usage: cat <ファイル名>");
+          return;
+        }
+        for (const f of a) {
+          if (!(f in r.work)) {
+            o.err(`cat: ${f}: No such file or directory`);
+            continue;
+          }
+          if (isCf(r.work[f]))
+            conflictLines(r.work[f]).forEach(([t, c]) => o.line(t, c));
+          else o.line(r.work[f]);
+        }
+      }
+      function shRm(r, a, o) {
+        const fs = a.filter(x => !x.startsWith("-"));
+        if (!fs.length) {
+          o.err("usage: rm <ファイル名>");
+          return;
+        }
+        for (const f of fs) {
+          if (!(f in r.work)) {
+            o.err(`rm: ${f}: No such file or directory`);
+            return;
+          }
+        }
+        fs.forEach(f => delete r.work[f]);
+        o.note(
+          "→ 作業台から消しました。消したことを Git に記録するには git add（または git rm）。"
+        );
+      }
+      function run(r, line, o) {
+        const t = tokenize(line);
+        if (!t.length) return;
+        const cmd = t[0],
+          a = t.slice(1);
+        switch (cmd) {
+          case "git":
+            return git(r, a, o);
+          case "touch":
+            return shTouch(r, a, o);
+          case "edit":
+          case "vim":
+          case "vi":
+          case "nano":
+          case "code":
+            return shEdit(r, a, o);
+          case "cat":
+            return shCat(r, a, o);
+          case "ls":
+            return o.line(Object.keys(r.work).sort().join("   "));
+          case "rm":
+            return shRm(r, a, o);
+          case "pwd":
+            return o.line("/Users/you/komugido");
+          default:
+            o.err(`command not found: ${cmd}`);
+            o.note(
+              "→ help と打つと、このゲームで使えるコマンドの一覧が出ます。"
+            );
+        }
+      }
+      function makeSetup(r) {
+        const ctx = {};
+        return {
+          ctx,
+          r,
+          run(c) {
+            const o = newOut();
+            run(r, c, o);
+            if (o.failed)
+              throw new Error(
+                "setup failed: " +
+                  c +
+                  " / " +
+                  o.lines.map(l => l.map(s => s[0]).join("")).join(" | ")
+              );
+          },
+          write(f, c) {
+            r.work[f] = c;
+          },
+          clone() {
+            setupRemote(r);
+          },
+          teammate(f, c, msg, b = "main") {
+            const tip = r.remote.branches[b];
+            const t = { ...treeOf(r, tip) };
+            t[f] = c;
+            const id = mkCommit(r, [tip], t, msg, false);
+            r.remote.branches[b] = id;
+            return id;
+          },
+        };
+      }
+      function helpers(r, ctx) {
+        return {
+          ctx,
+          tip: b => r.branches[b],
+          tree: id => treeOf(r, id),
+          ht: () => headTree(r),
+          hid: () => headId(r),
+          on: b => !!r.head && r.head.b === b,
+          ran: re => r.ran.some(c => re.test(c)),
+          staged: f =>
+            r.index[f] !== undefined &&
+            r.index[f] === r.work[f] &&
+            r.index[f] !== headTree(r)[f],
+          clean: () => isClean(r),
+          count: b => ancestors(r, b ? r.branches[b] : headId(r)).size,
+          anc: (a, b) => isAnc(r, a, b),
+          msg: id => (id ? r.store[id].msg : ""),
+          rtip: b => r.remote && r.remote.branches[b],
+          merges: id =>
+            [...ancestors(r, id)].filter(x => r.store[x].parents.length > 1)
+              .length,
+          parents: id => (id ? r.store[id].parents.length : 0),
+        };
+      }
+
+      /* ================= Levels ================= */
+      function base(s, n = 1) {
+        s.write("index.html", C.index);
+        s.write("style.css", C.style);
+        s.write("news.txt", C.news);
+        s.run("git init");
+        s.run("git add .");
+        s.run('git commit -m "ホームページを作る"');
+        if (n >= 2) {
+          s.write("menu.html", C.menu);
+          s.run("git add menu.html");
+          s.run('git commit -m "メニューを追加"');
+        }
+      }
+      const CHAPTERS = [
+        {
+          no: 1,
+          title: "はじめの一歩",
+          desc: "作業台、天板、焼き上がり。変更が記録になるまでの流れを手で覚える。",
+        },
+        {
+          no: 2,
+          title: "ブランチ",
+          desc: "本番を壊さずに試す。歴史を枝分かれさせ、あとで合流させる。",
+        },
+        {
+          no: 3,
+          title: "やり直し",
+          desc: "間違えても戻れる。どこまで戻すかで、使うコマンドが変わる。",
+        },
+        {
+          no: 4,
+          title: "チーム開発",
+          desc: "origin を通して、同僚と変更を送り合う。衝突も自分で解く。",
+        },
+      ];
+      const LEVELS = [
+        {
+          id: "1-1",
+          ch: 1,
+          title: "リポジトリを作る",
+          story:
+            "パン屋「こむぎ堂」のホームページ作りを手伝うことになりました。フォルダには index.html と style.css がありますが、まだ Git の管理下にありません。まず Git に「このフォルダを記録して」と頼みましょう。",
+          setup(s) {
+            s.write("index.html", C.index);
+            s.write("style.css", C.style);
+          },
+          goals: [
+            ["git init でリポジトリを作る", r => r.inited],
+            ["git status で今の様子を確かめる", (r, h) => h.ran(/^git status/)],
+          ],
+          hints: [
+            "<code>git init</code> と打って Enter。",
+            "続けて <code>git status</code>。ファイルが「Untracked（未追跡）」と出るはずです。",
+          ],
+          sol: ["git init", "git status"],
+          tools: ["git init", "git status", "ls"],
+          summary:
+            "git init はフォルダの中に .git という記録帳を作ります。git status は「今どうなっているか」を教えてくれるコマンドで、迷ったらまずこれを打ちます。",
+        },
+        {
+          id: "1-2",
+          ch: 1,
+          title: "天板に乗せる",
+          story:
+            "記録したいファイルは、まず「ステージ」に乗せます。パンを焼く前に、焼きたい生地を天板に並べるイメージです。index.html と style.css を両方とも乗せましょう。",
+          setup(s) {
+            s.write("index.html", C.index);
+            s.write("style.css", C.style);
+            s.run("git init");
+          },
+          goals: [
+            ["index.html をステージに乗せる", (r, h) => h.staged("index.html")],
+            ["style.css をステージに乗せる", (r, h) => h.staged("style.css")],
+          ],
+          hints: [
+            "<code>git add index.html</code> のように、ファイル名を指定します。",
+            "<code>git add .</code> なら全部まとめて乗せられます。",
+          ],
+          sol: ["git add ."],
+          tools: ["git add <ファイル>", "git add .", "git status"],
+          summary:
+            "git add はファイルを「次のコミットに入れるもの」としてステージ（天板）に乗せます。乗せたものだけが記録されるので、記録する内容を選べます。",
+        },
+        {
+          id: "1-3",
+          ch: 1,
+          title: "初めてのコミット",
+          story:
+            "天板に生地が並びました。いよいよ焼き上げ、つまりコミットです。あとで見返したときに何をしたか分かるよう、メッセージを付けて記録しましょう。",
+          setup(s) {
+            s.write("index.html", C.index);
+            s.write("style.css", C.style);
+            s.run("git init");
+            s.run("git add .");
+          },
+          goals: [["ステージの内容をコミットする", (r, h) => h.count() >= 1]],
+          hints: [
+            '<code>git commit -m "メッセージ"</code> の形で打ちます。',
+            '例: <code>git commit -m "最初のページを作成"</code>',
+          ],
+          sol: ['git commit -m "最初のページを作成"'],
+          tools: ['git commit -m "メッセージ"', "git log", "git status"],
+          summary:
+            "コミットはその時点のファイル一式の記録です。グラフの点 1 つがコミット 1 つ。メッセージには「何をしたか」を短く書きます。",
+        },
+        {
+          id: "1-4",
+          ch: 1,
+          title: "変更を重ねる",
+          story:
+            "店長から「メニューのページもほしい」と頼まれました。menu.html を作ってコミットしましょう。そのあと、トップページの見出しも手直しして、もう 1 回コミットします。",
+          setup(s) {
+            s.write("index.html", C.index);
+            s.write("style.css", C.style);
+            s.run("git init");
+            s.run("git add .");
+            s.run('git commit -m "ホームページを作る"');
+          },
+          goals: [
+            ["menu.html を作ってコミットする", (r, h) => "menu.html" in h.ht()],
+            [
+              "index.html を編集してコミットする",
+              (r, h) => h.ht()["index.html"] !== C.index,
+            ],
+            ["コミットを合計 3 つにする", (r, h) => h.count() >= 3],
+          ],
+          hints: [
+            "<code>touch menu.html</code> でファイルを作ります（このゲーム専用のコマンドです）。",
+            '<code>git add menu.html</code> のあと <code>git commit -m "メニューを追加"</code>。',
+            '<code>edit index.html</code> で編集します。<code>git commit -am "見出しを直す"</code> なら、追跡中のファイルの add と commit を一度にできます。',
+          ],
+          sol: [
+            "touch menu.html",
+            "git add menu.html",
+            'git commit -m "メニューを追加"',
+            "edit index.html",
+            'git commit -am "見出しを直す"',
+          ],
+          tools: [
+            "touch <ファイル>",
+            "edit <ファイル>",
+            "git add <ファイル>",
+            'git commit -m "メッセージ"',
+            'git commit -am "メッセージ"',
+          ],
+          summary:
+            "作業台で変更 → git add で天板へ → git commit で記録、がいつもの流れです。すでに追跡しているファイルなら git commit -am で add と commit をまとめられます（新しいファイルには効きません）。",
+        },
+        {
+          id: "1-5",
+          ch: 1,
+          title: "差分と歴史を読む",
+          story:
+            "デザイナーから「背景色を変えてほしい」と連絡がありました。style.css を編集したら、コミットする前に git diff で何が変わったかを確かめましょう。最後に git log で、これまでの歴史を振り返ります。",
+          setup(s) {
+            base(s, 2);
+          },
+          goals: [
+            ["git diff で変更を確かめる", (r, h) => h.ran(/^git diff/)],
+            [
+              "style.css の変更をコミットする",
+              (r, h) => h.ht()["style.css"] !== C.style,
+            ],
+            ["git log で歴史を振り返る", (r, h) => h.ran(/^git log/)],
+          ],
+          hints: [
+            "<code>edit style.css</code> で編集してから <code>git diff</code>。",
+            '<code>git commit -am "背景色を変更"</code> でコミット。',
+            "<code>git log</code> または <code>git log --oneline</code>。",
+          ],
+          sol: [
+            "edit style.css",
+            "git diff",
+            'git commit -am "背景色を変更"',
+            "git log",
+          ],
+          tools: [
+            "edit <ファイル>",
+            "git diff",
+            "git diff --staged",
+            "git log",
+            "git log --oneline",
+          ],
+          summary:
+            "git diff は「まだステージに乗せていない変更」、git diff --staged は「次のコミットに入る変更」を見せます。git log は新しい順にコミットを並べます。",
+        },
+
+        {
+          id: "2-1",
+          ch: 2,
+          title: "ブランチを切る",
+          story:
+            "新商品「メロンパン」のページを作ることになりました。本番の main を壊さずに試せるよう、ブランチ（枝）を作ります。melon という名前のブランチを作って、そこへ移動しましょう。",
+          setup(s) {
+            base(s, 2);
+          },
+          goals: [
+            ["melon ブランチを作る", r => "melon" in r.branches],
+            ["melon ブランチに移動する", (r, h) => h.on("melon")],
+          ],
+          hints: [
+            "<code>git branch melon</code> で作り、<code>git switch melon</code> で移動します。",
+            "<code>git switch -c melon</code> なら、作って移動するのを 1 回でできます。",
+          ],
+          sol: ["git switch -c melon"],
+          tools: [
+            "git branch",
+            "git branch <名前>",
+            "git switch <名前>",
+            "git switch -c <名前>",
+          ],
+          summary:
+            "ブランチはコミットに貼る付箋のようなものです。git switch で移動すると、HEAD（今いる場所）がその付箋に付きます。git checkout でも同じことができます。",
+        },
+        {
+          id: "2-2",
+          ch: 2,
+          title: "ブランチで作業する",
+          story:
+            "melon ブランチの上で melon.html を作り、コミットしましょう。コミットしても main の付箋は動かないことを、グラフで確かめてください。",
+          setup(s) {
+            base(s, 2);
+            s.run("git switch -c melon");
+          },
+          goals: [
+            [
+              "melon ブランチに melon.html をコミットする（main には入れない）",
+              (r, h) =>
+                "melon.html" in h.tree(h.tip("melon")) &&
+                !("melon.html" in h.tree(h.tip("main"))),
+            ],
+          ],
+          hints: [
+            "<code>touch melon.html</code> でファイルを作ります。",
+            '<code>git add melon.html</code> → <code>git commit -m "メロンパンのページを追加"</code>。',
+          ],
+          sol: [
+            "touch melon.html",
+            "git add melon.html",
+            'git commit -m "メロンパンのページを追加"',
+          ],
+          tools: [
+            "touch <ファイル>",
+            "git add <ファイル>",
+            'git commit -m "メッセージ"',
+            "git switch <名前>",
+          ],
+          summary:
+            "コミットすると、今いるブランチの付箋だけが新しい点へ進みます。main は元の場所のまま。試しに git switch main すると、作業台から melon.html が消えるのも確かめられます。",
+        },
+        {
+          id: "2-3",
+          ch: 2,
+          title: "マージで合流する",
+          story:
+            "メロンパンのページが完成しました。main に取り込みます。main に戻ってから merge しましょう。最後に、使い終わった melon ブランチを片付けます。",
+          setup(s) {
+            base(s, 2);
+            s.run("git switch -c melon");
+            s.run("touch melon.html");
+            s.run("git add melon.html");
+            s.run('git commit -m "メロンパンのページを追加"');
+          },
+          goals: [
+            ["main に移動する", (r, h) => h.on("main")],
+            [
+              "main に melon.html を取り込む",
+              (r, h) => "melon.html" in h.tree(h.tip("main")),
+            ],
+            [
+              "使い終わった melon ブランチを消す",
+              r => !("melon" in r.branches),
+            ],
+          ],
+          hints: [
+            "<code>git switch main</code> で main に戻ります。",
+            "<code>git merge melon</code>。main が後ろにいるだけなので「Fast-forward」になります。",
+            "<code>git branch -d melon</code> で付箋を外します。",
+          ],
+          sol: ["git switch main", "git merge melon", "git branch -d melon"],
+          tools: [
+            "git switch <名前>",
+            "git merge <名前>",
+            "git branch -d <名前>",
+            "git log --oneline",
+          ],
+          summary:
+            "git merge は、指定したブランチの変更を今いるブランチに取り込みます。分かれていなければ付箋を前に進めるだけ（Fast-forward）。合流済みのブランチは git branch -d で片付けます。",
+        },
+        {
+          id: "2-4",
+          ch: 2,
+          title: "分かれた歴史を合流",
+          story:
+            "melon で作業している間に、main でもお知らせ（news.txt）が更新されました。歴史が二股に分かれています。このまま main に melon をマージすると、親を 2 つ持つ「マージコミット」ができます。",
+          setup(s) {
+            base(s, 2);
+            s.run("git switch -c melon");
+            s.run("touch melon.html");
+            s.run("git add melon.html");
+            s.run('git commit -m "メロンパンのページを追加"');
+            s.run("git switch main");
+            s.run('edit news.txt "お知らせ: 11月は月曜日も定休日"');
+            s.run('git commit -am "お知らせを更新"');
+          },
+          goals: [
+            [
+              "main で melon をマージして、マージコミットを作る",
+              (r, h) =>
+                h.parents(h.tip("main")) === 2 &&
+                "melon.html" in h.tree(h.tip("main")),
+            ],
+          ],
+          hints: [
+            "今いるのは main です（<code>git status</code> で確認できます）。",
+            "<code>git merge melon</code>。",
+          ],
+          sol: ["git merge melon"],
+          tools: ["git status", "git merge <名前>", "git log --oneline"],
+          summary:
+            "両方のブランチが進んでいると、Git は 2 つを合わせた新しいコミット（マージコミット）を作ります。グラフの白抜きの点がそれです。違うファイルを触っていれば自動で合流できます。",
+        },
+        {
+          id: "2-5",
+          ch: 2,
+          title: "rebase で一直線に",
+          story:
+            "このチームは、マージコミットを作らずに歴史を一直線に保つのが好みです。croissant ブランチを main の最新の上に付け替え（rebase）てから、main を前に進めましょう。",
+          setup(s) {
+            base(s, 2);
+            s.run("git switch -c croissant");
+            s.run("touch croissant.html");
+            s.run("git add croissant.html");
+            s.run('git commit -m "クロワッサン特集を追加"');
+            s.run('edit croissant.html "クロワッサン特集: 焼き上がり写真つき"');
+            s.run('git commit -am "特集に写真を追加"');
+            s.run("git switch main");
+            s.run('edit news.txt "お知らせ: 秋の新作が出ました"');
+            s.run('git commit -am "お知らせを更新"');
+            s.ctx.mainTip = s.r.branches.main;
+          },
+          goals: [
+            [
+              "croissant を main の最新の上に付け替える",
+              (r, h) => h.anc(h.ctx.mainTip, h.tip("croissant")),
+            ],
+            [
+              "main に croissant の作業を取り込む（マージコミットなし）",
+              (r, h) =>
+                "croissant.html" in h.tree(h.tip("main")) &&
+                h.merges(h.tip("main")) === 0,
+            ],
+          ],
+          hints: [
+            "まず <code>git switch croissant</code>。",
+            "<code>git rebase main</code> で、croissant のコミットを main の先頭に積み直します。",
+            "<code>git switch main</code> → <code>git merge croissant</code>。一直線なので Fast-forward になります。",
+          ],
+          sol: [
+            "git switch croissant",
+            "git rebase main",
+            "git switch main",
+            "git merge croissant",
+          ],
+          tools: [
+            "git switch <名前>",
+            "git rebase <名前>",
+            "git merge <名前>",
+            "git log --oneline",
+          ],
+          summary:
+            "git rebase は自分のコミットを、指定したブランチの先頭に作り直して積み直します。歴史は一直線になりますが、コミットの ID が変わるので、すでに push して共有したブランチには使いません。",
+        },
+
+        {
+          id: "3-1",
+          ch: 3,
+          title: "天板から降ろす",
+          story:
+            "うっかり git add . で secret.txt（管理画面のパスワード入り）まで天板に乗せてしまいました。これは記録してはいけません。secret.txt だけを降ろして、index.html の変更はコミットしましょう。",
+          setup(s) {
+            base(s, 1);
+            s.run(
+              'edit index.html "見出し「こむぎ堂へようこそ」＋営業時間 7:00-18:00"'
+            );
+            s.write("secret.txt", "管理画面のパスワード: komugi1234");
+            s.run("git add .");
+          },
+          goals: [
+            [
+              "secret.txt をステージから降ろす",
+              r => r.index["secret.txt"] === undefined,
+            ],
+            [
+              "secret.txt を含めずに、index.html の変更をコミットする",
+              (r, h) =>
+                h.ht()["index.html"] !== C.index && !("secret.txt" in h.ht()),
+            ],
+          ],
+          hints: [
+            "<code>git status</code> の案内にも、降ろし方が書かれています。",
+            "<code>git restore --staged secret.txt</code>。",
+            '<code>git commit -m "営業時間を追加"</code>。',
+          ],
+          sol: [
+            "git restore --staged secret.txt",
+            'git commit -m "営業時間を追加"',
+          ],
+          tools: [
+            "git status",
+            "git restore --staged <ファイル>",
+            'git commit -m "メッセージ"',
+          ],
+          summary:
+            "git restore --staged は天板から降ろすだけで、作業台のファイルは残ります。パスワードのように決して記録しないファイルは、.gitignore に書いておくと git add . でも乗らなくなります。",
+        },
+        {
+          id: "3-2",
+          ch: 3,
+          title: "変更を捨てる",
+          story:
+            "style.css を試しに書き換えたら、表示が崩れてしまいました。まだコミットはしていません。最後のコミットの状態に戻しましょう。",
+          setup(s) {
+            base(s, 1);
+            s.run('edit style.css "背景も文字も蛍光ピンク（読めない）"');
+          },
+          goals: [
+            [
+              "style.css を最後のコミットの状態に戻す",
+              (r, h) => r.work["style.css"] === h.ht()["style.css"],
+            ],
+          ],
+          hints: [
+            "<code>git diff</code> で、何が変わっているか見てみましょう。",
+            "<code>git restore style.css</code>。",
+          ],
+          sol: ["git restore style.css"],
+          tools: ["git diff", "git restore <ファイル>", "cat <ファイル>"],
+          summary:
+            "git restore <ファイル> は、作業台の変更を捨てて記録済みの状態に戻します。捨てた変更は Git にも残っていないので、戻すときは本当に要らないか確かめてから。",
+        },
+        {
+          id: "3-3",
+          ch: 3,
+          title: "メッセージを直す",
+          story:
+            "直前のコミットメッセージを「メニュ追加」と打ち間違えました。まだ誰にも共有していないので、コミットを作り直して直せます。",
+          setup(s) {
+            base(s, 1);
+            s.run("touch menu.html");
+            s.run("git add menu.html");
+            s.run('git commit -m "メニュ追加"');
+          },
+          goals: [
+            [
+              "コミットを増やさずに、メッセージを「メニュー追加」に直す",
+              (r, h) => h.msg(h.hid()).includes("メニュー") && h.count() === 2,
+            ],
+          ],
+          hints: [
+            "<code>git commit --amend</code> は直前のコミットを作り直します。",
+            '<code>git commit --amend -m "メニュー追加"</code>。',
+          ],
+          sol: ['git commit --amend -m "メニュー追加"'],
+          tools: ["git log --oneline", 'git commit --amend -m "メッセージ"'],
+          summary:
+            "--amend は直前のコミットを作り直します。入れ忘れたファイルを git add してから --amend すれば、中身も足せます。ID が変わるので、push 済みのコミットには使いません。",
+        },
+        {
+          id: "3-4",
+          ch: 3,
+          title: "コミットを取り消す",
+          story:
+            "試作の「季節限定バナー」を 2 回コミットしたものの、店長の判断でボツになりました。まだ push していません。2 つのコミットごと消して、「メニューを追加」の時点に戻しましょう。",
+          setup(s) {
+            base(s, 2);
+            s.run("touch banner.html");
+            s.run("git add banner.html");
+            s.run('git commit -m "季節限定バナーを追加"');
+            s.run(
+              'edit banner.html "季節限定バナー: 栗あんパン（赤字で大きく）"'
+            );
+            s.run('git commit -am "バナーの色を調整"');
+          },
+          goals: [
+            [
+              "main を「メニューを追加」の時点に戻す",
+              (r, h) => h.msg(h.tip("main")) === "メニューを追加",
+            ],
+            [
+              "作業台にも banner.html を残さない",
+              r => !("banner.html" in r.work),
+            ],
+          ],
+          hints: [
+            "<code>HEAD~2</code> は「今から 2 つ前のコミット」を指します。グラフの点をクリックすると ID も入力できます。",
+            "<code>git reset --hard HEAD~2</code>。--soft や --mixed だと、作業台に変更が残ります。",
+          ],
+          sol: ["git reset --hard HEAD~2"],
+          tools: [
+            "git log --oneline",
+            "git reset --soft <コミット>",
+            "git reset --hard <コミット>",
+            "HEAD~2",
+          ],
+          summary:
+            "git reset は付箋（ブランチ）を過去のコミットへ戻します。--soft は天板に、--mixed は作業台に変更を残し、--hard は何も残しません。手元だけの歴史に使います。",
+        },
+        {
+          id: "3-5",
+          ch: 3,
+          title: "共有済みを打ち消す",
+          story:
+            "push 済みのコミット「定休日を水曜日に変更」が間違いでした。共有した歴史を reset で書き換えると同僚が困るので、打ち消すコミットを新しく積みます。打ち消したら push まで済ませましょう。",
+          setup(s) {
+            base(s, 2);
+            s.clone();
+            s.run('edit news.txt "お知らせ: 10月の定休日は水曜日"');
+            s.run('git commit -am "定休日を水曜日に変更"');
+            s.ctx.bad = s.r.branches.main;
+            s.run("git push");
+          },
+          goals: [
+            [
+              "news.txt を元に戻すコミットを積む（歴史は消さない）",
+              (r, h) =>
+                h.ht()["news.txt"] === C.news && h.anc(h.ctx.bad, h.hid()),
+            ],
+            [
+              "打ち消しを origin に届ける",
+              (r, h) =>
+                h.rtip("main") && h.tree(h.rtip("main"))["news.txt"] === C.news,
+            ],
+          ],
+          hints: [
+            "<code>git revert HEAD</code> で、直前のコミットと逆の変更を新しいコミットにします。",
+            "最後に <code>git push</code>。",
+          ],
+          sol: ["git revert HEAD", "git push"],
+          tools: ["git log --oneline", "git revert <コミット>", "git push"],
+          summary:
+            "git revert は過去を書き換えず、逆向きの変更を新しいコミットとして足します。共有済みの間違いはこちらで直します。reset と revert の使い分けがポイントです。",
+        },
+        {
+          id: "3-6",
+          ch: 3,
+          title: "作業を一時退避",
+          story:
+            "index.html を編集している途中で「hotfix ブランチのお知らせを今すぐ直して」と頼まれました。編集途中のままでは hotfix に切り替えられません。変更を棚にしまい（stash）、hotfix で news.txt を直してコミットしたら、main に戻って作業を取り出しましょう。",
+          setup(s) {
+            base(s, 1);
+            s.run("git switch -c hotfix");
+            s.run(
+              'edit index.html "見出し「こむぎ堂へようこそ」＋臨時休業のお知らせ"'
+            );
+            s.run('git commit -am "臨時休業を告知"');
+            s.run("git switch main");
+            s.ctx.wip = "見出し「こむぎ堂へようこそ」＋焼きたての写真";
+            s.run(`edit index.html "${s.ctx.wip}"`);
+          },
+          goals: [
+            [
+              "hotfix で news.txt を直してコミットする",
+              (r, h) =>
+                h.tip("hotfix") &&
+                h.tree(h.tip("hotfix"))["news.txt"] !== C.news,
+            ],
+            [
+              "main に戻り、棚から編集途中の index.html を取り出す",
+              (r, h) =>
+                h.on("main") &&
+                r.work["index.html"] === h.ctx.wip &&
+                r.stash.length === 0 &&
+                h.tree(h.tip("hotfix"))["news.txt"] !== C.news,
+            ],
+          ],
+          hints: [
+            "まず <code>git switch hotfix</code> を試すと、止められる理由が分かります。",
+            "<code>git stash</code> でしまってから <code>git switch hotfix</code>。",
+            '<code>edit news.txt</code> → <code>git commit -am "お知らせを修正"</code> → <code>git switch main</code> → <code>git stash pop</code>。',
+          ],
+          sol: [
+            "git stash",
+            "git switch hotfix",
+            "edit news.txt",
+            'git commit -am "お知らせを修正"',
+            "git switch main",
+            "git stash pop",
+          ],
+          tools: [
+            "git stash",
+            "git stash list",
+            "git stash pop",
+            "git switch <名前>",
+            "edit <ファイル>",
+            'git commit -am "メッセージ"',
+          ],
+          summary:
+            "git stash は編集途中の変更を棚にしまい、作業台を最後のコミットの状態に戻します。git stash pop で取り出します。急な割り込みのときの定番です。",
+        },
+
+        {
+          id: "4-1",
+          ch: 4,
+          title: "push で届ける",
+          story:
+            "こむぎ堂のサイトは GitHub 上のリポジトリ（origin）で共有されています。あなたが作ったコミット「店主あいさつを追加」は、まだ自分の PC の中だけ。push して origin に送りましょう。",
+          setup(s) {
+            base(s, 2);
+            s.clone();
+            s.run("touch about.html");
+            s.run("git add about.html");
+            s.run('git commit -m "店主あいさつを追加"');
+          },
+          goals: [
+            [
+              "origin の main に、あなたのコミットを届ける",
+              (r, h) => h.rtip("main") === h.tip("main"),
+            ],
+          ],
+          hints: [
+            "<code>git status</code> に「ahead of 'origin/main' by 1 commit」と出ます。",
+            "<code>git push</code>。",
+          ],
+          sol: ["git push"],
+          tools: ["git status", "git push", "git log --oneline"],
+          summary:
+            "origin/main は「最後に通信したときの origin の main の位置」を指す付箋です。push すると origin の main と一緒に、この付箋も進みます。",
+        },
+        {
+          id: "4-2",
+          ch: 4,
+          title: "ブランチごと送る",
+          story:
+            "新しい機能はブランチで作り、ブランチごと origin に送って同僚にレビューしてもらいます（プルリクエスト）。order ブランチを作って order.html をコミットし、origin に push しましょう。",
+          setup(s) {
+            base(s, 2);
+            s.clone();
+          },
+          goals: [
+            [
+              "order ブランチで order.html をコミットする",
+              (r, h) =>
+                h.tip("order") && "order.html" in h.tree(h.tip("order")),
+            ],
+            [
+              "order ブランチを origin に届ける",
+              (r, h) =>
+                h.rtip("order") && "order.html" in h.tree(h.rtip("order")),
+            ],
+          ],
+          hints: [
+            "<code>git switch -c order</code> → <code>touch order.html</code> → add → commit。",
+            "ただの <code>git push</code> だと、送り先が決まっていないと言われます。",
+            "<code>git push -u origin order</code>。",
+          ],
+          sol: [
+            "git switch -c order",
+            "touch order.html",
+            "git add order.html",
+            'git commit -m "予約フォームを追加"',
+            "git push -u origin order",
+          ],
+          tools: [
+            "git switch -c <名前>",
+            "touch <ファイル>",
+            "git add <ファイル>",
+            'git commit -m "メッセージ"',
+            "git push -u origin <名前>",
+          ],
+          summary:
+            "新しいブランチを初めて送るときは git push -u origin <名前>。-u で送り先を覚えさせると、次からは git push だけで送れます。",
+        },
+        {
+          id: "4-3",
+          ch: 4,
+          title: "pull で受け取る",
+          story:
+            "同僚のハナさんが news.txt を更新して push しました。でも、あなたの PC にはまだ届いていません。下の origin のグラフと見比べてから、取り込みましょう。",
+          setup(s) {
+            base(s, 2);
+            s.clone();
+            s.ctx.hana = s.teammate(
+              "news.txt",
+              "お知らせ: 11月3日は秋の収穫祭",
+              "ハナ: 収穫祭のお知らせ"
+            );
+          },
+          goals: [
+            [
+              "ハナさんのコミットを自分の main に取り込む",
+              (r, h) => h.anc(h.ctx.hana, h.tip("main")),
+            ],
+          ],
+          hints: [
+            "<code>git status</code> では「up to date」と出ます。最後に通信した時点の情報だからです。",
+            "<code>git fetch</code> で取ってくるだけ、<code>git pull</code> なら取ってきて合流までします。",
+          ],
+          sol: ["git pull"],
+          tools: [
+            "git status",
+            "git fetch",
+            "git pull",
+            "git merge origin/main",
+          ],
+          summary:
+            "git fetch は origin の最新を取ってきて origin/main を更新するだけ。git pull は fetch のあと merge まで行います。中身を見てから取り込みたいときは fetch → merge の 2 段階で。",
+        },
+        {
+          id: "4-4",
+          ch: 4,
+          title: "push が断られたら",
+          story:
+            "あなたは menu.html に値段を書き足してコミットしました。ところが、ハナさんが先に news.txt の更新を push していました。このまま push すると断られます。どうすればいいでしょう。",
+          setup(s) {
+            base(s, 2);
+            s.clone();
+            s.ctx.hana = s.teammate(
+              "news.txt",
+              "お知らせ: 年末年始の営業時間",
+              "ハナ: 年末年始の告知"
+            );
+            s.run(
+              'edit menu.html "メニュー: 食パン 380円 / クロワッサン 220円 / あんパン 180円"'
+            );
+            s.run('git commit -am "メニューに値段を追加"');
+            s.ctx.mine = s.r.branches.main;
+          },
+          goals: [
+            [
+              "ハナさんのコミットを取り込む",
+              (r, h) => h.anc(h.ctx.hana, h.tip("main")),
+            ],
+            [
+              "自分のコミットを origin に届ける",
+              (r, h) => h.anc(h.ctx.mine, h.rtip("main")),
+            ],
+          ],
+          hints: [
+            "まず <code>git push</code> を試して、断られる様子を見てみましょう（お手本の手数には入りません）。",
+            "<code>git pull</code> で取り込むと、違うファイルなので自動で合流できます。",
+            "そのあと <code>git push</code>。",
+          ],
+          sol: ["git pull", "git push"],
+          tools: ["git push", "git pull", "git fetch", "git log --oneline"],
+          summary:
+            "push が rejected になったら、origin に自分の持っていないコミットがある合図です。pull で取り込んでから push し直します。--force で上書きするのは、同僚の作業を消す危険な操作です。",
+        },
+        {
+          id: "4-5",
+          ch: 4,
+          title: "衝突を解決する",
+          story:
+            "あなたもハナさんも、index.html の見出しを書き換えていました。pull すると Git はどちらを残せばいいか決められず、衝突（コンフリクト）になります。中身を決めて合流を終わらせ、push まで済ませましょう。",
+          setup(s) {
+            base(s, 2);
+            s.clone();
+            s.ctx.hana = s.teammate(
+              "index.html",
+              "見出し「秋の収穫祭 11月3日」",
+              "ハナ: 見出しを収穫祭に"
+            );
+            s.run('edit index.html "見出し「焼きたては毎朝7時から」"');
+            s.run('git commit -am "見出しに開店時間を追加"');
+            s.ctx.mine = s.r.branches.main;
+          },
+          goals: [
+            [
+              "衝突を解決して、合流（マージコミット）を完了する",
+              (r, h) =>
+                !r.merging &&
+                h.parents(h.tip("main")) === 2 &&
+                h.anc(h.ctx.hana, h.tip("main")),
+            ],
+            [
+              "合流した結果を origin に届ける",
+              (r, h) =>
+                !r.merging &&
+                h.anc(h.ctx.mine, h.rtip("main")) &&
+                h.anc(h.ctx.hana, h.rtip("main")) &&
+                h.parents(h.rtip("main")) === 2,
+            ],
+          ],
+          hints: [
+            "<code>git pull</code> すると CONFLICT と出ます。<code>git status</code> や <code>cat index.html</code> で様子を見ましょう。",
+            "作業台の index.html にある「自分 / 相手 / 両方」のボタン、または <code>edit index.html --both</code> で中身を決めます。",
+            '<code>git add index.html</code> → <code>git commit -m "見出しの衝突を解決"</code> → <code>git push</code>。',
+          ],
+          sol: [
+            "git pull",
+            "edit index.html --both",
+            "git add index.html",
+            'git commit -m "見出しの衝突を解決"',
+            "git push",
+          ],
+          tools: [
+            "git pull",
+            "git status",
+            "cat <ファイル>",
+            "edit <ファイル> --both",
+            "git add <ファイル>",
+            'git commit -m "メッセージ"',
+            "git merge --abort",
+          ],
+          summary:
+            "衝突は失敗ではなく、Git が人間に判断を任せた合図です。ファイルの中身を決め、git add で解決済みにしてからコミットします。やめたいときは git merge --abort でマージ前に戻れます。",
+        },
+      ];
+      const SANDBOX = {
+        id: "sandbox",
+        ch: 0,
+        title: "自由に試す",
+        story:
+          "ゴールはありません。2 つのコミットがあり、origin とつながった状態から始まります。どんなコマンドを打っても壊れないので、気になる操作を試してください。「ハナさんが push する」で、同僚の変更も起こせます。",
+        setup(s) {
+          base(s, 2);
+          s.clone();
+        },
+        goals: [],
+        hints: [],
+        sol: [],
+        tools: [
+          "git status",
+          "git log --oneline",
+          "git switch -c <名前>",
+          "git merge <名前>",
+          "git rebase <名前>",
+          "git reset --hard <コミット>",
+          "git revert <コミット>",
+          "git stash",
+          "git fetch",
+          "git pull",
+          "git push",
+        ],
+        summary: "",
+      };
+      const COMMANDS = [
+        ["git init", "フォルダを Git の管理下に置く", "1-1"],
+        ["git status", "今の状態を見る。迷ったらまずこれ", "1-1"],
+        ["git add", "変更をステージ（天板）に乗せる", "1-2"],
+        ["git commit -m", "ステージの内容を記録する", "1-3"],
+        ["git commit -am", "追跡中のファイルの add と commit を一度に", "1-4"],
+        ["git diff", "変更の中身を見比べる", "1-5"],
+        ["git log", "コミットの歴史を新しい順に見る", "1-5"],
+        ["git branch", "ブランチを作る・一覧を見る", "2-1"],
+        ["git switch", "ブランチを移動する（-c で作って移動）", "2-1"],
+        ["git merge", "別のブランチの変更を取り込む", "2-3"],
+        ["git branch -d", "合流済みのブランチを消す", "2-3"],
+        ["git rebase", "コミットを別の土台の上に積み直す", "2-5"],
+        ["git restore --staged", "ステージから降ろす", "3-1"],
+        ["git restore", "作業台の変更を捨てる", "3-2"],
+        ["git commit --amend", "直前のコミットを作り直す", "3-3"],
+        ["git reset", "ブランチを過去のコミットへ戻す", "3-4"],
+        ["git revert", "逆向きの変更を新しいコミットで足す", "3-5"],
+        ["git stash", "編集途中の変更を棚にしまう / 戻す", "3-6"],
+        ["git push", "コミットを origin に送る", "4-1"],
+        ["git push -u", "新しいブランチを送り先ごと登録して送る", "4-2"],
+        ["git fetch", "origin の最新を取ってくるだけ", "4-3"],
+        ["git pull", "fetch して merge まで行う", "4-3"],
+        ["git merge --abort", "衝突したマージを取りやめる", "4-5"],
+      ];
+      if (typeof module !== "undefined")
+        module.exports = {
+          LEVELS,
+          SANDBOX,
+          newRepo,
+          makeSetup,
+          run,
+          newOut,
+          helpers,
+          NOCOUNT,
+          headId,
+        };
+    </script>
+
+    <script>
+      "use strict";
+      /* ================= UI ================= */
+      const $ = (s, el = document) => el.querySelector(s);
+      const view = $("#view");
+      const esc = s =>
+        String(s).replace(
+          /[&<>"']/g,
+          c =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c]
+        );
+      const KEY = "commit-quest-v1";
+      function loadProg() {
+        try {
+          const p = JSON.parse(localStorage.getItem(KEY));
+          return p && p.lv ? p : { lv: {} };
+        } catch (e) {
+          return { lv: {} };
+        }
+      }
+      function saveProg() {
+        try {
+          localStorage.setItem(KEY, JSON.stringify(PROG));
+        } catch (e) {
+          /* storage unavailable */
+        }
+      }
+      let PROG = loadProg();
+      let G = null;
+      const parOf = lv => lv.sol.filter(c => !NOCOUNT.test(c)).length;
+      const hashStr = s => {
+        let h = 7;
+        for (const ch of s) h = (Math.imul(h, 31) + ch.charCodeAt(0)) >>> 0;
+        return h || 1;
+      };
+      const totalStars = () =>
+        Object.values(PROG.lv).reduce((a, v) => a + (v.stars || 0), 0);
+      const starsHTML = n =>
+        [0, 1, 2]
+          .map(i => `<span class="${i < n ? "on" : ""}">★</span>`)
+          .join("");
+      const A = "/commit-quest/assets/";
+      const CH_ART = {
+        1: "chapter-1",
+        2: "chapter-2",
+        3: "chapter-3",
+        4: "chapter-4",
+      };
+
+      function renderScore() {
+        const cleared = LEVELS.filter(l => PROG.lv[l.id]).length;
+        $("#score").innerHTML =
+          `<img src="${A}bun.webp" alt="" width="22" height="22">★ <b>${totalStars()}</b> / ${LEVELS.length * 3}<span class="sc-clear">　焼き上がり <b>${cleared}</b> / ${LEVELS.length}</span>`;
+      }
+
+      /* ---------- graph ---------- */
+      const LANE = [
+        "var(--orange)",
+        "var(--blue)",
+        "var(--green)",
+        "var(--faint)",
+      ];
+      function graphSVG(r, mode, prev) {
+        const refs = [];
+        if (mode === "remote") {
+          Object.keys(r.remote.branches)
+            .sort((a, b) =>
+              a === "main" ? -1 : b === "main" ? 1 : a.localeCompare(b)
+            )
+            .forEach(b =>
+              refs.push({ n: b, id: r.remote.branches[b], k: "rb" })
+            );
+        } else {
+          for (const b of r.branchOrder)
+            if (r.branches[b])
+              refs.push({
+                n: b,
+                id: r.branches[b],
+                k: "b",
+                cur: r.head && r.head.b === b,
+              });
+          if (r.head && r.head.d)
+            refs.push({ n: "HEAD", id: r.head.d, k: "h" });
+          Object.keys(r.tracking)
+            .sort()
+            .forEach(k => refs.push({ n: k, id: r.tracking[k], k: "t" }));
+        }
+        const seeds = refs.map(x => x.id);
+        if (mode === "local" && r.merging) seeds.push(r.merging.head);
+        const vis = new Set();
+        seeds.forEach(s => ancestors(r, s).forEach(x => vis.add(x)));
+        if (!vis.size) return null;
+        const list = [...vis].sort((a, b) => r.store[a].seq - r.store[b].seq);
+        const lane = {};
+        let n = 0;
+        const chain = id => {
+          if (lane[id] !== undefined) return;
+          const L = n++;
+          let c = id;
+          while (c && lane[c] === undefined) {
+            lane[c] = L;
+            c = r.store[c].parents[0];
+          }
+        };
+        refs.forEach(x => chain(x.id));
+        [...list].reverse().forEach(chain);
+        const hasT = refs.some(x => x.k === "t");
+        const DX = 76,
+          DY = hasT ? 88 : 66,
+          PX = 40,
+          TOP = 40;
+        const pos = {};
+        list.forEach((id, i) => {
+          pos[id] = { x: PX + i * DX, y: TOP + lane[id] * DY };
+        });
+        const W = PX * 2 + (list.length - 1) * DX + 60,
+          H = TOP + (n - 1) * DY + (hasT ? 62 : 40);
+        const hidv = mode === "local" ? headId(r) : null;
+        let edges = "",
+          nodes = "",
+          labels = "";
+        list.forEach(id => {
+          const c = r.store[id];
+          c.parents.forEach((p, pi) => {
+            if (!pos[p]) return;
+            const a = pos[p],
+              b = pos[id],
+              col = LANE[(pi === 0 ? lane[id] : lane[p]) % 4];
+            const d =
+              a.y === b.y
+                ? `M${a.x} ${a.y}L${b.x} ${b.y}`
+                : `M${a.x} ${a.y}C${a.x + DX * 0.65} ${a.y},${b.x - DX * 0.65} ${b.y},${b.x} ${b.y}`;
+            edges += `<path d="${d}" stroke="${col}" class="edge${prev && !prev.has(id) ? " fresh" : ""}"/>`;
+          });
+        });
+        let fi = 0;
+        list.forEach(id => {
+          const { x, y } = pos[id],
+            c = r.store[id],
+            fresh = prev && !prev.has(id);
+          nodes +=
+            `<g class="node${fresh ? " fresh" : ""}" style="--i:${fresh ? fi++ : 0}" data-id="${id}" tabindex="0" role="button" aria-label="コミット ${id} ${esc(c.msg)}"><title>${id}  ${esc(c.msg)}</title>` +
+            (id === hidv
+              ? `<circle cx="${x}" cy="${y}" r="15.5" class="head-ring"/>`
+              : "") +
+            `<circle cx="${x}" cy="${y}" r="10" fill="${LANE[lane[id] % 4]}" class="dot"/>` +
+            (c.parents.length > 1
+              ? `<circle cx="${x}" cy="${y}" r="3.6" class="hole"/>`
+              : "") +
+            `<text x="${x}" y="${y + 27}" class="cid">${id}</text></g>`;
+        });
+        const by = {};
+        refs.forEach(x => (by[x.id] = by[x.id] || []).push(x));
+        const place = (rs, cx, cy) => {
+          const items = rs.map(q => {
+            const t = q.cur ? `HEAD → ${q.n}` : q.n;
+            return { q, t, w: t.length * 6.5 + 16 };
+          });
+          const total =
+            items.reduce((a, i) => a + i.w, 0) + (items.length - 1) * 4;
+          let sx = Math.max(4, cx - total / 2);
+          items.forEach(({ q, t, w }) => {
+            const cls = q.cur
+              ? "cur"
+              : q.k === "b"
+                ? "br"
+                : q.k === "h"
+                  ? "head"
+                  : q.k === "t"
+                    ? "tr"
+                    : "rb";
+            labels += `<g class="ref ${cls}"><rect x="${sx}" y="${cy - 9}" width="${w}" height="18" rx="9"/><text x="${sx + w / 2}" y="${cy}">${esc(t)}</text></g>`;
+            sx += w + 4;
+          });
+        };
+        Object.entries(by).forEach(([id, rs]) => {
+          const { x, y } = pos[id];
+          const top = rs.filter(q => q.k !== "t"),
+            bot = rs.filter(q => q.k === "t");
+          if (top.length) place(top, x, y - 25);
+          if (bot.length) place(bot, x, y + 47);
+        });
+        return {
+          svg: `<svg class="graph" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="コミットグラフ">${edges}${nodes}${labels}</svg>`,
+          ids: new Set(list),
+        };
+      }
+
+      /* ---------- map ---------- */
+      function demoGraph() {
+        const r = newRepo(42),
+          s = makeSetup(r);
+        base(s, 2);
+        s.clone();
+        [
+          "git switch -c melon",
+          "touch melon.html",
+          "git add melon.html",
+          'git commit -m "メロンパン"',
+          "edit melon.html",
+          'git commit -am "写真"',
+          "git switch main",
+          "edit news.txt",
+          'git commit -am "お知らせ"',
+          "git merge melon",
+          "git push",
+        ].forEach(c => s.run(c));
+        return graphSVG(r, "local", null).svg;
+      }
+      function showMap() {
+        G = null;
+        closeModal();
+        const next = LEVELS.find(l => !PROG.lv[l.id]) || LEVELS[0];
+        const cleared = LEVELS.filter(l => PROG.lv[l.id]).length,
+          stars = totalStars();
+        const started = cleared > 0;
+        view.innerHTML = `
+  <div class="wrap">
+    <section class="hero">
+      <div class="scene">
+        <img class="bg" src="${A}hero-bakery.webp" alt="朝のこむぎ堂の店内。かごに並んだクロワッサンやメロンパン、レンガの窯" width="1600" height="1067" fetchpriority="high">
+        <div class="hero-copy">
+          <p class="eyebrow">Commit Quest · Git をゲームで覚える</p>
+          <h1>コミット・クエスト</h1>
+          <p class="lead">町のパン屋「こむぎ堂」のホームページ作りを手伝いながら、Git を手で覚えます。本物と同じコマンドを打つと、記録の枝が目の前で伸びていきます。全 ${LEVELS.length} レベル、1 つ 3 分ほど。</p>
+          <div class="cta">
+            <a class="btn primary" href="#lv-${next.id}">${started ? `続きから（${next.id} ${esc(next.title)}）` : "はじめる"}</a>
+            <a class="btn" href="#sandbox">自由に試す</a>
+          </div>
+          <div class="prog"><div class="bar"><i style="width:${((stars / (LEVELS.length * 3)) * 100).toFixed(1)}%"></i></div>
+            <p>★ ${stars} / ${LEVELS.length * 3}　焼き上がり ${cleared} / ${LEVELS.length}</p></div>
+        </div>
+      </div>
+      <div class="welcome">
+        <div class="greet"><img src="${A}mascot-baker.webp" alt="店長のこむぎ。パン職人の帽子とエプロンの猫" width="132" height="132">
+          <div class="bubble"><span class="who">店長 こむぎ</span><p>${started ? `おかえり。次は ${next.id}「${esc(next.title)}」を焼こう。` : "いらっしゃい。うちのホームページ作り、手伝ってくれるかな。"}下の生地を 1 つずつ、パンに焼き上げていってね。</p></div></div>
+        <figure class="hero-fig"><div class="graph-scroll">${demoGraph()}</div>
+          <figcaption>melon ブランチで作業し、main に合流させて push した歴史。ゲームでは、これを自分のコマンドで育てます。</figcaption></figure>
+      </div>
+    </section>
+    <section class="chapters" aria-label="レベル">
+      ${CHAPTERS.map(ch => {
+        const lvs = LEVELS.filter(l => l.ch === ch.no);
+        return `<div class="chapter" data-ch="${ch.no}">
+          <header><img class="ch-art" src="${A}${CH_ART[ch.no]}.webp" alt="" width="78" height="78" loading="lazy"><div><span class="chno">CHAPTER ${ch.no}</span><h3>${esc(ch.title)}</h3><p>${esc(ch.desc)}</p></div></header>
+          <ol class="stations" style="--n:${lvs.length}">${lvs
+            .map(l => {
+              const p = PROG.lv[l.id];
+              return `<li><a class="st${p ? " cleared" : ""}${l === next && !p ? " next" : ""}" href="#lv-${l.id}" aria-label="${l.id} ${esc(l.title)}${p ? "（クリア済み）" : ""}"><img class="bread" src="${A}${p ? "bun" : "dough"}.webp" alt="" width="54" height="54" loading="lazy"><span class="no">${l.id}</span><span class="name">${esc(l.title)}</span><span class="stars">${starsHTML(p ? p.stars : 0)}</span></a></li>`;
+            })
+            .join("")}</ol></div>`;
+      }).join("")}
+    </section>
+    <section class="zukan">
+      <div class="section-h"><h2>コマンド図鑑</h2><p>レベルを焼き上げると集まります。${COMMANDS.filter(c => PROG.lv[c[2]]).length} / ${COMMANDS.length}</p></div>
+      <div class="cards">${COMMANDS.map(([c, d, lv]) =>
+        PROG.lv[lv]
+          ? `<div class="cmdcard"><img src="${A}bun.webp" alt="" width="34" height="34" loading="lazy"><div><code>${esc(c)}</code><p>${esc(d)}</p></div></div>`
+          : `<div class="cmdcard locked"><img src="${A}dough.webp" alt="" width="34" height="34" loading="lazy"><div><code>？？？</code><p>${lv} をクリアで解放</p></div></div>`
+      ).join("")}</div>
+    </section>
+  </div>
+  <footer class="foot"><div class="wrap">このゲームの git は学習用の再現で、よく使う動きに絞っています。touch と edit は、ファイルを作る・エディタで書き換える操作の代わりです。進み具合はこのブラウザに保存されます。</div></footer>`;
+        renderScore();
+        window.scrollTo(0, 0);
+      }
+
+      /* ---------- play ---------- */
+      const ARROW =
+        '<svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true"><path d="M1 6H19M14 1L20 6L14 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      const CHECK =
+        '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2L5 8.6L9.6 3.6" fill="none" stroke="#faf9f5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      function startLevel(lv) {
+        closeModal();
+        const r = newRepo(hashStr(lv.id)),
+          s = makeSetup(r);
+        lv.setup(s);
+        r.ran = [];
+        const hist = G ? G.hist : [];
+        G = {
+          lv,
+          r,
+          ctx: s.ctx,
+          count: 0,
+          hints: 0,
+          done: false,
+          hist,
+          hi: hist.length,
+          prev: { local: new Set(), remote: new Set() },
+          goalState: [],
+        };
+        const ch = CHAPTERS.find(c => c.no === lv.ch);
+        view.innerHTML = `
+  <div class="wrap"><div class="play">
+    <aside class="mission">
+      <div class="crumb"><a href="#map">← マップ</a><span>${ch ? `第${ch.no}章 ${esc(ch.title)}` : "サンドボックス"}</span></div>
+      <h1><span class="lvno">${lv.id === "sandbox" ? "SANDBOX" : "LEVEL " + lv.id}</span>${esc(lv.title)}</h1>
+      <div class="boss"><img src="${A}mascot-baker.webp" alt="店長のこむぎ" width="72" height="72"><div class="bubble"><span class="who">店長 こむぎ</span><p class="story">${esc(lv.story)}</p></div></div>
+      ${
+        lv.goals.length
+          ? `<div><h2 class="lbl">ゴール</h2><ul class="goals" id="goals"></ul></div>
+      <div class="meter"><span>手数 <b id="cnt">0</b></span><span>お手本 <b>${parOf(lv)}</b> 手</span><span>ヒント <b id="hcnt">0</b> / ${lv.hints.length}</span></div>
+      <div><button class="btn small" id="hintBtn" type="button">ヒントを見る</button><ol class="hints" id="hints"></ol></div>`
+          : `<div class="side-actions"><button class="btn small" id="hanaBtn" type="button">ハナさんが push する</button></div>`
+      }
+      <div><h2 class="lbl">道具箱（押すと入力欄に入ります）</h2><div class="tools">${lv.tools.map(t => `<button class="chip" type="button" data-ins="${esc(t.includes("<") ? t.slice(0, t.indexOf("<")) : t)}">${esc(t)}</button>`).join("")}</div></div>
+      <div class="side-actions"><button class="linkbtn" id="resetBtn" type="button">最初からやり直す</button>${lv.id !== "sandbox" ? "" : ""}</div>
+    </aside>
+    <section class="board">
+      <div class="panel">
+        <div class="panel-h"><span>コミットグラフ　あなたの PC</span><span class="legend"><span><i class="lg-dot"></i>コミット</span><span><i class="lg-ref"></i>ブランチ</span>${lv.ch === 4 || lv.id === "sandbox" || lv.id === "3-5" ? '<span><i class="lg-tr"></i>最後に見た origin の位置</span>' : ""}</span></div>
+        <div class="graph-scroll" id="gLocal"></div>
+        <div class="remote-part" id="gRemoteWrap" hidden><div class="panel-h"><span>origin（GitHub 上の共有リポジトリ）</span></div><div class="graph-scroll" id="gRemote"></div></div>
+      </div>
+      <div class="zones" id="zones"></div>
+      <div class="term">
+        <div class="term-bar"><span>ターミナル</span><span class="keys">help でコマンド一覧 · ↑↓ で履歴 · Tab で補完</span></div>
+        <div class="term-out" id="out" role="log" aria-live="polite"></div>
+        <form id="cmdForm" autocomplete="off"><label for="cmd" id="prompt"></label><input id="cmd" name="cmd" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" aria-label="コマンドを入力"><button class="runbtn" type="submit">実行</button></form>
+      </div>
+    </section>
+  </div></div>`;
+        bindPlay();
+        print([
+          [
+            [
+              `# ${lv.id === "sandbox" ? "サンドボックス" : lv.id + " " + lv.title}`,
+              "sys",
+            ],
+          ],
+          [
+            [
+              "# 使えるコマンドは help、行き詰まったら hint。グラフの点を押すとコミット ID が入力されます。",
+              "sys",
+            ],
+          ],
+        ]);
+        renderBoard(true);
+        renderScore();
+        window.scrollTo(0, 0);
+        if (matchMedia("(pointer: fine)").matches)
+          $("#cmd").focus({ preventScroll: true });
+      }
+      function bindPlay() {
+        const input = $("#cmd");
+        $("#cmdForm").addEventListener("submit", e => {
+          e.preventDefault();
+          const v = input.value;
+          input.value = "";
+          exec(v);
+        });
+        input.addEventListener("keydown", e => {
+          if (e.isComposing) return;
+          if (e.key === "ArrowUp") {
+            if (G.hi > 0) {
+              G.hi--;
+              input.value = G.hist[G.hi];
+            }
+            e.preventDefault();
+          } else if (e.key === "ArrowDown") {
+            if (G.hi < G.hist.length) {
+              G.hi++;
+              input.value = G.hist[G.hi] || "";
+            }
+            e.preventDefault();
+          } else if (e.key === "Tab") {
+            e.preventDefault();
+            complete(input);
+          } else if (e.key === "l" && e.ctrlKey) {
+            e.preventDefault();
+            $("#out").innerHTML = "";
+          }
+        });
+        document.querySelectorAll(".chip").forEach(b =>
+          b.addEventListener("click", () => {
+            input.value = b.dataset.ins;
+            input.focus();
+          })
+        );
+        const hb = $("#hintBtn");
+        if (hb) hb.addEventListener("click", showHint);
+        const hn = $("#hanaBtn");
+        if (hn) hn.addEventListener("click", hanaPush);
+        $("#resetBtn").addEventListener("click", () => startLevel(G.lv));
+        const onNode = e => {
+          const g = e.target.closest(".node");
+          if (!g) return;
+          if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ")
+            return;
+          e.preventDefault();
+          input.value =
+            input.value.replace(/\s*$/, input.value.trim() ? " " : "") +
+            g.dataset.id;
+          input.focus();
+        };
+        ["gLocal", "gRemote"].forEach(id => {
+          $("#" + id).addEventListener("click", onNode);
+          $("#" + id).addEventListener("keydown", onNode);
+        });
+      }
+      function promptText(r) {
+        if (!r.inited) return "~/komugido $";
+        const where = r.head.b !== undefined ? r.head.b : `(${r.head.d})`;
+        return `~/komugido (${where}${r.merging ? "|MERGING" : ""}) $`;
+      }
+      function print(lines) {
+        const out = $("#out");
+        if (!out) return;
+        const frag = document.createDocumentFragment();
+        lines.forEach(parts => {
+          const d = document.createElement("div");
+          d.className = "ln";
+          parts.forEach(([t, c]) => {
+            const s = document.createElement("span");
+            if (c) s.className = c;
+            s.textContent = t;
+            d.appendChild(s);
+          });
+          frag.appendChild(d);
+        });
+        out.appendChild(frag);
+        out.scrollTop = out.scrollHeight;
+      }
+      const HELP = [
+        ["Git コマンド", "sys"],
+        [
+          '  git init / status / add <f> / commit -m "msg" / log [--oneline] / diff [--staged] / show',
+          "",
+        ],
+        [
+          "  git branch [名前] / switch [-c] 名前 / checkout 名前 / merge 名前 / rebase 名前",
+          "",
+        ],
+        [
+          "  git restore [--staged] <f> / reset [--soft|--hard] <コミット> / revert <コミット>",
+          "",
+        ],
+        [
+          '  git commit --amend -m "msg" / stash [pop|list] / merge --abort',
+          "",
+        ],
+        ["  git fetch / pull / push [-u origin 名前] / remote -v", ""],
+        ["ファイル操作（このゲーム用）", "sys"],
+        ['  ls / cat <f> / touch <f> / edit <f> ["新しい中身"] / rm <f>', ""],
+        ["その他", "sys"],
+        ["  hint（ヒント） / clear（画面を消す）", ""],
+        [
+          "コミットの指し方: HEAD, HEAD~1, HEAD~2, main, origin/main, a1b2c3d（グラフの点を押すと入力）",
+          "note",
+        ],
+      ];
+      function exec(raw) {
+        const line = raw.trim().replace(/\s+/g, " ");
+        if (!line) return;
+        if (G.hist[G.hist.length - 1] !== line) G.hist.push(line);
+        G.hi = G.hist.length;
+        print([
+          [
+            [promptText(G.r) + " ", "pr"],
+            [line, "cmd"],
+          ],
+        ]);
+        if (line === "clear") {
+          $("#out").innerHTML = "";
+          return;
+        }
+        if (line === "help" || line === "git help" || line === "git --help") {
+          print(HELP.map(h => [h]));
+          return;
+        }
+        if (line === "hint") {
+          showHint();
+          return;
+        }
+        if (!NOCOUNT.test(line)) G.count++;
+        const o = newOut();
+        run(G.r, line, o);
+        if (!o.failed) G.r.ran.push(line);
+        print(o.lines);
+        renderBoard(false);
+      }
+      function showHint() {
+        const lv = G.lv;
+        if (!lv.hints.length) {
+          print([
+            [
+              [
+                "→ サンドボックスにヒントはありません。help でコマンド一覧が見られます。",
+                "note",
+              ],
+            ],
+          ]);
+          return;
+        }
+        if (G.hints >= lv.hints.length) {
+          print([
+            [["→ ヒントはこれで全部です。左の一覧を見てください。", "note"]],
+          ]);
+          return;
+        }
+        G.hints++;
+        const tmp = document.createElement("div");
+        tmp.innerHTML = lv.hints[G.hints - 1];
+        print([[[`ヒント ${G.hints}: ${tmp.textContent}`, "note"]]]);
+        renderHints();
+      }
+      function renderHints() {
+        const ol = $("#hints");
+        if (!ol) return;
+        ol.innerHTML = G.lv.hints
+          .slice(0, G.hints)
+          .map(h => `<li>${h}</li>`)
+          .join("");
+        $("#hcnt").textContent = G.hints;
+        const b = $("#hintBtn");
+        b.textContent =
+          G.hints >= G.lv.hints.length
+            ? "ヒントは以上です"
+            : `ヒントを見る（あと ${G.lv.hints.length - G.hints}）`;
+        b.disabled = G.hints >= G.lv.hints.length;
+      }
+      let hanaN = 0;
+      function hanaPush() {
+        const r = G.r,
+          tip = r.remote.branches.main,
+          t = { ...r.store[tip].tree };
+        hanaN++;
+        t["news.txt"] = `お知らせ: ハナさんの更新 その${hanaN}`;
+        r.remote.branches.main = mkCommit(
+          r,
+          [tip],
+          t,
+          `ハナ: お知らせ更新 ${hanaN}`,
+          false
+        );
+        print([
+          [
+            [
+              "# ハナさんが origin の main に push しました（news.txt を更新）。git fetch や git pull で受け取れます。",
+              "sys",
+            ],
+          ],
+        ]);
+        renderBoard(false);
+      }
+      function complete(input) {
+        const v = input.value,
+          toks = v.split(" "),
+          last = toks[toks.length - 1],
+          r = G.r;
+        let cands;
+        if (toks.length === 1)
+          cands = [
+            "git",
+            "touch",
+            "edit",
+            "cat",
+            "ls",
+            "rm",
+            "help",
+            "hint",
+            "clear",
+          ];
+        else if (toks[0] === "git" && toks.length === 2) cands = GIT_SUBS;
+        else
+          cands = [
+            ...Object.keys(r.work),
+            ...Object.keys(r.branches),
+            ...Object.keys(r.tracking),
+            ...(r.remote ? ["origin"] : []),
+            "HEAD",
+          ];
+        const m = [...new Set(cands)].filter(c => c.startsWith(last));
+        if (m.length === 1) {
+          toks[toks.length - 1] = m[0];
+          input.value = toks.join(" ") + " ";
+        } else if (m.length > 1) {
+          let p = m[0];
+          m.forEach(x => {
+            while (!x.startsWith(p)) p = p.slice(0, -1);
+          });
+          if (p.length > last.length) {
+            toks[toks.length - 1] = p;
+            input.value = toks.join(" ");
+          } else print([[[m.join("   "), "dim"]]]);
+        }
+      }
+      function renderBoard(first) {
+        const r = G.r,
+          lv = G.lv;
+        const gl = graphSVG(r, "local", G.prev.local);
+        const el = $("#gLocal");
+        el.innerHTML = gl
+          ? gl.svg
+          : `<div class="graph-empty">${r.inited ? "まだコミットがありません。最初のコミットを作ると、ここに点が現れます。" : "まだ Git の管理下にありません。git init から始めましょう。"}</div>`;
+        if (gl) {
+          G.prev.local = gl.ids;
+          el.scrollLeft = el.scrollWidth;
+        }
+        const rw = $("#gRemoteWrap");
+        if (r.remote) {
+          rw.hidden = false;
+          const gr = graphSVG(r, "remote", G.prev.remote),
+            er = $("#gRemote");
+          er.innerHTML = gr ? gr.svg : "";
+          if (gr) {
+            G.prev.remote = gr.ids;
+            er.scrollLeft = er.scrollWidth;
+          }
+        } else rw.hidden = true;
+        renderZones();
+        $("#prompt").textContent = promptText(r);
+        if (!lv.goals.length) return;
+        const h = helpers(r, G.ctx);
+        const states = lv.goals.map(g => {
+          try {
+            return !!g[1](r, h);
+          } catch (e) {
+            return false;
+          }
+        });
+        $("#goals").innerHTML = lv.goals
+          .map(
+            (g, i) =>
+              `<li class="goal${states[i] ? " done" : ""}${states[i] && !first && !G.goalState[i] ? " just" : ""}"><span class="chk">${CHECK}</span><span>${esc(g[0])}</span></li>`
+          )
+          .join("");
+        G.goalState = states;
+        $("#cnt").textContent = G.count;
+        renderHints();
+        if (!first && !G.done && states.every(Boolean)) {
+          G.done = true;
+          setTimeout(showClear, 750);
+        }
+      }
+      function renderZones() {
+        const r = G.r,
+          H = headTree(r),
+          st = fileStates(r),
+          z = $("#zones");
+        const fileRow = (f, tag, cls, extra = "") =>
+          `<li class="file"><span class="fn">${esc(f)}</span>${tag ? `<span class="tag ${cls}">${tag}</span>` : ""}${extra}</li>`;
+        const work = Object.keys(r.work)
+          .sort()
+          .map(f => {
+            const s = st.find(x => x.f === f) || {};
+            if (s.conflict) {
+              if (isCf(r.work[f]))
+                return fileRow(
+                  f,
+                  "衝突",
+                  "cf",
+                  `<span class="cfbox"><button type="button" data-run="edit ${esc(f)} --ours">自分を残す</button><button type="button" data-run="edit ${esc(f)} --theirs">相手を残す</button><button type="button" data-run="edit ${esc(f)} --both">両方残す</button></span>`
+                );
+              return fileRow(f, "解決済み・add 待ち", "ok");
+            }
+            const tag =
+              s.unstaged === "untracked"
+                ? ["未追跡", "new"]
+                : s.unstaged === "modified"
+                  ? ["変更あり", "mod"]
+                  : ["", ""];
+            return fileRow(
+              f,
+              tag[0],
+              tag[1],
+              `<button class="fbtn" type="button" data-run="edit ${esc(f)}">編集</button>`
+            );
+          });
+        st.filter(s => s.unstaged === "deleted").forEach(s =>
+          work.push(fileRow(s.f, "削除", "del"))
+        );
+        const stage = st
+          .filter(s => s.staged)
+          .map(s =>
+            fileRow(
+              s.f,
+              { new: "新規", modified: "変更", deleted: "削除" }[s.staged],
+              s.staged === "new"
+                ? "new"
+                : s.staged === "deleted"
+                  ? "del"
+                  : "mod"
+            )
+          );
+        const hidv = headId(r);
+        const repo = Object.keys(H)
+          .sort()
+          .map(f => fileRow(f, "", ""));
+        const pre = r.inited
+          ? ""
+          : '<p class="empty">git init で使えるようになります。</p>';
+        z.innerHTML = `
+    <div class="zone"><header><div><h3>作業台</h3><span>working directory</span></div><img src="${A}zone-workbench.webp" alt="" width="58" height="58"></header>
+      ${work.length ? `<ul>${work.join("")}</ul>` : '<p class="empty">ファイルはありません。</p>'}</div>
+    <div class="arrow">${ARROW}<span>git add</span></div>
+    <div class="zone stage"><header><div><h3>天板</h3><span>staging area · 次のコミットに入る</span></div><img src="${A}zone-tray.webp" alt="" width="58" height="58"></header>
+      ${pre || (stage.length ? `<ul>${stage.join("")}</ul>` : '<p class="empty">空です。git add で乗せた変更がここに並びます。</p>')}</div>
+    <div class="arrow">${ARROW}<span>git commit</span></div>
+    <div class="zone"><header><div><h3>焼き上がり</h3><span>repository · HEAD のコミット</span></div><img src="${A}zone-baked.webp" alt="" width="58" height="58"></header>
+      ${pre || (hidv ? `<p class="headinfo">${hidv} ${esc(r.store[hidv].msg)}</p><ul>${repo.join("")}</ul>` : '<p class="empty">まだコミットがありません。</p>')}</div>`;
+        z.querySelectorAll("[data-run]").forEach(b =>
+          b.addEventListener("click", () => exec(b.dataset.run))
+        );
+      }
+
+      /* ---------- clear modal ---------- */
+      function showClear() {
+        if (!G || !G.done) return;
+        const lv = G.lv,
+          par = parOf(lv);
+        const crit = [true, G.count <= par, G.hints === 0];
+        const stars = crit.filter(Boolean).length;
+        const prev = PROG.lv[lv.id];
+        PROG.lv[lv.id] = { stars: Math.max(stars, prev ? prev.stars : 0) };
+        saveProg();
+        renderScore();
+        $("#mTitle").textContent =
+          stars === 3 ? "最高の焼き上がり！" : "焼き上がり！";
+        $("#mSub").textContent = `${lv.id} ${lv.title}`;
+        $("#mStars").innerHTML = [0, 1, 2]
+          .map(i =>
+            i < stars
+              ? `<img class="on" src="${A}bun.webp" alt="パン（星）" width="62" height="62">`
+              : `<img class="off" src="${A}dough.webp" alt="生地（星なし）" width="62" height="62">`
+          )
+          .join("");
+        const cols = [
+          "var(--orange)",
+          "var(--blue)",
+          "var(--green)",
+          "#e3b26b",
+        ];
+        $("#mCrumbs").innerHTML = Array.from({ length: 18 }, (_, i) => {
+          const a = (i / 18) * Math.PI * 2,
+            d = 110 + (i % 3) * 40;
+          return `<i style="--c:${cols[i % 4]};--x:${Math.round(Math.cos(a) * d)}px;--y:${Math.round(Math.sin(a) * d * 0.7)}px"></i>`;
+        }).join("");
+        $("#mCrit").innerHTML = [
+          `クリア`,
+          `お手本の ${par} 手以内（今回 ${G.count} 手）`,
+          `ヒントを使わない（今回 ${G.hints} 回）`,
+        ]
+          .map((t, i) => `<li class="${crit[i] ? "on" : ""}">${esc(t)}</li>`)
+          .join("");
+        $("#mLearn").textContent = lv.summary;
+        const idx = LEVELS.indexOf(lv),
+          next = LEVELS[idx + 1];
+        const nb = $("#mNext");
+        nb.textContent = next
+          ? `次へ: ${next.id} ${next.title}`
+          : "マップに戻る";
+        nb.onclick = () => {
+          closeModal();
+          location.hash = next ? "lv-" + next.id : "map";
+        };
+        $("#mRetry").onclick = () => {
+          closeModal();
+          startLevel(lv);
+        };
+        $("#modal").hidden = false;
+        nb.focus();
+      }
+      function closeModal() {
+        $("#modal").hidden = true;
+      }
+      $("#modal").addEventListener("click", e => {
+        if (e.target.id === "modal") closeModal();
+      });
+      $("#mMap").addEventListener("click", closeModal);
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && !$("#modal").hidden) closeModal();
+      });
+
+      /* ---------- routing ---------- */
+      function route() {
+        const h = location.hash.slice(1);
+        if (h.startsWith("lv-")) {
+          const lv = LEVELS.find(l => l.id === h.slice(3));
+          if (lv) return startLevel(lv);
+        }
+        if (h === "sandbox") return startLevel(SANDBOX);
+        showMap();
+      }
+      window.addEventListener("hashchange", route);
+      route();
+    </script>
+  </body>
+</html>
