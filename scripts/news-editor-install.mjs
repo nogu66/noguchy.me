@@ -21,6 +21,16 @@ const destination = path.join(applications, "News Studio.app");
 const pnpm = execFileSync("/usr/bin/which", ["pnpm"], {
   encoding: "utf8",
 }).trim();
+let codex = "";
+try {
+  codex = execFileSync("/usr/bin/which", ["codex"], {
+    encoding: "utf8",
+  }).trim();
+} catch {
+  console.warn(
+    "Codex CLIが見つかりません。アプリのCodex補助は後からCLIをインストールすると利用できます。"
+  );
+}
 const temporary = await mkdtemp(path.join(os.tmpdir(), "news-studio-build-"));
 const bundle = path.join(temporary, "News Studio.app");
 const contents = path.join(bundle, "Contents");
@@ -64,7 +74,7 @@ await writeFile(
 );
 await writeFile(
   path.join(resources, "LocalConfig.plist"),
-  plist({ Repository: root, Node: process.execPath, Pnpm: pnpm })
+  plist({ Repository: root, Node: process.execPath, Pnpm: pnpm, Codex: codex })
 );
 console.log("News Studio.app を作成しています…");
 execFileSync(

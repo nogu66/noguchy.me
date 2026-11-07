@@ -10,6 +10,7 @@ final class StudioApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDe
     var root = ""
     var node = ""
     var pnpm = ""
+    var codex = ""
     var server: Process?
     var didStartServer = false
     var isClosing = false
@@ -27,6 +28,7 @@ final class StudioApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDe
         root = repository
         node = executable
         pnpm = packageManager
+        codex = config["Codex"] as? String ?? ""
         makeMenu()
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
@@ -118,8 +120,12 @@ final class StudioApp: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUIDe
         process.arguments = ["scripts/news-editor-server.mjs"]
         process.currentDirectoryURL = URL(fileURLWithPath: root)
         var environment = ProcessInfo.processInfo.environment
-        environment["PATH"] = URL(fileURLWithPath: node).deletingLastPathComponent().path + ":" + URL(fileURLWithPath: pnpm).deletingLastPathComponent().path + ":/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        var paths = [URL(fileURLWithPath: node).deletingLastPathComponent().path, URL(fileURLWithPath: pnpm).deletingLastPathComponent().path]
+        if !codex.isEmpty { paths.append(URL(fileURLWithPath: codex).deletingLastPathComponent().path) }
+        paths.append(contentsOf: ["/opt/homebrew/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"])
+        environment["PATH"] = paths.joined(separator: ":")
         environment["NEWS_EDITOR_PNPM"] = pnpm
+        environment["NEWS_EDITOR_CODEX"] = codex
         environment["NEWS_EDITOR_PORT"] = "4323"
         process.environment = environment
         let folder = URL(fileURLWithPath: root).appendingPathComponent(".local/news-editor")

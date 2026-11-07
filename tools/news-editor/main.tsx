@@ -21,6 +21,7 @@ import {
   Plus,
   Search,
   Settings2,
+  Sparkles,
   X,
 } from "lucide-react";
 import RichEditor from "./RichEditor";
@@ -34,6 +35,7 @@ import {
   type Article,
 } from "./model";
 import "./style.css";
+import { acceptAutoSave, canAutoSave, repositoryChange } from "./sync";
 
 type Summary = Omit<Article, "body">;
 type Cache = { article: Article; baseline: string; at: number };
@@ -45,6 +47,17 @@ type Publication = {
   label: string;
   detail: string;
   tone: "published" | "pending" | "draft" | "unknown";
+};
+type AssistKind = "title" | "summary" | "body" | "outline";
+type CodexStatus = {
+  available: boolean;
+  connected: boolean;
+  threadId?: string | null;
+};
+type AssistantMessage = {
+  role: "user" | "assistant";
+  text: string;
+  kind?: AssistKind;
 };
 const emptyPublishState: PublishState = { deployedAt: null, articles: {} };
 const storageKey = (key: string) => `noguchy.news.studio.v1:${key}`;
@@ -127,18 +140,32 @@ function App() {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [syncIssue, setSyncIssue] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [localSaved, setLocalSaved] = useState(false);
   const [sidebar, setSidebar] = useState(true);
   const [settings, setSettings] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantPrompt, setAssistantPrompt] = useState("");
+  const [assistantAnswer, setAssistantAnswer] = useState("");
+  const [assistantKind, setAssistantKind] = useState<AssistKind | null>(null);
+  const [assistantMessages, setAssistantMessages] = useState<
+    AssistantMessage[]
+  >([]);
+  const [assistantBusy, setAssistantBusy] = useState(false);
+  const [codexStatus, setCodexStatus] = useState<CodexStatus | null>(null);
   const [tagText, setTagText] = useState("");
   const [editorVersion, setEditorVersion] = useState(0);
   const coverInput = useRef<HTMLInputElement>(null);
-  const latest = useRef({ draft, session, baseline });
-  latest.current = { draft, session, baseline };
+  const assistantMessagesRef = useRef<HTMLDivElement>(null);
   const saveRef = useRef<() => void>(() => {});
   const busy = saving || publishing || uploading || loading;
+  const latest = useRef({ draft, session, baseline, busy, tagText });
+  latest.current = { draft, session, baseline, busy, tagText };
+  const saveInFlight = useRef(false);
+  const failedAutoSave = useRef("");
   const dirty = !!draft && fingerprint(draft) !== baseline;
 
   function persist() {
@@ -177,6 +204,11 @@ function App() {
     return result.articles;
   }
   function activate(article: Article, key: string, recover = true) {
+    setAssistantMessages([]);
+    setAssistantAnswer("");
+    setAssistantKind(null);
+    setSyncIssue("");
+    failedAutoSave.current = "";
     let value = article,
       base = fingerprint(article),
       recovered = false;
@@ -212,6 +244,7 @@ function App() {
     setNotice(recovered ? "保存前の入力内容を復元しました。" : "");
   }
   async function openArticle(id: string, recover = true) {
+    if (saveInFlight.current) return;
     if (!persist()) return;
     setLoading(true);
     setError("");
@@ -228,6 +261,7 @@ function App() {
     }
   }
   function createNew() {
+    if (saveInFlight.current) return;
     if (!persist()) return;
     activate(newArticle(), "new");
     setSettings(false);
@@ -281,17 +315,125 @@ function App() {
     };
   }, []);
   useEffect(() => {
+    if (!assistantOpen || codexStatus) return;
+    api<CodexStatus>("/api/codex/status")
+      .then(setCodexStatus)
+      .catch(() => setCodexStatus({ available: false, connected: false }));
+  }, [assistantOpen, codexStatus]);
+  useEffect(() => {
+    if (assistantOpen && assistantMessagesRef.current)
+      assistantMessagesRef.current.scrollTop =
+        assistantMessagesRef.current.scrollHeight;
+  }, [assistantMessages, assistantBusy, assistantOpen]);
+  useEffect(() => {
     setLocalSaved(false);
     const timeout = window.setTimeout(persist, 500);
     return () => window.clearTimeout(timeout);
   }, [draft, baseline, session]);
 
+  useEffect(() => {
+    let stopped = false;
+    let checking = false;
+    const synchronize = async () => {
+      if (checking || latest.current.busy || saveInFlight.current) return;
+      checking = true;
+      try {
+        const before = latest.current;
+        const list = await refreshList();
+        const current = latest.current;
+        if (stopped || current.busy || saveInFlight.current || !current.draft)
+          return;
+        if (
+          before.session !== current.session ||
+          before.draft?.revision !== current.draft.revision
+        )
+          return;
+        const change = repositoryChange(
+          current.draft,
+          current.baseline,
+          list.find(article => article.id === current.draft?.id),
+          !!current.tagText.trim()
+        );
+        if (change === "unchanged") {
+          setSyncIssue("");
+          return;
+        }
+        if (change === "missing" || change === "conflict") {
+          persist();
+          setSyncIssue(
+            change === "missing"
+              ? "記事ファイルが削除されたか、読み取れません。入力内容を保持し、自動保存を停止しています。"
+              : "この記事はリポジトリでも変更されました。入力内容を保持し、自動保存を停止しています。Markdownをダウンロードしてから、記事ファイルを読み直してください。"
+          );
+          return;
+        }
+        const article = await api<Article>(
+          `/api/article?id=${encodeURIComponent(current.draft.id)}`
+        );
+        const now = latest.current;
+        if (
+          stopped ||
+          now.busy ||
+          saveInFlight.current ||
+          now.session !== current.session ||
+          !now.draft ||
+          fingerprint(now.draft) !== now.baseline ||
+          now.tagText.trim() ||
+          now.draft.revision !== current.draft.revision
+        )
+          return;
+        setDraft(article);
+        setBaseline(fingerprint(article));
+        setSyncIssue("");
+        if (needsSourceMode(article.body)) setMode("source");
+        setEditorVersion(version => version + 1);
+        setNotice("リポジトリの変更を取り込みました。");
+      } catch {
+        if (!stopped)
+          setSyncIssue(
+            "同期できません。接続の回復後に再確認します。入力内容は保持されています。"
+          );
+      } finally {
+        checking = false;
+      }
+    };
+    const timer = window.setInterval(synchronize, 1000);
+    window.addEventListener("focus", synchronize);
+    document.addEventListener("visibilitychange", synchronize);
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", synchronize);
+      document.removeEventListener("visibilitychange", synchronize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !draft ||
+      !dirty ||
+      busy ||
+      autoSaving ||
+      syncIssue ||
+      tagText.trim() ||
+      !canAutoSave(draft) ||
+      failedAutoSave.current === fingerprint(draft)
+    )
+      return;
+    const timer = window.setTimeout(() => {
+      void save(true);
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [draft, dirty, busy, autoSaving, syncIssue, tagText]);
+
   function update(patch: Partial<Article>) {
     setDraft(current => (current ? { ...current, ...patch } : current));
   }
-  async function save(): Promise<Article | null> {
-    if (!draft || busy) return null;
-    setSaving(true);
+  async function save(automatic = false): Promise<Article | null> {
+    if (!draft || busy || saveInFlight.current || syncIssue) return null;
+    saveInFlight.current = true;
+    if (automatic) setAutoSaving(true);
+    else setSaving(true);
     setError("");
     persist();
     try {
@@ -312,25 +454,46 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(snapshot),
       });
-      try {
-        localStorage.removeItem(storageKey(session));
-      } catch {
-        /* Save succeeded even if browser storage is unavailable. */
+      if (automatic && latest.current.draft) {
+        const accepted = acceptAutoSave(latest.current.draft, snapshot, result);
+        latest.current = { ...latest.current, ...accepted, session: result.id };
+        setDraft(accepted.draft);
+        setBaseline(accepted.baseline);
+        setSession(result.id);
+        try {
+          localStorage.removeItem(storageKey(session));
+          localStorage.setItem("noguchy.news.studio.last", result.id);
+        } catch {
+          /* Browser storage is optional. */
+        }
+        persist();
+      } else {
+        try {
+          localStorage.removeItem(storageKey(session));
+        } catch {
+          /* Save succeeded even if browser storage is unavailable. */
+        }
+        activate(result, result.id, false);
+        setNotice(
+          "記事ファイルに保存しました。公開サイトへの反映はデプロイ後です。"
+        );
       }
-      activate(result, result.id, false);
-      setNotice(
-        "記事ファイルに保存しました。公開サイトへの反映はデプロイ後です。"
-      );
+      failedAutoSave.current = "";
       await refreshList();
       return result;
     } catch (error) {
+      if (automatic) failedAutoSave.current = fingerprint(draft);
       setError(messageOf(error));
       return null;
     } finally {
+      saveInFlight.current = false;
+      setAutoSaving(false);
       setSaving(false);
     }
   }
-  saveRef.current = save;
+  saveRef.current = () => {
+    void save();
+  };
   async function publish() {
     if (!draft || busy) return;
     setError("");
@@ -381,6 +544,76 @@ function App() {
       setUploading(false);
     }
   }
+  async function askCodex(kind: AssistKind, prompt: string) {
+    if (!draft || assistantBusy) return;
+    setAssistantKind(kind);
+    setAssistantPrompt("");
+    setAssistantAnswer("");
+    setAssistantMessages(current => [
+      ...current,
+      { role: "user", text: prompt },
+    ]);
+    setError("");
+    setAssistantBusy(true);
+    try {
+      const result = await api<{ answer: string }>("/api/codex/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, article: draft }),
+      });
+      setAssistantAnswer(result.answer);
+      setAssistantMessages(current => [
+        ...current,
+        { role: "assistant", text: result.answer, kind },
+      ]);
+      setCodexStatus(current => ({
+        ...(current ?? { available: true }),
+        available: true,
+        connected: true,
+      }));
+    } catch (error) {
+      setError(messageOf(error));
+      setCodexStatus(current =>
+        current ? { ...current, connected: false } : current
+      );
+    } finally {
+      setAssistantBusy(false);
+    }
+  }
+  function applyAssistantAnswer() {
+    if (!assistantAnswer || !assistantKind) return;
+    if (assistantKind === "body") {
+      update({ body: assistantAnswer });
+      setMode(needsSourceMode(assistantAnswer) ? "source" : "write");
+      setEditorVersion(version => version + 1);
+      setNotice(
+        "Codexの下書きを本文に反映しました。内容を確認して保存してください。"
+      );
+    } else if (assistantKind === "summary") {
+      update({ description: assistantAnswer.split("\n")[0].trim() });
+      setNotice(
+        "Codexの概要案を反映しました。内容を確認して保存してください。"
+      );
+    } else if (assistantKind === "title") {
+      update({ title: assistantAnswer.split("\n")[0].trim() });
+      setNotice(
+        "Codexのタイトル案を反映しました。内容を確認して保存してください。"
+      );
+    }
+  }
+  async function copyAssistantAnswer() {
+    if (!assistantAnswer) return;
+    try {
+      await navigator.clipboard.writeText(assistantAnswer);
+      setNotice("Codexの回答をクリップボードにコピーしました。");
+    } catch {
+      setError("クリップボードにコピーできませんでした。");
+    }
+  }
+  function submitAssistant() {
+    const prompt = assistantPrompt.trim();
+    if (prompt) void askCodex("outline", prompt);
+  }
   function download() {
     if (!draft) return;
     const { id, body } = draft;
@@ -427,7 +660,9 @@ function App() {
     : null;
 
   return (
-    <div className={`studio ${sidebar ? "" : "sidebar-hidden"}`}>
+    <div
+      className={`studio ${sidebar ? "" : "sidebar-hidden"} ${assistantOpen ? "assistant-open" : ""}`}
+    >
       <aside className="sidebar" aria-label="記事一覧">
         <a
           className="studio-brand"
@@ -439,7 +674,11 @@ function App() {
             noguchy.me<small>NEWS STUDIO</small>
           </span>
         </a>
-        <button className="new-button" disabled={busy} onClick={createNew}>
+        <button
+          className="new-button"
+          disabled={busy || autoSaving}
+          onClick={createNew}
+        >
           <Plus size={17} />
           新しい記事<span>＋</span>
         </button>
@@ -503,14 +742,14 @@ function App() {
                 作成中
               </span>
               <strong>{draft.title || "無題の記事"}</strong>
-              <small>このブラウザに自動退避</small>
+              <small>タイトルを入力すると自動保存</small>
             </button>
           )}
           {visible.map(article => (
             <button
               className={`article-item ${session === article.id ? "active" : ""}`}
               key={article.id}
-              disabled={busy}
+              disabled={busy || autoSaving}
               onClick={() => openArticle(article.id)}
             >
               <span
@@ -539,7 +778,7 @@ function App() {
         <div className="sidebar-bottom">
           <span className="local-dot" />
           <div>
-            このMacで編集中<small>noguchy.me のニュース</small>
+            リポジトリと自動同期<small>noguchy.me のニュース</small>
           </div>
           <a
             href="https://news.noguchy.me/"
@@ -573,7 +812,7 @@ function App() {
           </div>
           <div className="header-actions">
             <span className="save-indicator" role="status">
-              {saving || uploading ? (
+              {saving || autoSaving || uploading ? (
                 <>
                   <Loader2 size={14} className="spin" />
                   {uploading ? "画像を追加中" : "保存中"}
@@ -581,12 +820,16 @@ function App() {
               ) : dirty ? (
                 <>
                   <CloudCheck size={14} />
-                  {localSaved ? "ブラウザに退避済み" : "編集中"}
+                  {syncIssue
+                    ? "同期を確認"
+                    : localSaved
+                      ? "自動保存待ち"
+                      : "編集中"}
                 </>
               ) : (
                 <>
                   <Check size={14} />
-                  {draft?.revision ? "保存済み" : "ローカル専用"}
+                  {draft?.revision ? "同期済み" : "ローカル専用"}
                 </>
               )}
             </span>
@@ -601,6 +844,20 @@ function App() {
               </span>
             )}
             <button
+              className="codex-header-button"
+              disabled={!draft || busy}
+              aria-label="Codexアシスタント"
+              title="Codexアシスタント"
+              aria-pressed={assistantOpen}
+              onClick={() => {
+                setAssistantOpen(!assistantOpen);
+                setSettings(false);
+              }}
+            >
+              <Sparkles size={16} />
+              <span>Codexに相談</span>
+            </button>
+            <button
               className="icon-button"
               disabled={!draft || busy}
               aria-label="記事設定"
@@ -612,15 +869,17 @@ function App() {
             </button>
             <button
               className="secondary-header-button"
-              disabled={!draft || busy}
-              onClick={save}
+              disabled={!draft || busy || autoSaving || !!syncIssue}
+              onClick={() => {
+                void save();
+              }}
             >
               <Check size={15} />
               保存する<kbd>⌘S</kbd>
             </button>
             <button
               className="primary-button"
-              disabled={!draft || busy}
+              disabled={!draft || busy || autoSaving || !!syncIssue}
               onClick={publish}
             >
               {publishing ? (
@@ -632,6 +891,17 @@ function App() {
             </button>
           </div>
         </header>
+        {syncIssue && (
+          <div className="banner error" role="alert">
+            <span>{syncIssue}</span>
+            <button className="text-button" onClick={download}>
+              Markdownをダウンロード
+            </button>
+            <button className="text-button" onClick={() => setSettings(true)}>
+              記事設定を開く
+            </button>
+          </div>
+        )}
         {error && (
           <div className="banner error" role="alert">
             <span>{error}</span>
@@ -879,9 +1149,205 @@ function App() {
                     <FileText size={14} />
                     {draft.id}
                   </span>
-                  <span>入力内容を自動退避 · 保存は ⌘S</span>
+                  <span>リポジトリと自動同期 · 今すぐ保存は ⌘S</span>
                 </footer>
               </article>
+              {assistantOpen && (
+                <aside className="assistant-panel">
+                  <div className="assistant-panel-header">
+                    <div className="assistant-title">
+                      <span className="assistant-avatar">
+                        <Sparkles size={15} />
+                      </span>
+                      <div>
+                        <h2>Codex</h2>
+                        <div
+                          className={`codex-status ${codexStatus?.available ? "available" : ""}`}
+                        >
+                          <span />
+                          {codexStatus === null
+                            ? "接続を確認中"
+                            : codexStatus.available
+                              ? codexStatus.connected
+                                ? "Codexに接続中"
+                                : "Codexを利用できます"
+                              : "Codex CLIが見つかりません"}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      className="icon-button"
+                      aria-label="Codexアシスタントを閉じる"
+                      onClick={() => setAssistantOpen(false)}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="assistant-quick-access">
+                    <div className="assistant-section-label">
+                      クイックアクセス <span>記事作成</span>
+                    </div>
+                    <div className="assistant-presets">
+                      <button
+                        disabled={assistantBusy || !codexStatus?.available}
+                        onClick={() =>
+                          void askCodex(
+                            "body",
+                            "記事のテーマと現在の内容を活かして、公開できる本文の下書きをMarkdownで作成してください。出力は本文だけにし、前置きやコードフェンスは付けないでください。"
+                          )
+                        }
+                      >
+                        <FileText size={14} />
+                        下書きを作成
+                      </button>
+                      <button
+                        disabled={assistantBusy || !codexStatus?.available}
+                        onClick={() =>
+                          void askCodex(
+                            "title",
+                            "記事の内容に合うタイトルを1つだけ作ってください。出力はタイトル本文のみ、説明や記号は不要です。"
+                          )
+                        }
+                      >
+                        <Sparkles size={14} />
+                        タイトル案
+                      </button>
+                      <button
+                        disabled={assistantBusy || !codexStatus?.available}
+                        onClick={() =>
+                          void askCodex(
+                            "summary",
+                            "記事の概要を日本語で1文だけ作ってください。出力は概要文のみ、説明や箇条書きは不要です。"
+                          )
+                        }
+                      >
+                        <BookOpen size={14} />
+                        概要を書く
+                      </button>
+                      <button
+                        disabled={assistantBusy || !codexStatus?.available}
+                        onClick={() =>
+                          void askCodex(
+                            "outline",
+                            "この記事をより読みやすくする構成案を、見出しと各章の要点で提案してください。"
+                          )
+                        }
+                      >
+                        <LayoutList size={14} />
+                        構成を提案
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    className="assistant-messages"
+                    aria-live="polite"
+                    ref={assistantMessagesRef}
+                  >
+                    {!assistantMessages.length && !assistantBusy && (
+                      <div className="assistant-empty">
+                        <Sparkles size={21} />
+                        <strong>記事づくりを始めましょう</strong>
+                        <span>
+                          クイックアクセスを選ぶか、下の入力欄から相談できます。
+                        </span>
+                      </div>
+                    )}
+                    {assistantMessages.map((message, index) => {
+                      const latestAnswer =
+                        message.role === "assistant" &&
+                        index === assistantMessages.length - 1;
+                      return (
+                        <div
+                          className={`assistant-message ${message.role}`}
+                          key={`${message.role}-${index}`}
+                        >
+                          <span className="assistant-message-role">
+                            {message.role === "user" ? "あなた" : "Codex"}
+                          </span>
+                          <pre>{message.text}</pre>
+                          {latestAnswer && (
+                            <div className="assistant-message-actions">
+                              <button
+                                onClick={() => void copyAssistantAnswer()}
+                              >
+                                コピー
+                              </button>
+                              {message.kind !== "outline" && (
+                                <button onClick={applyAssistantAnswer}>
+                                  {message.kind === "body"
+                                    ? "本文に反映"
+                                    : message.kind === "summary"
+                                      ? "概要に反映"
+                                      : "タイトルに反映"}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {assistantBusy && (
+                      <div className="assistant-message assistant pending">
+                        <span className="assistant-message-role">Codex</span>
+                        <div className="assistant-typing">
+                          <i />
+                          <i />
+                          <i />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <form
+                    className="assistant-composer"
+                    onSubmit={event => {
+                      event.preventDefault();
+                      submitAssistant();
+                    }}
+                  >
+                    <textarea
+                      aria-label="Codexへのメッセージ"
+                      rows={3}
+                      value={assistantPrompt}
+                      disabled={assistantBusy || !codexStatus?.available}
+                      onChange={event => setAssistantPrompt(event.target.value)}
+                      onKeyDown={event => {
+                        if (
+                          event.key === "Enter" &&
+                          !event.shiftKey &&
+                          !event.nativeEvent.isComposing
+                        ) {
+                          event.preventDefault();
+                          submitAssistant();
+                        }
+                      }}
+                      placeholder={
+                        codexStatus?.available
+                          ? "記事についてCodexに相談…"
+                          : "Codex CLIを起動すると利用できます"
+                      }
+                    />
+                    <button
+                      className="assistant-send"
+                      type="submit"
+                      aria-label="Codexに送信"
+                      disabled={
+                        assistantBusy ||
+                        !codexStatus?.available ||
+                        !assistantPrompt.trim()
+                      }
+                    >
+                      {assistantBusy ? (
+                        <Loader2 size={15} className="spin" />
+                      ) : (
+                        <ArrowUpRight size={15} />
+                      )}
+                    </button>
+                  </form>
+                  <p className="assistant-note">
+                    読み取り専用接続 · 提案を確認してから保存・公開してください
+                  </p>
+                </aside>
+              )}
               {settings && (
                 <aside className="settings-panel">
                   <div className="settings-heading">
