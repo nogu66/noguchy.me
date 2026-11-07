@@ -2,15 +2,19 @@
 title: "Claude Codeの拡張機能「Claude Mods」が登場"
 pubDatetime: 2026-09-15
 published: true
-tags: [AI, Claude Code, Anthropic]
+tags:
+  - AI
+  - Claude Code
+  - Anthropic
 contents:
-  - "Function Hooksを基盤とする新たなプラグイン機構"
-  - "UIの描画やイベント処理にも対応"
-  - "環境変数による試験的な有効化"
-  - "コミュニティで公開されたゲーム実装"
+  - Function Hooksを基盤とする新たなプラグイン機構
+  - UIの描画やイベント処理にも対応
+  - 環境変数による試験的な有効化
+  - コミュニティで公開されたゲーム実装
 description: "Anthropicが、Claude Codeをより深く拡張できるプラグイン機構「Claude Mods」を発表しました。Function Hooksを通じてUIや実行フローを変更でき、すでに試験的な利用が可能です。"
 thumbnail: "/images/news/claude-mods.png"
 timezone: "Asia/Tokyo"
+modDatetime: 2026-09-16T00:52:49.787Z
 ---
 
 AnthropicのBoris Cherny氏が、Claude Codeの新しい拡張機能「Claude Mods」の提供開始を告知しました。
@@ -32,7 +36,7 @@ Function Hooksでは、従来のイベントフックよりも深いレベルで
 ```bash
 {
     "env": {
-        CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1
+        “CLAUDE_CODE_ENABLE_FUNCTION_HOOKS”:1
     }
 }
 ```
