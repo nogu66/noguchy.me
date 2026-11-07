@@ -1,0 +1,55 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Main from "@/layouts/Main.astro";
+import { SITE } from "@/config";
+import { ADVENT_CALENDARS } from "@/data/adventCalendars";
+import {
+  ADVENT_DAYS,
+  buildAdventDays,
+  countPublished,
+} from "@/utils/adventCalendar";
+
+const calendars = [...ADVENT_CALENDARS]
+  .sort((a, b) => b.year - a.year)
+  .map(calendar => ({
+    ...calendar,
+    published: countPublished(buildAdventDays(calendar)),
+  }));
+
+const description = "毎年12月1日から25日まで、1日1本記事を書く企画です。";
+---
+
+<Layout
+  title={`Advent Calendar | ${SITE.title}`}
+  description={description}
+  ogImage={`/advent-calendar/${calendars[0].year}/og.png`}
+>
+  <Header />
+  <Main
+    pageTitle="Advent Calendar"
+    pageLabel="アドベントカレンダー"
+    pageDesc={description}
+  >
+    <ul class="grid gap-4 sm:grid-cols-2">
+      {
+        calendars.map(calendar => (
+          <li>
+            <a href={`/advent-calendar/${calendar.year}/`} class="cw-card p-6">
+              <span class="text-[33.28px] leading-none font-black">
+                {calendar.year}
+                <span class="text-cobalt">.</span>
+              </span>
+              <span class="mt-3 text-lg font-black">{calendar.title}</span>
+              <span class="cw-ui mt-1 text-ink-muted">
+                {calendar.published} / {ADVENT_DAYS} 本公開
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </Main>
+  <Footer />
+</Layout>

@@ -1,0 +1,259 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Main from "@/layouts/Main.astro";
+import { SITE } from "@/config";
+import { ADVENT_CALENDARS } from "@/data/adventCalendars";
+import {
+  ADVENT_DAYS,
+  PLATFORM_LABELS,
+  buildAdventDays,
+  countPublished,
+  type AdventCalendar,
+} from "@/utils/adventCalendar";
+
+export function getStaticPaths() {
+  return ADVENT_CALENDARS.map(calendar => ({
+    params: { year: String(calendar.year) },
+    props: { calendar },
+  }));
+}
+
+const { calendar } = Astro.props as { calendar: AdventCalendar };
+const days = buildAdventDays(calendar);
+const published = countPublished(days);
+const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
+const isExternal = (url: string) => !url.startsWith("/");
+---
+
+<Layout
+  title={`${calendar.title} | ${SITE.title}`}
+  description={calendar.description}
+  ogImage={`/advent-calendar/${calendar.year}/og.png`}
+>
+  <Header />
+  <Main
+    pageTitle={`Advent Calendar ${calendar.year}`}
+    pageLabel="アドベントカレンダー"
+  >
+    <div class="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <p class="cw-ui text-ink-muted">
+        {calendar.year}.12.01 — {calendar.year}.12.25
+      </p>
+      <p class="cw-ui">
+        <span class="text-cobalt">{published}</span>
+        <span class="text-ink-muted"> / {ADVENT_DAYS} 本公開</span>
+      </p>
+      <div
+        class="h-2 min-w-32 flex-1 border-2 border-ink"
+        role="progressbar"
+        aria-label="公開済みの記事"
+        aria-valuemin="0"
+        aria-valuemax={ADVENT_DAYS}
+        aria-valuenow={published}
+      >
+        <div
+          class="h-full bg-cobalt"
+          style={`width: ${(published / ADVENT_DAYS) * 100}%`}
+        >
+        </div>
+      </div>
+    </div>
+
+    <ol class="advent-grid" data-year={calendar.year}>
+      {
+        weekdays.map((label, i) => (
+          <li
+            aria-hidden="true"
+            class:list={[
+              "advent-weekday cw-label",
+              i === 0 ? "text-sale" : "text-ink-muted",
+            ]}
+          >
+            {label}
+          </li>
+        ))
+      }
+      {
+        days.map(({ day, weekday, entry }) => {
+          const dayLabel = (
+            <span class="flex items-baseline gap-2">
+              <span class="advent-day-num">{day}</span>
+              <span
+                class:list={[
+                  "cw-label",
+                  weekday === 0 ? "text-sale" : "text-ink-subtle",
+                ]}
+              >
+                <span class="advent-weekday-inline">{weekdays[weekday]}</span>
+              </span>
+            </span>
+          );
+          return (
+            <li
+              class="advent-cell"
+              style={day === 1 ? `--start: ${weekday + 1}` : undefined}
+              data-day={day}
+            >
+              {entry?.url ? (
+                <a
+                  href={entry.url}
+                  class="advent-card is-published"
+                  {...(isExternal(entry.url) && {
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                  })}
+                >
+                  <span class="flex items-center justify-between gap-2">
+                    {dayLabel}
+                    <span class="advent-badge cw-label">
+                      {PLATFORM_LABELS[entry.platform!]}
+                    </span>
+                  </span>
+                  <span class="advent-title">{entry.title}</span>
+                  {entry.description && (
+                    <span class="cw-ui line-clamp-2 text-ink-muted">
+                      {entry.description}
+                    </span>
+                  )}
+                </a>
+              ) : (
+                <div class="advent-card">
+                  <span class="flex items-center justify-between gap-2">
+                    {dayLabel}
+                    {entry && (
+                      <span class="cw-label text-ink-subtle">予定</span>
+                    )}
+                  </span>
+                  {entry ? (
+                    <span class="advent-title text-ink-muted">
+                      {entry.title}
+                    </span>
+                  ) : (
+                    <span class="cw-ui text-ink-subtle">—</span>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })
+      }
+    </ol>
+
+    <p class="cw-ui mt-8 text-ink-muted">
+      記事は
+      <a href="/posts/" class="text-cobalt underline">noguchy.me</a>・
+      <a
+        href="https://zenn.dev/nogu66"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-cobalt underline">Zenn</a
+      >・
+      <a
+        href="https://x.com/_nogu66"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-cobalt underline">X</a
+      >
+      のいずれかに公開しています。
+    </p>
+  </Main>
+  <Footer />
+</Layout>
+
+<style>
+  .advent-grid {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .advent-weekday {
+    display: none;
+  }
+  .advent-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    height: 100%;
+    padding: var(--space-4);
+    border: var(--border-hair) solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .advent-card.is-published {
+    border: var(--border-strong) solid var(--ink);
+  }
+  a.advent-card:hover {
+    background: var(--surface-soft);
+  }
+  .advent-day-num {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .is-published .advent-day-num {
+    color: var(--cobalt);
+  }
+  .advent-title {
+    font-weight: 900;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .advent-badge {
+    flex-shrink: 0;
+    padding: 2px 6px;
+    background: var(--cobalt);
+    color: var(--on-cobalt);
+  }
+  .advent-cell[data-today] .advent-card {
+    outline: var(--border-strong) solid var(--sale);
+    outline-offset: 2px;
+  }
+
+  /* Weekday calendar from tablet width up; a plain list on phones */
+  @media (min-width: 768px) {
+    .advent-grid {
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+    .advent-weekday {
+      display: block;
+      text-align: center;
+    }
+    .advent-cell[style] {
+      grid-column-start: var(--start);
+    }
+    .advent-card {
+      min-height: 9rem;
+      padding: var(--space-2) 10px;
+    }
+    .advent-weekday-inline {
+      display: none;
+    }
+    .advent-title {
+      font-size: 13px;
+      -webkit-line-clamp: 4;
+    }
+  }
+</style>
+
+<script>
+  // Mark today's cell (JST) in the browser so a static build stays correct
+  function markToday() {
+    const grid = document.querySelector<HTMLElement>(".advent-grid");
+    if (!grid) return;
+    const now = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
+    );
+    if (now.getFullYear() !== Number(grid.dataset.year)) return;
+    if (now.getMonth() !== 11) return;
+    grid
+      .querySelector(`[data-day="${now.getDate()}"]`)
+      ?.setAttribute("data-today", "");
+  }
+  document.addEventListener("astro:page-load", markToday);
+</script>
