@@ -17,7 +17,10 @@ body:has(.news-shell) {
 }
 .news-shell h1,
 .news-shell h2,
-.news-shell h3 {
+.news-shell h3,
+.news-shell h4,
+.news-shell h5,
+.news-shell h6 {
   font-family: var(--news-heading);
 }
 .news-container {

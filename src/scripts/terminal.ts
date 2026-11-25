@@ -164,6 +164,10 @@ function initTerminal() {
     return line;
   };
 
+  // The echoed prompt is real text, so copying the scrollback includes it
+  const promptText = `${root.querySelector(".term-user")?.textContent ?? ""} > `;
+  const echo = (text: string) => print(`${promptText}${text}`, "t-cmd");
+
   const option = (
     label: string,
     desc: string,
@@ -395,7 +399,7 @@ function initTerminal() {
     const line = raw.trim();
     if (!line) return;
     closeMenu();
-    print(line, "t-cmd");
+    echo(line);
     const { cmd, args } = parseInput(line);
     const handler = handlers[cmd];
     if (handler) handler(args);
@@ -460,7 +464,7 @@ function initTerminal() {
       } else {
         // an empty line still gets its own prompt line, as in a shell
         closeMenu();
-        print("", "t-cmd");
+        echo("");
       }
     },
     { signal }
@@ -491,7 +495,7 @@ function initTerminal() {
           event.preventDefault();
           closeSugs();
           closeMenu();
-          print(`${input.value}^C`, "t-cmd");
+          echo(`${input.value}^C`);
           input.value = "";
           historyIndex = -1;
           draft = "";
