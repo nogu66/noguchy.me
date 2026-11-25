@@ -27,11 +27,7 @@ const description = "毎年12月1日から25日まで、1日1本記事を書く�
   ogImage={`/advent-calendar/${calendars[0].year}/og.png`}
 >
   <Header />
-  <Main
-    pageTitle="Advent Calendar"
-    pageLabel="アドベントカレンダー"
-    pageDesc={description}
-  >
+  <Main pageTitle="Advent Calendar" pageDesc={description}>
     <ul class="grid gap-4 sm:grid-cols-2">
       {
         calendars.map(calendar => (

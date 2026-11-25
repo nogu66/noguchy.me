@@ -2,7 +2,7 @@
 title: "完全版 Claude Mods 入門 | Claude Codeを自由にカスタマイズする"
 pubDatetime: 2026-09-19T12:00:00+09:00
 modDatetime: 2026-10-02T11:00:00+09:00
-featured: true
+featured: false
 published: true
 tags: ["claude", "claudecode", "ai", "plugin", "hooks", "mod"]
 description: "TypeScriptの関数でClaude Codeの機能や見た目を自由かつ安全にカスタマイズできるClaude Mods（Function Hooks）について、仕組み・5層のチェーン構造・実例から、状態管理・テスト・配布まで含めたModの作り方、全イベントとAPIリファレンスまで解説します。"

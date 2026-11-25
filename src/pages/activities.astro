@@ -29,13 +29,13 @@ const formatDate = (date: Date) => {
 
 <Layout>
   <Header activeNav="activities" />
-  <Main pageTitle="Activities" pageLabel="活動" withSidebar={false}>
+  <Main pageTitle="Activities" withSidebar={false}>
     <!-- サイドバー（一時的に非表示）
     <ArchiveSidebar slot="sidebar" items={archiveItems} />
     -->
     <!-- 登壇情報 -->
     <section class="max-w-none! px-0!">
-      <SectionHeading label="登壇" class="mb-10">Talks</SectionHeading>
+      <SectionHeading class="mb-10">Talks</SectionHeading>
       {
         sortedTalks.length === 0 ? (
           <p class="text-ink-muted">登壇情報はまだありません</p>
@@ -44,7 +44,7 @@ const formatDate = (date: Date) => {
             {sortedTalks.map(talk => (
               <a href={`/talks/${talk.id}`} class="cw-card">
                 {talk.data.ogpImage && (
-                  <div class="aspect-video w-full overflow-hidden border-b-2 border-ink">
+                  <div class="aspect-video w-full overflow-hidden border-b border-line">
                     <img
                       src={talk.data.ogpImage}
                       alt={talk.data.title}
@@ -57,10 +57,12 @@ const formatDate = (date: Date) => {
                   <h3 class="line-clamp-2 text-lg leading-snug">
                     {talk.data.title}
                   </h3>
-                  <p class="cw-ui mt-2 text-ink-muted">
-                    {talk.data.event}
-                    {talk.data.venue && ` @ ${talk.data.venue}`}
-                  </p>
+                  {(talk.data.event || talk.data.venue) && (
+                    <p class="cw-ui mt-2 text-ink-muted">
+                      {talk.data.event}
+                      {talk.data.venue && ` @ ${talk.data.venue}`}
+                    </p>
+                  )}
                   <p class="cw-ui mt-1 text-ink-muted">
                     {formatDate(talk.data.date)}
                   </p>
@@ -153,7 +155,7 @@ const formatDate = (date: Date) => {
 
     <!-- 入賞情報 -->
     <section class="mt-16 max-w-none! px-0!">
-      <SectionHeading label="受賞" class="mb-10">Awards</SectionHeading>
+      <SectionHeading class="mb-10">Awards</SectionHeading>
       {
         sortedAwards.length === 0 ? (
           <p class="text-ink-muted">入賞情報はまだありません</p>

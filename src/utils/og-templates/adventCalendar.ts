@@ -8,14 +8,14 @@ import {
   type AdventCalendar,
 } from "../adventCalendar";
 
-// Cobalt Wave (light) colors
+// Light theme colors, kept in step with the tokens in src/styles/global.css
 const SURFACE = "#ffffff";
-const SURFACE_SOFT = "#e8eef9";
-const INK = "#000000";
-const INK_MUTED = "#6b6b6b";
-const LINE = "#cccccc";
-const COBALT = "#003894";
-const SALE = "#cc0000";
+const SURFACE_SOFT = "#e6f2fd";
+const INK = "#1e2433";
+const INK_MUTED = "#5d6678";
+const LINE = "#e1e6ee";
+const COBALT = "#1a63c4";
+const SALE = "#d63a3a";
 
 const CELL = 60;
 const GAP = 8;

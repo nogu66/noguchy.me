@@ -7,7 +7,6 @@ import { getListedPostPath } from "@/utils/getListedPosts";
 import { slugifyStr } from "@/utils/slugify";
 import type { TermPost } from "@/utils/terminalShell";
 import { SITE } from "@/config";
-import { NEWS } from "@/news.config";
 import { SOCIALS } from "@/constants";
 
 const PAGE_SIZE = 5;
@@ -71,7 +70,7 @@ const termData = {
   posts,
   tags,
   activities,
-  links: { news: NEWS.website, github: social("GitHub"), x: social("X") },
+  links: { github: social("GitHub"), x: social("X") },
 };
 
 // 5-row block font for the banner; "#" marks a filled cell
@@ -102,7 +101,6 @@ const menu = [
   { key: "T", label: "TAGS", href: "/tags" },
   { key: "A", label: "ABOUT", href: "/about" },
   { key: "C", label: "ACTIVITIES", href: "/activities" },
-  { key: "N", label: "NEWS", href: NEWS.website },
 ];
 
 const description =
@@ -196,7 +194,7 @@ const description =
           >
             <span></span>
             <span class="lm">LOAD MORE</span>
-            <span class="hint">/posts for more</span>
+            <span class="hint">/posts for all</span>
           </button>
 
           <div class="term-scroll" id="term-out" aria-live="polite"></div>
@@ -452,20 +450,14 @@ const description =
     color: var(--muted);
     white-space: pre-wrap;
   }
+  /* Echoed commands look like the prompt line: no chip, no tint */
   .term-scroll .t-cmd {
-    width: fit-content;
     margin: 6px 0 2px;
-    padding: 3px 10px;
-    font-weight: 500;
     color: var(--foreground-dark);
-    background: var(--light);
+    white-space: pre-wrap;
   }
   .term-scroll .t-cmd:first-child {
     margin-top: 0;
-  }
-  .term-scroll .t-cmd::before {
-    color: var(--muted);
-    content: "> ";
   }
   .term-scroll .t-opt {
     display: grid;

@@ -8,7 +8,6 @@ import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
 import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
 import SearchModal from "./SearchModal.astro";
 import { SITE } from "@/config";
-import { NEWS } from "@/news.config";
 
 const { pathname } = Astro.url;
 
@@ -24,7 +23,6 @@ const isActive = (path: string) => {
 };
 
 const navItems = [
-  { href: NEWS.website, label: "News", external: true },
   { href: "/posts", label: "Posts" },
   { href: "/tags", label: "Tags" },
   { href: "/activities", label: "Activities" },
@@ -47,13 +45,20 @@ const navItems = [
   >
     <a
       href="/"
-      class="bg-cobalt px-3 py-2 text-sm leading-none font-black tracking-wide text-on-cobalt uppercase"
+      class="site-logo flex items-center gap-2 text-xl leading-none font-black hover:text-cobalt"
     >
+      <img
+        src="/favicon.png"
+        alt=""
+        width="32"
+        height="32"
+        class="size-8 rounded-full"
+      />
       {SITE.title}
     </a>
     <button
       id="menu-btn"
-      class="flex size-9 items-center justify-center md:hidden"
+      class="flex size-10 items-center justify-center rounded-full bg-surface-soft text-cobalt md:hidden"
       aria-label="Open Menu"
       aria-expanded="false"
       aria-controls="nav-menu"
@@ -63,23 +68,21 @@ const navItems = [
     </button>
     <nav
       id="nav-menu"
-      class="hidden w-full flex-col gap-4 pt-4 pb-2 md:flex md:w-auto md:flex-row md:items-center md:gap-6 md:p-0"
+      class="hidden w-full flex-col gap-3 pt-3 pb-2 md:flex md:w-auto md:flex-row md:items-center md:gap-6 md:p-0"
     >
       <ul
-        class="cw-ui flex flex-col tracking-wider uppercase md:flex-row md:items-center md:gap-5"
+        class="flex flex-col gap-1 text-[15px] leading-normal font-bold md:flex-row md:items-center md:gap-5 md:text-xs md:font-semibold md:tracking-wider md:uppercase"
       >
         {
           navItems.map(item => (
-            <li class="border-b border-line md:border-0">
+            <li>
               <a
                 href={item.href}
                 class:list={[
-                  "block py-3 hover:text-cobalt md:py-1",
-                  { "active-nav": !item.external && isActive(item.href) },
+                  "block rounded-xl px-4 py-3 hover:bg-surface-soft hover:text-cobalt md:rounded-none md:p-0 md:py-1 md:hover:bg-transparent",
+                  { "active-nav": isActive(item.href) },
                 ]}
-                aria-current={
-                  !item.external && isActive(item.href) ? "page" : undefined
-                }
+                aria-current={isActive(item.href) ? "page" : undefined}
               >
                 {item.label}
               </a>
@@ -87,12 +90,14 @@ const navItems = [
           ))
         }
       </ul>
-      <ul class="flex items-center gap-1 md:border-l md:border-line md:pl-4">
+      <ul
+        class="flex items-center gap-2 border-t border-line px-2 pt-3 md:gap-1 md:border-t-0 md:border-l md:px-0 md:pt-0 md:pl-4"
+      >
         <li>
           <a
             href="/rss.xml"
             target="_blank"
-            class="flex size-9 items-center justify-center text-ink-muted hover:text-cobalt"
+            class="flex size-10 items-center justify-center rounded-full text-ink-muted hover:bg-surface-soft hover:text-cobalt md:size-9"
             aria-label="rss feed"
             title="RSS Feed"
           >
@@ -103,7 +108,7 @@ const navItems = [
           <a
             href="/terminal"
             class:list={[
-              "flex size-9 items-center justify-center hover:text-cobalt",
+              "flex size-10 items-center justify-center rounded-full hover:bg-surface-soft hover:text-cobalt md:size-9",
               isActive("/terminal") ? "text-cobalt" : "text-ink-muted",
             ]}
             aria-label="terminal"
@@ -115,7 +120,7 @@ const navItems = [
         <li>
           <button
             data-search-trigger
-            class="flex size-9 items-center justify-center text-ink-muted hover:text-cobalt"
+            class="flex size-10 items-center justify-center rounded-full text-ink-muted hover:bg-surface-soft hover:text-cobalt md:size-9"
             aria-label="Search"
             title="Search (Ctrl+K / ⌘K)"
           >
@@ -127,7 +132,7 @@ const navItems = [
             <li>
               <button
                 id="theme-btn"
-                class="relative block size-9 text-ink-muted hover:text-cobalt hover:[&>svg]:stroke-current"
+                class="relative block size-10 rounded-full text-ink-muted hover:bg-surface-soft hover:text-cobalt md:size-9 hover:[&>svg]:stroke-current"
                 title="Toggles light & dark"
                 aria-label="auto"
                 aria-live="polite"

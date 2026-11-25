@@ -34,10 +34,7 @@ const isExternal = (url: string) => !url.startsWith("/");
   ogImage={`/advent-calendar/${calendar.year}/og.png`}
 >
   <Header />
-  <Main
-    pageTitle={`Advent Calendar ${calendar.year}`}
-    pageLabel="アドベントカレンダー"
-  >
+  <Main pageTitle={`Advent Calendar ${calendar.year}`}>
     <div class="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2">
       <p class="cw-ui text-ink-muted">
         {calendar.year}.12.01 — {calendar.year}.12.25
@@ -47,7 +44,7 @@ const isExternal = (url: string) => !url.startsWith("/");
         <span class="text-ink-muted"> / {ADVENT_DAYS} 本公開</span>
       </p>
       <div
-        class="h-2 min-w-32 flex-1 border-2 border-ink"
+        class="h-3 min-w-32 flex-1 overflow-hidden rounded-full border-2 border-ink"
         role="progressbar"
         aria-label="公開済みの記事"
         aria-valuemin="0"
@@ -55,7 +52,7 @@ const isExternal = (url: string) => !url.startsWith("/");
         aria-valuenow={published}
       >
         <div
-          class="h-full bg-cobalt"
+          class="h-full rounded-full bg-cobalt"
           style={`width: ${(published / ADVENT_DAYS) * 100}%`}
         >
         </div>
@@ -181,12 +178,36 @@ const isExternal = (url: string) => !url.startsWith("/");
     background: var(--surface);
     color: var(--ink);
     text-decoration: none;
+    border-radius: 12px;
+  }
+  .advent-card:not(.is-published) {
+    border-style: dashed;
   }
   .advent-card.is-published {
     border: var(--border-strong) solid var(--ink);
+    box-shadow: 3px 3px 0 var(--cobalt);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
   }
   a.advent-card:hover {
     background: var(--surface-soft);
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--cobalt);
+  }
+  a.advent-card:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--cobalt);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .advent-card.is-published {
+      transition: none;
+    }
+    a.advent-card:hover,
+    a.advent-card:active {
+      transform: none;
+    }
   }
   .advent-day-num {
     font-size: 24px;
@@ -206,13 +227,14 @@ const isExternal = (url: string) => !url.startsWith("/");
   }
   .advent-badge {
     flex-shrink: 0;
-    padding: 2px 6px;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
     background: var(--cobalt);
     color: var(--on-cobalt);
   }
   .advent-cell[data-today] .advent-card {
     outline: var(--border-strong) solid var(--sale);
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 
   /* Weekday calendar from tablet width up; a plain list on phones */

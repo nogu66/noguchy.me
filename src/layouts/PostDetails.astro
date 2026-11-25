@@ -118,7 +118,7 @@ const nextPost =
     </div>
     <article
       id="article"
-      class="app-prose mx-auto mt-10 text-[15px] leading-[1.8] prose-pre:bg-surface-soft dark:prose-pre:bg-(--shiki-dark-bg)"
+      class="app-prose mx-auto mt-10 text-[15px] leading-[1.8] prose-pre:bg-(--shiki-dark-bg)"
     >
       <Content />
     </article>
@@ -143,7 +143,7 @@ const nextPost =
         prevPost && (
           <a
             href={getPath(prevPost.id, prevPost.filePath)}
-            class="flex w-full items-center gap-2 border-2 border-ink p-4 hover:bg-surface-soft"
+            class="flex w-full items-center gap-2 rounded-2xl border border-line p-4 hover:border-cobalt hover:bg-surface-soft"
           >
             <IconChevronLeft class="inline-block flex-none rtl:rotate-180" />
             <div>
@@ -159,7 +159,7 @@ const nextPost =
         nextPost && (
           <a
             href={getPath(nextPost.id, nextPost.filePath)}
-            class="flex w-full items-center justify-end gap-2 border-2 border-ink p-4 text-end hover:bg-surface-soft sm:col-start-2"
+            class="flex w-full items-center justify-end gap-2 rounded-2xl border border-line p-4 text-end hover:border-cobalt hover:bg-surface-soft sm:col-start-2"
           >
             <div>
               <span class="cw-label text-ink-muted">Next Post</span>

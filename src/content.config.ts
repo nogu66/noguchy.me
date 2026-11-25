@@ -51,7 +51,7 @@ const talks = defineCollection({
   schema: () =>
     z.object({
       title: z.string(), // 登壇タイトル
-      event: z.string(), // イベント名
+      event: z.string().optional(), // イベント名
       date: z.date(), // 登壇日
       venue: z.string().optional(), // 会場
       slideUrl: z.string().url().optional(), // スライドURL

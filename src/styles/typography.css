@@ -89,7 +89,7 @@
     }
 
     blockquote {
-      @apply border-0 bg-light px-6 py-4 font-semibold wrap-break-word not-italic;
+      @apply rounded-xl border-0 bg-light px-6 py-4 font-semibold wrap-break-word not-italic;
     }
 
     blockquote p {
@@ -115,7 +115,19 @@
     }
 
     pre {
-      @apply rounded-none focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
+      @apply rounded-xl focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
+    }
+  }
+
+  /* Blog-style accents: a marker under bold text, and code blocks that stay
+     dark in both themes. The news site keeps its own article typography. */
+  .app-prose:not(.news-article-body) {
+    :where(p, li) > strong {
+      background: linear-gradient(transparent 62%, var(--marker) 62%);
+    }
+
+    .astro-code {
+      @apply bg-(--shiki-dark-bg) text-(--shiki-dark) [&_span]:text-(--shiki-dark);
     }
   }
 

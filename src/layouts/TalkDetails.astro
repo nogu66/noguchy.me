@@ -39,7 +39,7 @@ const formatDate = (date: Date) => {
 
 const layoutProps = {
   title: `${title} | ${SITE.title}`,
-  description: `${event}での登壇: ${title}`,
+  description: event ? `${event}での登壇: ${title}` : `登壇: ${title}`,
   ogImage: ogpImage,
   scrollSmooth: true,
 };
@@ -59,7 +59,7 @@ const layoutProps = {
       <!-- OGP画像 -->
       {
         ogpImage && (
-          <div class="not-prose mb-8 border-2 border-ink">
+          <div class="not-prose mb-8 overflow-hidden rounded-2xl border border-line">
             <img
               src={ogpImage}
               alt={title}
@@ -77,7 +77,7 @@ const layoutProps = {
 
       <!-- イベント情報 -->
       <div class="not-prose mb-6">
-        <p class="cw-lead">{event}</p>
+        {event && <p class="cw-lead">{event}</p>}
         {venue && <p class="text-ink-muted">@ {venue}</p>}
         <p class="cw-ui mt-1 text-ink-muted">{formatDate(date)}</p>
       </div>

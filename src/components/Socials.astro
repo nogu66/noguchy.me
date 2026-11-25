@@ -13,7 +13,7 @@ const { centered = false } = Astro.props;
     SOCIALS.map(social => (
       <a
         href={social.href}
-        class="flex size-9 items-center justify-center rounded-full border-2 border-cobalt text-cobalt hover:bg-cobalt hover:text-on-cobalt"
+        class="flex size-9 items-center justify-center rounded-full border border-line bg-surface text-cobalt hover:border-cobalt hover:bg-cobalt hover:text-on-cobalt"
         title={social.linkTitle}
       >
         <social.icon class="size-4 fill-transparent stroke-current stroke-2" />
