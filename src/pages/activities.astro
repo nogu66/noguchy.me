@@ -57,10 +57,12 @@ const formatDate = (date: Date) => {
                   <h3 class="line-clamp-2 text-lg leading-snug">
                     {talk.data.title}
                   </h3>
-                  <p class="cw-ui mt-2 text-ink-muted">
-                    {talk.data.event}
-                    {talk.data.venue && ` @ ${talk.data.venue}`}
-                  </p>
+                  {(talk.data.event || talk.data.venue) && (
+                    <p class="cw-ui mt-2 text-ink-muted">
+                      {talk.data.event}
+                      {talk.data.venue && ` @ ${talk.data.venue}`}
+                    </p>
+                  )}
                   <p class="cw-ui mt-1 text-ink-muted">
                     {formatDate(talk.data.date)}
                   </p>

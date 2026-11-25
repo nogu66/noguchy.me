@@ -148,9 +148,11 @@ const websiteStructuredData = {
                   <h3 class="mt-2 line-clamp-3 text-base leading-snug">
                     {talk.data.title}
                   </h3>
-                  <p class="cw-ui mt-auto pt-4 text-ink-muted">
-                    {talk.data.event}
-                  </p>
+                  {talk.data.event && (
+                    <p class="cw-ui mt-auto pt-4 text-ink-muted">
+                      {talk.data.event}
+                    </p>
+                  )}
                 </div>
               </a>
             ))}
