@@ -13,15 +13,15 @@ const { title, description, pubDatetime, modDatetime, timezone, tags } = data;
 
 const headerProps = {
   style: { viewTransitionName: slugifyStr(title) },
-  class: "text-xl leading-snug font-black group-hover:text-cobalt",
+  class: "line-clamp-2 text-xl leading-snug font-black group-hover:text-cobalt",
 };
 ---
 
-<li class="py-6">
+<li class="relative flex flex-col py-6">
   <Datetime {pubDatetime} {modDatetime} {timezone} />
   <a
     href={getListedPostPath(Astro.props)}
-    class="group mt-2 inline-block focus-visible:no-underline"
+    class="group mt-2 inline-block after:absolute after:inset-0 after:rounded-(--radius-lg) after:content-[''] focus-visible:no-underline"
   >
     {
       variant === "h2" ? (
@@ -31,10 +31,10 @@ const headerProps = {
       )
     }
   </a>
-  <p class="mt-2 text-ink-muted">{description}</p>
+  <p class="mt-2 line-clamp-2 text-ink-muted">{description}</p>
   {
     tags && tags.length > 0 && (
-      <ul class="cw-label mt-3 flex flex-wrap gap-x-3 gap-y-1 text-cobalt">
+      <ul class="cw-label mt-auto flex flex-wrap gap-x-3 gap-y-1 pt-3 text-cobalt">
         {tags.map(tag => (
           <li>#{tag}</li>
         ))}

@@ -25,11 +25,10 @@ const { page } = Astro.props;
   <Header />
   <Main
     pageTitle="Posts"
-    pageLabel="記事"
     pageDesc="All the articles I've posted."
     withSidebar={false}
   >
-    <ul class="cw-list">
+    <ul class="cw-list cw-list--cards">
       {page.data.map(data => <Card {...data} />)}
     </ul>
 
