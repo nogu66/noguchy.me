@@ -8,7 +8,6 @@ import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
 import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
 import SearchModal from "./SearchModal.astro";
 import { SITE } from "@/config";
-import { NEWS } from "@/news.config";
 
 const { pathname } = Astro.url;
 
@@ -24,7 +23,6 @@ const isActive = (path: string) => {
 };
 
 const navItems = [
-  { href: NEWS.website, label: "News", external: true },
   { href: "/posts", label: "Posts" },
   { href: "/tags", label: "Tags" },
   { href: "/activities", label: "Activities" },
@@ -82,11 +80,9 @@ const navItems = [
                 href={item.href}
                 class:list={[
                   "block rounded-xl px-4 py-3 hover:bg-surface-soft hover:text-cobalt md:rounded-none md:p-0 md:py-1 md:hover:bg-transparent",
-                  { "active-nav": !item.external && isActive(item.href) },
+                  { "active-nav": isActive(item.href) },
                 ]}
-                aria-current={
-                  !item.external && isActive(item.href) ? "page" : undefined
-                }
+                aria-current={isActive(item.href) ? "page" : undefined}
               >
                 {item.label}
               </a>

@@ -25,7 +25,7 @@ interface TermData {
   posts: TermPost[];
   tags: TermTag[];
   activities: TermActivity[];
-  links: { news: string; github: string; x: string };
+  links: { github: string; x: string };
 }
 
 const PAGE_SIZE = 5;
@@ -43,7 +43,6 @@ const COMMANDS: [string, string, string][] = [
   ["/search", "<word>", "サイト内を検索"],
   ["/activities", "", "登壇・受賞歴を表示"],
   ["/about", "", "プロフィールを開く"],
-  ["/news", "", "NEWS サイトを開く"],
   ["/links", "", "リンク集を開く"],
   ["/github", "", "GitHub を開く"],
   ["/x", "", "X を開く"],
@@ -338,7 +337,6 @@ function initTerminal() {
     "/about": () => open("プロフィール", "/about"),
     "/home": () => open("ホーム", "/"),
     "/links": () => open("リンク集", "/links"),
-    "/news": () => open("NEWS ↗", data.links.news),
     "/github": () => open("GitHub ↗", data.links.github),
     "/x": () => open("X ↗", data.links.x),
     "/whoami": () => print("guest — ようこそ。/about で中の人がわかります。"),

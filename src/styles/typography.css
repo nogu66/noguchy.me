@@ -119,16 +119,15 @@
     }
   }
 
-  /* Blog-style accents: a tinted bar behind h2 and a marker under strong text.
-     The news site keeps its own article typography. */
+  /* Blog-style accents: a marker under bold text, and code blocks that stay
+     dark in both themes. The news site keeps its own article typography. */
   .app-prose:not(.news-article-body) {
-    h2 {
-      @apply rounded-2xl bg-surface-soft px-5 py-3;
-      font-family: var(--font-display);
-    }
-
     :where(p, li) > strong {
       background: linear-gradient(transparent 62%, var(--marker) 62%);
+    }
+
+    .astro-code {
+      @apply bg-(--shiki-dark-bg) text-(--shiki-dark) [&_span]:text-(--shiki-dark);
     }
   }
 
