@@ -37,9 +37,9 @@ const THEMES: Record<string, string> = {
 // [name, usage, description]. Commands whose usage starts with "<" need an argument.
 const COMMANDS: [string, string, string][] = [
   ["/help", "", "コマンド一覧を表示"],
-  ["/posts", "", "記事をさらに 5 件読み込む"],
+  ["/posts", "", "記事一覧を表示"],
   ["/read", "[n]", "n 番目の記事を開く（省略で一覧）"],
-  ["/tags", "[tag]", "タグで記事を絞り込む"],
+  ["/tags", "[tag]", "タグの記事一覧を表示"],
   ["/search", "<word>", "サイト内を検索"],
   ["/activities", "", "登壇・受賞歴を表示"],
   ["/about", "", "プロフィールを開く"],
@@ -107,7 +107,6 @@ function initTerminal() {
   /* ---------- feed ---------- */
 
   const feedList = () => filterByTag(data.posts, activeTag);
-  const visibleFeed = () => feedList().slice(0, shown);
 
   const feedRow = (post: TermPost, order: number) => {
     const row = el("a", "frow") as HTMLAnchorElement;
@@ -149,13 +148,11 @@ function initTerminal() {
     renderFeed(0);
   };
 
-  /** Returns how many rows were added. */
   const loadMore = () => {
-    const before = visibleFeed().length;
+    const before = Math.min(shown, feedList().length);
     shown += PAGE_SIZE;
     renderFeed(before);
     scrollEnd();
-    return visibleFeed().length - before;
   };
 
   /* ---------- scrollback ---------- */
@@ -181,8 +178,11 @@ function initTerminal() {
 
   /* ---------- selectable option menu (/help, /theme, ...) ---------- */
 
+  // A menu opens idle, so Enter and the up arrow keep their shell meaning.
+  // The down arrow moves into it; from then on the arrows and Enter drive it.
   let menu: HTMLElement[] | null = null;
   let menuIndex = 0;
+  let menuEngaged = false;
   let themeBefore: string | null = null;
 
   const currentTheme = () =>
@@ -196,13 +196,22 @@ function initTerminal() {
     if (!items.length) return;
     menu = items;
     menuIndex = Math.max(0, index);
-    menu[menuIndex].classList.add("on");
+    menuEngaged = false;
     print(hint, "t-out t-hint");
+  };
+
+  const engageMenu = () => {
+    if (!menu) return;
+    menuEngaged = true;
+    const item = menu[menuIndex];
+    item.classList.add("on");
+    item.scrollIntoView({ block: "nearest" });
   };
 
   const closeMenu = ({ revert = true } = {}) => {
     menu?.forEach(item => item.classList.remove("on"));
     menu = null;
+    menuEngaged = false;
     if (themeBefore && revert) previewTheme(themeBefore);
     themeBefore = null;
   };
@@ -239,6 +248,20 @@ function initTerminal() {
     go(href);
   };
 
+  // Every command prints its own complete answer; none depends on what an
+  // earlier command or the feed above happens to show. Post numbers are the
+  // position in the full list, so /read n always means the same post.
+  const listPosts = (posts: TermPost[]) => {
+    const items = posts.map(post =>
+      option(
+        `${String(allPosts.indexOf(post) + 1).padStart(2, "0")}  ${post.date}`,
+        post.title,
+        { href: post.href }
+      )
+    );
+    openMenu(items, 0, "↓ で選択 · enter で開く · esc で閉じる");
+  };
+
   const handlers: Record<string, (args: string[]) => void> = {
     "/help": () => {
       const items = COMMANDS.map(([name, usage, desc]) =>
@@ -248,39 +271,27 @@ function initTerminal() {
           usage.startsWith("<") ? { fill: `${name} ` } : { cmd: name }
         )
       );
-      openMenu(items, 0, "↑↓ で選択 · enter で実行 · esc で閉じる");
+      openMenu(items, 0, "↓ で選択 · enter で実行 · esc で閉じる");
     },
-    "/posts": () => {
-      if (shown >= feedList().length) {
-        print("これで全部です。/tags で絞り込みもできます。");
-        return;
-      }
-      print(`${loadMore()} 件読み込みました。`);
-    },
+    "/posts": () => listPosts(allPosts),
     "/read": ([n]) => {
-      const list = [...data.featured, ...visibleFeed()];
       if (!n) {
-        const items = list.map((post, i) =>
-          option(String(i + 1).padStart(2, "0"), post.title, {
-            href: post.href,
-          })
-        );
-        openMenu(items, 0, "↑↓ で選択 · enter で開く · esc で閉じる");
+        listPosts(allPosts);
         return;
       }
-      const post = list[Number.parseInt(n, 10) - 1];
+      const post = allPosts[Number.parseInt(n, 10) - 1];
       if (post) open(`「${post.title}」`, post.href);
-      else print(`${n} 番目の記事はありません。/read で一覧を表示します。`);
+      else print(`${n} 番目の記事はありません。/posts で一覧を表示します。`);
     },
     "/tags": ([name]) => {
       if (!name) {
         const items = [
-          option("all", `${data.posts.length} 件`, { cmd: "/tags all" }),
+          option("all", `${allPosts.length} 件`, { cmd: "/tags all" }),
           ...data.tags.map(({ tag, name, count }) =>
             option(`#${name}`, `${count} 件`, { cmd: `/tags ${tag}` })
           ),
         ];
-        openMenu(items, 0, "↑↓ で選択 · enter で絞り込み · esc で閉じる");
+        openMenu(items, 0, "↓ で選択 · enter で一覧 · esc で閉じる");
         return;
       }
       const wanted = name.replace(/^#/, "").toLowerCase();
@@ -294,8 +305,9 @@ function initTerminal() {
         print(`タグ「${name}」は見つかりません。/tags で一覧を表示します。`);
         return;
       }
-      setTag(hit.tag);
-      print(`#${hit.name}: ${feedList().length} 件`);
+      const tagged = filterByTag(allPosts, hit.tag);
+      print(`#${hit.name}: ${tagged.length} 件`);
+      listPosts(tagged);
     },
     "/search": args => {
       const query = args.join(" ");
@@ -313,7 +325,7 @@ function initTerminal() {
       const items = data.activities.map(({ label, title, href, date }) =>
         option(`${date} ${label}`, title, { href })
       );
-      openMenu(items, 0, "↑↓ で選択 · enter で開く · esc で閉じる");
+      openMenu(items, 0, "↓ で選択 · enter で開く · esc で閉じる");
     },
     "/theme": ([name]) => {
       const theme = (name ?? "").toLowerCase();
@@ -330,7 +342,7 @@ function initTerminal() {
       openMenu(
         items,
         names.indexOf(current),
-        "↑↓ でプレビュー · enter で適用 · esc でキャンセル"
+        "↓ でプレビュー · enter で適用 · esc でキャンセル"
       );
       themeBefore = current;
     },
@@ -371,7 +383,7 @@ function initTerminal() {
       const items = hits.map(post =>
         option("└", post.title, { href: post.href })
       );
-      openMenu(items, 0, "↑↓ で選択 · enter で開く · esc で閉じる");
+      openMenu(items, 0, "↓ で選択 · enter で開く · esc で閉じる");
       return;
     }
     print(
@@ -424,17 +436,32 @@ function initTerminal() {
 
   const history: string[] = [];
   let historyIndex = -1;
+  // what was being typed before stepping back through the history
+  let draft = "";
+  const finePointer = window.matchMedia(
+    "(hover: hover) and (pointer: fine)"
+  ).matches;
+  const refocus = () => {
+    if (finePointer) input.focus({ preventScroll: true });
+  };
 
   form.addEventListener(
     "submit",
     event => {
       event.preventDefault();
       const value = input.value;
-      if (value.trim()) history.unshift(value);
+      if (value.trim() && history[0] !== value) history.unshift(value);
       historyIndex = -1;
+      draft = "";
       input.value = "";
       closeSugs();
-      run(value);
+      if (value.trim()) {
+        run(value);
+      } else {
+        // an empty line still gets its own prompt line, as in a shell
+        closeMenu();
+        print("", "t-cmd");
+      }
     },
     { signal }
   );
@@ -454,6 +481,31 @@ function initTerminal() {
     event => {
       // Enter that confirms an IME composition must not submit the line
       if (event.isComposing || event.keyCode === 229) return;
+      if (event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
+        const ctrlKey = event.key.toLowerCase();
+        const hasSelection =
+          input.selectionStart !== input.selectionEnd ||
+          Boolean(window.getSelection()?.toString());
+        if (ctrlKey === "c" && !hasSelection) {
+          // cancel the line being typed (Ctrl+C still copies a selection)
+          event.preventDefault();
+          closeSugs();
+          closeMenu();
+          print(`${input.value}^C`, "t-cmd");
+          input.value = "";
+          historyIndex = -1;
+          draft = "";
+        } else if (ctrlKey === "l") {
+          event.preventDefault();
+          closeMenu();
+          out.replaceChildren();
+        } else if (ctrlKey === "u") {
+          event.preventDefault();
+          closeSugs();
+          input.value = "";
+        }
+        return;
+      }
       if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
         return;
       const { key } = event;
@@ -483,17 +535,18 @@ function initTerminal() {
         return;
       }
 
-      // the option menu owns the arrow keys while it is open
-      if (menu) return;
+      // once the option menu is engaged it owns the arrow keys
+      if (menu && menuEngaged) return;
 
       if (key === "ArrowUp" && history.length) {
         event.preventDefault();
+        if (historyIndex < 0) draft = input.value;
         historyIndex = Math.min(historyIndex + 1, history.length - 1);
         input.value = history[historyIndex];
       } else if (key === "ArrowDown" && historyIndex >= 0) {
         event.preventDefault();
         historyIndex -= 1;
-        input.value = historyIndex >= 0 ? history[historyIndex] : "";
+        input.value = historyIndex >= 0 ? history[historyIndex] : draft;
       } else if (key === "Tab" && input.value) {
         const match = COMMAND_NAMES.find(name =>
           name.startsWith(input.value.toLowerCase())
@@ -522,9 +575,15 @@ function initTerminal() {
       if (typing) return;
 
       if (menu) {
-        if (key === "ArrowUp" || key === "ArrowDown") {
+        if (menuEngaged && (key === "ArrowUp" || key === "ArrowDown")) {
           event.preventDefault();
           moveMenu(key === "ArrowDown" ? 1 : -1);
+          return;
+        }
+        // the down arrow enters the menu, unless it just stepped the history
+        if (key === "ArrowDown" && !event.defaultPrevented) {
+          event.preventDefault();
+          engageMenu();
           return;
         }
         if (key === "Escape") {
@@ -533,6 +592,7 @@ function initTerminal() {
         }
         if (
           key === "Enter" &&
+          menuEngaged &&
           !input.value.trim() &&
           (inPrompt || target === document.body)
         ) {
@@ -584,12 +644,21 @@ function initTerminal() {
     "click",
     event => {
       const tab = (event.target as HTMLElement).closest<HTMLElement>("button");
-      if (tab?.dataset.tag) setTag(tab.dataset.tag);
+      if (!tab?.dataset.tag) return;
+      setTag(tab.dataset.tag);
+      refocus();
     },
     { signal }
   );
 
-  more.addEventListener("click", () => loadMore(), { signal });
+  more.addEventListener(
+    "click",
+    () => {
+      loadMore();
+      refocus();
+    },
+    { signal }
+  );
 
   // clicking empty space focuses the prompt, like a real terminal
   root.querySelector(".term-main")!.addEventListener(
@@ -622,9 +691,7 @@ function initTerminal() {
 
   scrollEnd();
   // skip autofocus on touch devices so the keyboard doesn't cover the feed
-  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    input.focus({ preventScroll: true });
-  }
+  refocus();
 }
 
 document.addEventListener("astro:page-load", initTerminal);
