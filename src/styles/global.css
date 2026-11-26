@@ -141,6 +141,33 @@ html[data-theme="dark"] {
 .site-logo {
   font-family: var(--font-display);
 }
+.site-header {
+  background: var(--surface);
+}
+.site-footer {
+  background: var(--surface-soft);
+}
+/* Dark header: the page shows through a frosted bar, and the current page
+   gets a tinted pill */
+html[data-theme="dark"] .site-header {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: saturate(1.6) blur(14px);
+  -webkit-backdrop-filter: saturate(1.6) blur(14px);
+}
+html[data-theme="dark"] .active-nav {
+  background: var(--surface-soft);
+}
+/* Dark footer: a band darker than the page. The tokens are re-pointed inside
+   it, so links and social buttons pick up the right colours. */
+html[data-theme="dark"] .site-footer {
+  --surface: rgb(255 255 255 / 0.08);
+  --ink: #ffffff;
+  --ink-muted: #8f9ab3;
+  --line: rgb(255 255 255 / 0.16);
+  border-top: var(--border-hair) solid #2a3550;
+  background: #070c1a;
+  color: var(--ink);
+}
 /* Phone menu: the current page gets a tinted row, and the panel eases in */
 @media (max-width: 767px) {
   .active-nav {
