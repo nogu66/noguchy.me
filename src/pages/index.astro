@@ -10,6 +10,7 @@ import SectionHeading from "@/components/SectionHeading.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
 import getUniqueTags from "@/utils/getUniqueTags";
 import { SITE } from "@/config";
+import { ADVENT_CALENDARS } from "@/data/adventCalendars";
 
 const posts = await getListedPosts();
 
@@ -26,6 +27,8 @@ const byDateDesc = <T extends { data: { date: Date } }>(a: T, b: T) =>
 
 const talks = (await getCollection("talks")).sort(byDateDesc).slice(0, 3);
 const awards = (await getCollection("awards")).sort(byDateDesc);
+
+const advent = [...ADVENT_CALENDARS].sort((a, b) => b.year - a.year)[0];
 
 const formatDate = (date: Date) =>
   date.toLocaleDateString("ja-JP", {
@@ -63,6 +66,26 @@ const websiteStructuredData = {
   <Header />
   <main id="main-content" data-layout="index" class="w-full pb-16">
     <h1 class="sr-only">{SITE.title}</h1>
+    {
+      advent && (
+        <section id="advent-calendar" class="pt-8">
+          <a
+            href={`/advent-calendar/${advent.year}/`}
+            class="cw-card group items-center gap-4 px-6 py-7 text-center sm:py-8"
+          >
+            <span class="text-[33.28px] leading-tight font-black group-hover:text-cobalt sm:text-[40px]">
+              Advent Calendar {advent.year}
+            </span>
+            <span class="cw-more shrink-0">
+              カレンダーを見る
+              <span class="cw-more-arrow" aria-hidden="true">
+                →
+              </span>
+            </span>
+          </a>
+        </section>
+      )
+    }
     {
       featuredPosts.length > 0 && (
         <section id="featured" class="cw-section">
