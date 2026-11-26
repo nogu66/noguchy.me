@@ -32,7 +32,7 @@ const navItems = [
 ];
 ---
 
-<header class="sticky top-0 z-30 border-b border-line bg-surface">
+<header class="site-header sticky top-0 z-30 border-b border-line">
   <a
     id="skip-to-content"
     href="#main-content"
@@ -42,7 +42,7 @@ const navItems = [
   </a>
   <div
     id="nav-container"
-    class="mx-auto flex max-w-app flex-wrap items-center justify-between gap-x-6 px-4 py-3"
+    class="mx-auto flex max-w-app flex-wrap items-center justify-between gap-x-3 px-4 py-3 lg:gap-x-6"
   >
     <a
       href="/"
@@ -69,10 +69,10 @@ const navItems = [
     </button>
     <nav
       id="nav-menu"
-      class="hidden w-full flex-col gap-3 pt-3 pb-2 md:flex md:w-auto md:flex-row md:items-center md:gap-6 md:p-0"
+      class="hidden w-full flex-col gap-3 pt-3 pb-2 md:flex md:w-auto md:flex-row md:items-center md:gap-3 md:p-0 lg:gap-6"
     >
       <ul
-        class="flex flex-col gap-1 text-[15px] leading-normal font-bold md:flex-row md:items-center md:gap-5 md:text-xs md:font-semibold md:tracking-wider md:uppercase"
+        class="flex flex-col gap-1 text-[15px] leading-normal font-bold md:flex-row md:items-center md:gap-0.5 md:text-xs md:font-semibold md:tracking-wider md:uppercase"
       >
         {
           navItems.map(item => (
@@ -80,8 +80,8 @@ const navItems = [
               <a
                 href={item.href}
                 class:list={[
-                  "block rounded-xl px-4 py-3 hover:bg-surface-soft hover:text-cobalt md:rounded-none md:p-0 md:py-1 md:hover:bg-transparent",
-                  { "active-nav": isActive(item.href) },
+                  "block rounded-xl px-4 py-3 hover:bg-surface-soft hover:text-cobalt md:rounded-full md:px-1.5 md:py-1.5 md:hover:bg-transparent lg:px-2.5 dark:md:hover:bg-surface-soft",
+                  isActive(item.href) ? "active-nav" : "dark:md:text-ink-muted",
                 ]}
                 aria-current={isActive(item.href) ? "page" : undefined}
               >
@@ -92,7 +92,7 @@ const navItems = [
         }
       </ul>
       <ul
-        class="flex items-center gap-2 border-t border-line px-2 pt-3 md:gap-1 md:border-t-0 md:border-l md:px-0 md:pt-0 md:pl-4"
+        class="flex items-center gap-2 border-t border-line px-2 pt-3 md:gap-1 md:border-t-0 md:border-l md:px-0 md:pt-0 md:pl-2 lg:pl-4"
       >
         <li>
           <a
