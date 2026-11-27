@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import satori from "satori";
 import { SITE } from "@/config";
 import { loadGoogleFont } from "../loadGoogleFont";
@@ -17,13 +19,15 @@ const LINE = "#e1e6ee";
 const COBALT = "#1a63c4";
 const SALE = "#d63a3a";
 
-const CELL = 60;
+const CELL = 70;
+const CELL_HEIGHT = 88;
 const GAP = 8;
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+const SHADOW_SOFT = "0 12px 32px rgba(26, 99, 196, 0.12)";
 
 type Node = {
   type: string;
-  props: { style?: Record<string, unknown>; children?: unknown };
+  props: Record<string, unknown>;
 };
 
 const el = (
@@ -34,6 +38,11 @@ const el = (
   type,
   props: { style: { display: "flex", ...style }, children },
 });
+
+async function loadAvatar() {
+  const file = await readFile(join(process.cwd(), "public", "favicon.png"));
+  return `data:image/png;base64,${file.toString("base64")}`;
+}
 
 export default async function adventCalendarOgImage(calendar: AdventCalendar) {
   const days = buildAdventDays(calendar);
@@ -53,21 +62,23 @@ export default async function adventCalendarOgImage(calendar: AdventCalendar) {
   const isPublished = new Set(days.filter(d => d.entry?.url).map(d => d.day));
 
   const cell = (day: number | null) => {
-    if (day === null) return el("div", { width: CELL, height: CELL }, null);
+    if (day === null)
+      return el("div", { width: CELL, height: CELL_HEIGHT }, null);
     const done = isPublished.has(day);
     return el(
       "div",
       {
         width: CELL,
-        height: CELL,
+        height: CELL_HEIGHT,
         alignItems: "center",
         justifyContent: "center",
-        border: `${done ? 3 : 2}px solid ${done ? COBALT : INK}`,
+        border: `1px solid ${done ? COBALT : LINE}`,
+        borderRadius: 18,
         background: done ? COBALT : SURFACE,
         color: done ? SURFACE : INK,
         fontFamily: "Roboto",
         fontWeight: 900,
-        fontSize: 26,
+        fontSize: 30,
       },
       String(day)
     );
@@ -76,14 +87,14 @@ export default async function adventCalendarOgImage(calendar: AdventCalendar) {
   const calendarGrid = el("div", { flexDirection: "column", gap: GAP }, [
     el(
       "div",
-      { gap: GAP },
+      { gap: GAP, marginBottom: 4 },
       WEEKDAYS.map((w, i) =>
         el(
           "div",
           {
             width: CELL,
             justifyContent: "center",
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: 700,
             color: i === 0 ? SALE : INK_MUTED,
           },
@@ -98,79 +109,85 @@ export default async function adventCalendarOgImage(calendar: AdventCalendar) {
     "div",
     {
       flexDirection: "column",
-      fontFamily: "Roboto",
+      fontFamily: "Zen Maru Gothic",
       fontWeight: 900,
-      fontSize: 92,
-      lineHeight: 0.95,
+      fontSize: 86,
+      lineHeight: 1.08,
       color: INK,
-      letterSpacing: "-0.01em",
     },
     [
-      el("div", {}, "ADVENT"),
-      el("div", {}, "CALENDAR"),
-      el("div", { alignItems: "baseline" }, [
-        el("span", {}, String(calendar.year)),
-        el("span", { color: COBALT }, "."),
-      ]),
+      el("div", {}, "Advent"),
+      el("div", {}, "Calendar"),
+      el("div", { color: COBALT }, String(calendar.year)),
     ]
   );
 
-  const progressWidth = 360;
+  const progressWidth = 380;
   const progress = el("div", { flexDirection: "column", gap: 12 }, [
     el(
       "div",
-      { fontFamily: "Roboto", fontWeight: 900, fontSize: 26, color: INK },
-      `${calendar.year}.12.01 — 12.25`
+      {
+        alignItems: "baseline",
+        gap: 10,
+        fontSize: 26,
+        fontWeight: 700,
+        color: INK_MUTED,
+      },
+      [
+        el(
+          "span",
+          {
+            fontFamily: "Roboto",
+            fontWeight: 900,
+            fontSize: 44,
+            lineHeight: 1,
+            color: COBALT,
+          },
+          String(published)
+        ),
+        el("span", {}, `/ ${ADVENT_DAYS} 本公開`),
+      ]
     ),
-    el("div", { alignItems: "center", gap: 16 }, [
-      el(
-        "div",
-        {
-          width: progressWidth,
-          height: 14,
-          border: `3px solid ${INK}`,
-          background: SURFACE,
-        },
-        el("div", {
-          width: (published / ADVENT_DAYS) * (progressWidth - 6),
-          height: "100%",
-          background: COBALT,
-        })
-      ),
-      el(
-        "div",
-        {
-          alignItems: "baseline",
-          gap: 8,
-          fontSize: 22,
-          fontWeight: 700,
-          color: INK_MUTED,
-        },
-        [
-          el(
-            "span",
-            { fontFamily: "Roboto", fontWeight: 900, color: COBALT },
-            String(published)
-          ),
-          el("span", {}, `/ ${ADVENT_DAYS} 本公開`),
-        ]
-      ),
-    ]),
+    el(
+      "div",
+      {
+        width: progressWidth,
+        height: 14,
+        borderRadius: 9999,
+        background: SURFACE_SOFT,
+        overflow: "hidden",
+      },
+      el("div", {
+        width: (published / ADVENT_DAYS) * progressWidth,
+        height: "100%",
+        borderRadius: 9999,
+        background: COBALT,
+      })
+    ),
   ]);
 
   const logo = el(
     "div",
     {
-      alignSelf: "flex-start",
-      padding: "8px 16px",
-      background: COBALT,
-      color: SURFACE,
-      fontFamily: "Roboto",
+      alignItems: "center",
+      gap: 12,
+      fontFamily: "Zen Maru Gothic",
       fontWeight: 900,
-      fontSize: 24,
-      letterSpacing: "0.02em",
+      fontSize: 30,
+      color: INK,
     },
-    domain.toUpperCase()
+    [
+      {
+        type: "img",
+        props: {
+          src: await loadAvatar(),
+          width: 48,
+          height: 48,
+          style: { borderRadius: 9999 },
+        },
+      },
+      el("span", {}, domain),
+    ]
   );
 
   const root = el(
@@ -178,16 +195,18 @@ export default async function adventCalendarOgImage(calendar: AdventCalendar) {
     {
       width: "100%",
       height: "100%",
-      background: SURFACE,
-      padding: 28,
+      background: SURFACE_SOFT,
+      padding: 36,
       fontFamily: "Noto Sans JP",
     },
     el(
       "div",
       {
         flex: 1,
-        border: `4px solid ${INK}`,
-        background: `linear-gradient(135deg, ${SURFACE} 0%, ${SURFACE} 62%, ${SURFACE_SOFT} 62%, ${SURFACE_SOFT} 100%)`,
+        border: `1px solid ${LINE}`,
+        borderRadius: 40,
+        background: SURFACE,
+        boxShadow: SHADOW_SOFT,
         padding: "44px 52px",
         justifyContent: "space-between",
         alignItems: "center",
@@ -206,8 +225,8 @@ export default async function adventCalendarOgImage(calendar: AdventCalendar) {
           "div",
           {
             padding: 24,
-            border: `2px solid ${LINE}`,
-            background: SURFACE,
+            borderRadius: 28,
+            background: SURFACE_SOFT,
           },
           calendarGrid
         ),
@@ -215,9 +234,11 @@ export default async function adventCalendarOgImage(calendar: AdventCalendar) {
     )
   );
 
-  const latin = `ADVENTCALENDAR0123456789.—/ ${domain.toUpperCase()}`;
+  const display = `AdventCalendar0123456789${domain}`;
+  const latin = "0123456789";
   const japanese = `${WEEKDAYS.join("")} / 0123456789本公開`;
-  const [roboto, noto] = await Promise.all([
+  const [zenMaru, roboto, noto] = await Promise.all([
+    loadGoogleFont("Zen+Maru+Gothic", display, 900),
     loadGoogleFont("Roboto", latin, 900),
     loadGoogleFont("Noto+Sans+JP", japanese, 700),
   ]);
@@ -227,6 +248,7 @@ export default async function adventCalendarOgImage(calendar: AdventCalendar) {
     height: 630,
     embedFont: true,
     fonts: [
+      { name: "Zen Maru Gothic", data: zenMaru, weight: 900, style: "normal" },
       { name: "Roboto", data: roboto, weight: 900, style: "normal" },
       { name: "Noto Sans JP", data: noto, weight: 700, style: "normal" },
     ],
